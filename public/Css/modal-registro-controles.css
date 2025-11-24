@@ -1,0 +1,1184 @@
+/* ============================================
+   MODALES DE REGISTRO DE CONTROLES
+   Estilos mejorados para modales de registro
+   ============================================ */
+
+@import url('./variables.css');
+
+/* Contenedor principal de modales de registro */
+/* Z-index aumentado para aparecer por encima del modal principal (1000-1001) */
+.modales-registro-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-modal-registro);
+    pointer-events: none;
+  }
+  
+  /* Overlay base para todos los modales de registro */
+  .modal-registro-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--color-bg-overlay);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: var(--z-modal-registro-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: auto;
+  }
+  
+  .modal-registro-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Contenedor del modal */
+  .modal-registro-content {
+    background: var(--color-bg-primary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    width: 100%;
+    max-width: 520px;
+    margin: auto;
+    transform: scale(0.95) translateY(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 3002;
+  }
+  
+  .modal-registro-overlay.show .modal-registro-content {
+    transform: scale(1) translateY(0);
+  }
+  
+  /* Header del modal */
+  .modal-registro-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    padding: 1.5rem 1.75rem;
+    border-radius: 1rem 1rem 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .modal-registro-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  
+  .modal-registro-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-registro-title-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0.9;
+  }
+  
+  .modal-registro-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .modal-registro-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-registro-close svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  /* Body del modal */
+  .modal-registro-body {
+    padding: 1.75rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+  
+  /* Formulario */
+  .modal-registro-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  
+  /* Grupos de formulario */
+  .modal-registro-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .modal-registro-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .modal-registro-label .required {
+    color: #ef4444;
+    font-weight: 700;
+  }
+  
+  .modal-registro-input,
+  .modal-registro-select,
+  .modal-registro-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    transition: all 0.2s ease;
+    background: white;
+  }
+  
+  .modal-registro-input:focus,
+  .modal-registro-select:focus,
+  .modal-registro-textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+  
+  .modal-registro-input:read-only,
+  .modal-registro-select:disabled {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: not-allowed;
+  }
+  
+  .modal-registro-textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+  }
+  
+  /* Grid para campos múltiples */
+  .modal-registro-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+  
+  .modal-registro-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .modal-registro-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @media (max-width: 640px) {
+    .modal-registro-grid-3 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .modal-registro-grid-2 {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .modal-registro-grid-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Checkboxes y radios */
+  .modal-registro-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.625rem;
+    border: 1.5px solid #e2e8f0;
+  }
+  
+  .modal-registro-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: background 0.2s ease;
+  }
+  
+  .modal-registro-checkbox-item:hover {
+    background: rgba(99, 102, 241, 0.05);
+  }
+  
+  .modal-registro-checkbox-item input[type="checkbox"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    cursor: pointer;
+    accent-color: #6366f1;
+    border-radius: 0.25rem;
+  }
+  
+  .modal-registro-checkbox-item label {
+    font-size: 0.875rem;
+    color: #475569;
+    cursor: pointer;
+    flex: 1;
+    margin: 0;
+  }
+  
+  /* Información adicional */
+  .modal-registro-info {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .modal-registro-info .highlight {
+    color: #6366f1;
+    font-weight: 600;
+  }
+  
+  /* Footer del modal */
+  .modal-registro-footer {
+    padding: 1.5rem 1.75rem;
+    border-top: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    gap: 0.75rem;
+    border-radius: 0 0 1rem 1rem;
+  }
+  
+  .modal-registro-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-registro-btn-cancel {
+    background: white;
+    color: #475569;
+    border: 1.5px solid #e2e8f0;
+  }
+  
+  .modal-registro-btn-cancel:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-registro-btn-submit {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25);
+  }
+  
+  .modal-registro-btn-submit:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(99, 102, 241, 0.35);
+  }
+  
+  .modal-registro-btn-submit:active {
+    transform: translateY(0);
+  }
+  
+  /* Animaciones */
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  .modal-registro-content {
+    animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Scrollbar personalizado */
+  .modal-registro-body::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .modal-registro-body::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+  
+  .modal-registro-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+  
+  .modal-registro-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .modal-registro-content {
+      max-width: 95%;
+      margin: 1rem;
+    }
+  
+    .modal-registro-header {
+      padding: 1.25rem 1.5rem;
+    }
+  
+    .modal-registro-body {
+      padding: 1.5rem;
+    }
+  
+    .modal-registro-footer {
+      padding: 1.25rem 1.5rem;
+      flex-direction: column;
+    }
+  
+    .modal-registro-btn {
+      width: 100%;
+    }
+  }
+  
+  /* Estados especiales */
+  .modal-registro-overlay.hidden {
+    display: none;
+  }
+  
+  .modal-registro-overlay.flex {
+    display: flex;
+  }
+  
+  /* ============================================
+     VARIANTES DE DISEÑO POR TIPO DE MODAL
+     Cada modal tiene colores y estilos únicos
+     ============================================ */
+  
+  /* ========== MODAL: CONTROL RECIÉN NACIDO ========== */
+  .modal-registro-overlay.modal-tipo-recien-nacido .modal-registro-header:not(.modal-recien-nacido-header) {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-input:focus,
+  .modal-tipo-recien-nacido .modal-registro-select:focus,
+  .modal-tipo-recien-nacido .modal-registro-textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-checkbox-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #3b82f6;
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-info .highlight {
+    color: #3b82f6;
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-btn-submit:not(.modal-recien-nacido-btn-submit) {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25);
+  }
+  
+  .modal-tipo-recien-nacido .modal-registro-btn-submit:not(.modal-recien-nacido-btn-submit):hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.35);
+  }
+  
+  /* ========== MODAL: TAMIZAJE NEONATAL ========== */
+  .modal-registro-overlay.modal-tipo-tamizaje .modal-registro-header:not(.modal-tamizaje-header) {
+    background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-input:focus,
+  .modal-tipo-tamizaje .modal-registro-select:focus,
+  .modal-tipo-tamizaje .modal-registro-textarea:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-checkbox-item:hover {
+    background: rgba(16, 185, 129, 0.05);
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #10b981;
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-info .highlight {
+    color: #10b981;
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-btn-submit:not(.modal-tamizaje-btn-submit) {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25);
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-btn-submit:not(.modal-tamizaje-btn-submit):hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.35);
+  }
+  
+  /* ========== MODAL: CNV (Carné de Nacido Vivo) ========== */
+  .modal-registro-overlay.modal-tipo-cnv .modal-registro-header:not(.modal-cnv-header) {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+  }
+  
+  .modal-tipo-cnv .modal-registro-input:focus,
+  .modal-tipo-cnv .modal-registro-select:focus,
+  .modal-tipo-cnv .modal-registro-textarea:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
+  .modal-tipo-cnv .modal-registro-checkbox-item:hover {
+    background: rgba(139, 92, 246, 0.05);
+  }
+  
+  .modal-tipo-cnv .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #8b5cf6;
+  }
+  
+  .modal-tipo-cnv .modal-registro-info .highlight {
+    color: #8b5cf6;
+  }
+  
+  .modal-tipo-cnv .modal-registro-btn-submit:not(.modal-cnv-btn-submit) {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25);
+  }
+  
+  .modal-tipo-cnv .modal-registro-btn-submit:not(.modal-cnv-btn-submit):hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    box-shadow: 0 6px 12px rgba(139, 92, 246, 0.35);
+  }
+  
+  /* ========== MODAL: VISITA DOMICILIARIA ========== */
+  .modal-registro-overlay.modal-tipo-visita .modal-registro-header:not(.modal-visita-header) {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  }
+  
+  .modal-tipo-visita .modal-registro-input:focus,
+  .modal-tipo-visita .modal-registro-select:focus,
+  .modal-tipo-visita .modal-registro-textarea:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  }
+  
+  .modal-tipo-visita .modal-registro-checkbox-item:hover {
+    background: rgba(245, 158, 11, 0.05);
+  }
+  
+  .modal-tipo-visita .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #f59e0b;
+  }
+  
+  .modal-tipo-visita .modal-registro-info .highlight {
+    color: #f59e0b;
+  }
+  
+  .modal-tipo-visita .modal-registro-btn-submit:not(.modal-visita-btn-submit) {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    box-shadow: 0 4px 6px rgba(245, 158, 11, 0.25);
+  }
+  
+  .modal-tipo-visita .modal-registro-btn-submit:not(.modal-visita-btn-submit):hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    box-shadow: 0 6px 12px rgba(245, 158, 11, 0.35);
+  }
+  
+  /* ========== MODAL: VACUNA ========== */
+  .modal-registro-overlay.modal-tipo-vacuna .modal-registro-header.modal-vacuna-header {
+    background: #ef4444 !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-vacuna .modal-registro-header.modal-vacuna-header::before {
+    display: none !important;
+  }
+  
+  .modal-vacuna-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-vacuna-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-vacuna-icon-circle svg {
+    color: #ef4444;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-vacuna-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-vacuna-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .modal-vacuna-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-vacuna-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-tipo-vacuna .modal-registro-input:focus,
+  .modal-tipo-vacuna .modal-registro-select:focus,
+  .modal-tipo-vacuna .modal-registro-textarea:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  .modal-tipo-vacuna .modal-registro-checkbox-item:hover {
+    background: rgba(239, 68, 68, 0.05);
+  }
+  
+  .modal-tipo-vacuna .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #ef4444;
+  }
+  
+  .modal-tipo-vacuna .modal-registro-info .highlight {
+    color: #ef4444;
+  }
+  
+  .modal-vacuna-btn-submit {
+    background: #ef4444 !important;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.25) !important;
+  }
+  
+  .modal-vacuna-btn-submit:hover {
+    background: #dc2626 !important;
+    box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35) !important;
+  }
+  
+  /* ========== MODAL: CRED MENSUAL ========== */
+  .modal-registro-overlay.modal-tipo-cred-mensual .modal-registro-header:not(.modal-cred-mensual-header) {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-input:focus,
+  .modal-tipo-cred-mensual .modal-registro-select:focus,
+  .modal-tipo-cred-mensual .modal-registro-textarea:focus {
+    border-color: #06b6d4;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-checkbox-item:hover {
+    background: rgba(6, 182, 212, 0.05);
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-checkbox-item input[type="checkbox"] {
+    accent-color: #06b6d4;
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-info .highlight {
+    color: #06b6d4;
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-btn-submit:not(.modal-cred-mensual-btn-submit) {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    box-shadow: 0 4px 6px rgba(6, 182, 212, 0.25);
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-btn-submit:not(.modal-cred-mensual-btn-submit):hover {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    box-shadow: 0 6px 12px rgba(6, 182, 212, 0.35);
+  }
+  
+  /* ========== BADGES DE IDENTIFICACIÓN VISUAL ========== */
+  .modal-registro-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Iconos diferenciados con colores */
+  .modal-tipo-recien-nacido .modal-registro-title-icon {
+    color: #dbeafe;
+  }
+  
+  .modal-tipo-tamizaje .modal-registro-title-icon {
+    color: #d1fae5;
+  }
+  
+  .modal-tipo-cnv .modal-registro-title-icon {
+    color: #ede9fe;
+  }
+  
+  .modal-tipo-visita .modal-registro-title-icon {
+    color: #fef3c7;
+  }
+  
+  .modal-tipo-vacuna .modal-registro-title-icon {
+    color: #fee2e2;
+  }
+  
+  .modal-tipo-cred-mensual .modal-registro-title-icon {
+    color: #cffafe;
+  }
+  
+  /* ========== ESTILOS UNIFICADOS PARA TODOS LOS MODALES ========== */
+  /* Replicando el diseño del modal de vacunas en todos los modales */
+  
+  /* ========== MODAL: RECIÉN NACIDO ========== */
+  .modal-registro-overlay.modal-tipo-recien-nacido .modal-registro-header.modal-recien-nacido-header {
+    background: #3b82f6 !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-recien-nacido .modal-registro-header.modal-recien-nacido-header::before {
+    display: none !important;
+  }
+  
+  .modal-recien-nacido-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-recien-nacido-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 2;
+  }
+  
+  .modal-recien-nacido-icon-circle svg {
+    color: #3b82f6;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-recien-nacido-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-recien-nacido-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .modal-recien-nacido-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-recien-nacido-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-recien-nacido-btn-submit {
+    background: #3b82f6 !important;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.25) !important;
+  }
+  
+  .modal-recien-nacido-btn-submit:hover {
+    background: #2563eb !important;
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.35) !important;
+  }
+  
+  /* ========== MODAL: TAMIZAJE ========== */
+  .modal-registro-overlay.modal-tipo-tamizaje .modal-registro-header.modal-tamizaje-header {
+    background: #10b981 !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-tamizaje .modal-registro-header.modal-tamizaje-header::before {
+    display: none !important;
+  }
+  
+  .modal-tamizaje-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-tamizaje-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-tamizaje-icon-circle svg {
+    color: #10b981;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-tamizaje-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-tamizaje-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .modal-tamizaje-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-tamizaje-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-tamizaje-btn-submit {
+    background: #10b981 !important;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25) !important;
+  }
+  
+  .modal-tamizaje-btn-submit:hover {
+    background: #059669 !important;
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.35) !important;
+  }
+  
+  /* ========== MODAL: CNV ========== */
+  .modal-registro-overlay.modal-tipo-cnv .modal-registro-header.modal-cnv-header {
+    background: #8b5cf6 !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-cnv .modal-registro-header.modal-cnv-header::before {
+    display: none !important;
+  }
+  
+  .modal-cnv-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-cnv-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-cnv-icon-circle svg {
+    color: #8b5cf6;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-cnv-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-cnv-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .modal-cnv-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-cnv-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-cnv-btn-submit {
+    background: #8b5cf6 !important;
+    box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25) !important;
+  }
+  
+  .modal-cnv-btn-submit:hover {
+    background: #7c3aed !important;
+    box-shadow: 0 6px 12px rgba(139, 92, 246, 0.35) !important;
+  }
+  
+  /* ========== MODAL: VISITA ========== */
+  .modal-registro-overlay.modal-tipo-visita .modal-registro-header.modal-visita-header {
+    background: #f59e0b !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-visita .modal-registro-header.modal-visita-header::before {
+    display: none !important;
+  }
+  
+  .modal-visita-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-visita-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-visita-icon-circle svg {
+    color: #f59e0b;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-visita-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-visita-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .modal-visita-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-visita-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-visita-btn-submit {
+    background: #f59e0b !important;
+    box-shadow: 0 4px 6px rgba(245, 158, 11, 0.25) !important;
+  }
+  
+  .modal-visita-btn-submit:hover {
+    background: #d97706 !important;
+    box-shadow: 0 6px 12px rgba(245, 158, 11, 0.35) !important;
+  }
+  
+  /* ========== MODAL: CRED MENSUAL ========== */
+  .modal-registro-overlay.modal-tipo-cred-mensual .modal-registro-header.modal-cred-mensual-header {
+    background: #06b6d4 !important;
+    padding: 1.5rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 1rem 1rem 0 0;
+    position: relative;
+    overflow: visible;
+  }
+  
+  .modal-registro-overlay.modal-tipo-cred-mensual .modal-registro-header.modal-cred-mensual-header::before {
+    display: none !important;
+  }
+  
+  .modal-cred-mensual-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+  }
+  
+  .modal-cred-mensual-icon-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .modal-cred-mensual-icon-circle svg {
+    color: #06b6d4;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .modal-cred-mensual-title {
+    color: white !important;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .modal-cred-mensual-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+  }
+  
+  .modal-cred-mensual-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+  }
+  
+  .modal-cred-mensual-close svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .modal-cred-mensual-btn-submit {
+    background: #06b6d4 !important;
+    box-shadow: 0 4px 6px rgba(6, 182, 212, 0.25) !important;
+  }
+  
+  .modal-cred-mensual-btn-submit:hover {
+    background: #0891b2 !important;
+    box-shadow: 0 6px 12px rgba(6, 182, 212, 0.35) !important;
+  }
+  
+  
+  

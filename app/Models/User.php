@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -42,4 +43,27 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function isAdmin()
+    {
+        return $this->role === 'ADMIN' || $this->role === 'admin';
+    }
+
+    public function isJefeDeRed()
+    {
+        return $this->role === 'JefeDeRed' || $this->role === 'jefe_de_red';
+    }
+
+    public function isCoordinadorDeMicroRed()
+    {
+        return $this->role === 'CoordinadorDeMicroRed' || $this->role === 'coordinador_de_microred';
+    }
+
+    /**
+     * Relación con solicitudes
+     */
+    public function solicitud()
+    {
+        return $this->hasOne(Solicitud::class, 'user_id');
+    }
 }

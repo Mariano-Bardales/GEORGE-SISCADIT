@@ -1,7 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\FormularioController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ApiController;
+use App\Http\Controllers\ControlCredController;
+use App\Http\Controllers\SolicitudController;
+use App\Http\Controllers\UsuarioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,8 +30,90 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Ruta placeholder para solicitar cuenta
-Route::get('/formulario-solicitud', function () {
-    return 'Aquí irá el formulario para solicitar una cuenta.';
-})->name('formulario');
+// Formulario de solicitud
+Route::get('/formulario-solicitud', [FormularioController::class, 'show'])->name('formulario');
+Route::post('/formulario-solicitud', [FormularioController::class, 'submit'])->name('formulario.submit');
+
+// Consulta de solicitud (placeholder - implementar después)
+Route::get('/consultar-solicitud', function () {
+    return redirect()->route('login')->with('info', 'La funcionalidad de consulta de solicitudes estará disponible próximamente.');
+})->name('consultar-solicitud');
+
+// Dashboard y rutas protegidas
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/controles-cred', [ControlCredController::class, 'index'])->name('controles-cred');
+    Route::post('/controles-cred', [ControlCredController::class, 'store'])->name('controles-cred.store');
+    Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
+    
+    // Solicitudes (solo admin) - CRUD completo
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('solicitudes');
+        Route::post('/solicitudes', [SolicitudController::class, 'store'])->name('solicitudes.store');
+        Route::get('/solicitudes/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
+        Route::put('/solicitudes/{id}', [SolicitudController::class, 'update'])->name('solicitudes.update');
+        Route::delete('/solicitudes/{id}', [SolicitudController::class, 'destroy'])->name('solicitudes.destroy');
+        Route::post('/solicitudes/{id}/crear-usuario', [SolicitudController::class, 'crearUsuario'])->name('solicitudes.crear-usuario');
+    });
+    
+    // Usuarios (solo admin)
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
+        Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
+        Route::get('/usuarios/{id}', [UsuarioController::class, 'show'])->name('usuarios.show');
+        Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('usuarios.update');
+        Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+    });
+    
+    Route::get('/logs', function () { return view('dashboard.logs'); })->name('logs');
+    
+    // API Routes
+    Route::prefix('api')->group(function () {
+        Route::get('/dashboard/stats', [ApiController::class, 'dashboardStats'])->name('api.dashboard.stats');
+        Route::get('/dashboard/top-establecimientos', [ApiController::class, 'topEstablecimientos'])->name('api.dashboard.top-establecimientos');
+        Route::get('/reportes/estadisticas', [ApiController::class, 'reportesEstadisticas'])->name('api.reportes.estadisticas');
+        Route::get('/ninos', [ApiController::class, 'ninos'])->name('api.ninos');
+        Route::get('/nino/datos-extras', [ApiController::class, 'datosExtras'])->name('api.nino.datos-extras');
+        
+        // Controles Recién Nacido
+        Route::get('/controles-recien-nacido', [ApiController::class, 'controlesRecienNacido'])->name('api.controles-recien-nacido');
+        Route::post('/controles-recien-nacido/registrar', [ApiController::class, 'registrarControlRecienNacido'])->name('api.controles-recien-nacido.registrar');
+        Route::post('/controles-recien-nacido/{id}/update', [ApiController::class, 'actualizarControlRecienNacido'])->name('api.controles-recien-nacido.update');
+        Route::delete('/controles-recien-nacido/{id}', [ApiController::class, 'eliminarControlRecienNacido'])->name('api.controles-recien-nacido.delete');
+        
+        // Controles CRED Mensual
+        Route::get('/controles-cred-mensual', [ApiController::class, 'controlesCredMensual'])->name('api.controles-cred-mensual');
+        Route::post('/controles-cred-mensual/registrar', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar');
+        Route::post('/controles-cred-mensual/registrar/{id}', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar.update');
+        
+        // Tamizaje Neonatal
+        Route::get('/tamizaje', [ApiController::class, 'tamizaje'])->name('api.tamizaje');
+        Route::post('/tamizaje/registrar', [ApiController::class, 'registrarTamizaje'])->name('api.tamizaje.registrar');
+        
+        // CNV (Carné de Nacido Vivo)
+        Route::get('/cnv', [ApiController::class, 'cnv'])->name('api.cnv');
+        Route::post('/cnv/registrar', [ApiController::class, 'registrarCNV'])->name('api.cnv.registrar');
+        
+        // Visitas Domiciliarias
+        Route::get('/visitas', [ApiController::class, 'visitas'])->name('api.visitas');
+        Route::post('/visitas/registrar', [ApiController::class, 'registrarVisita'])->name('api.visitas.registrar');
+        
+        // Vacunas
+        Route::get('/vacunas', [ApiController::class, 'vacunas'])->name('api.vacunas');
+        Route::post('/vacunas/registrar', [ApiController::class, 'registrarVacuna'])->name('api.vacunas.registrar');
+        
+        Route::get('/alertas/total', [ApiController::class, 'totalAlertas'])->name('api.alertas.total');
+    });
+    
+    // Logs Routes (placeholders - pueden ser implementadas después)
+    Route::post('/logs/view-extras', function (Request $request) {
+        // Placeholder para registrar visualización de datos extras
+        return response()->json(['success' => true]);
+    })->name('logs.view-extras');
+    
+    Route::post('/logs/view-controls', function (Request $request) {
+        // Placeholder para registrar visualización de controles
+        return response()->json(['success' => true]);
+    })->name('logs.view-controls');
+});
 

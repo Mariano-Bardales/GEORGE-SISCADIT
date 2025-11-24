@@ -1,0 +1,294 @@
+/* ============================================
+   DASHBOARD PRINCIPAL - SISCADIT
+   Estilos específicos para el dashboard principal
+   ============================================ */
+
+@import url('./variables.css');
+
+/* Contenedor principal del Dashboard */
+.dashboard-main {
+  margin-left: 280px;
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+  transition: margin-left var(--transition-base);
+}
+
+.dashboard-main.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+/* Header del Dashboard */
+.dashboard-header {
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+  font-size: 0.875rem;
+}
+
+/* Tarjetas de Estadísticas */
+.stat-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.stat-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.stat-card-icon.primary {
+  background: var(--color-primary-50);
+  color: var(--color-primary);
+}
+
+.stat-card-icon.success {
+  background: var(--color-success-50);
+  color: var(--color-success);
+}
+
+.stat-card-icon.warning {
+  background: var(--color-warning-50);
+  color: var(--color-warning);
+}
+
+.stat-card-icon.error {
+  background: var(--color-error-50);
+  color: var(--color-error);
+}
+
+.stat-card-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: var(--spacing-sm) 0;
+}
+
+.stat-card-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.stat-card-description {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: var(--spacing-xs);
+}
+
+/* Gráficos */
+.chart-container {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+}
+
+.chart-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.chart-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* Tablas */
+.dashboard-table-container {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-table thead {
+  background: var(--color-gray-50);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.dashboard-table th {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dashboard-table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.dashboard-table tbody tr:hover {
+  background: var(--color-gray-50);
+}
+
+.dashboard-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Top Establecimientos */
+.establishment-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--spacing-sm);
+}
+
+.establishment-card:hover {
+  background: var(--color-gray-100);
+  transform: translateX(4px);
+}
+
+.establishment-rank {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-text-inverse);
+  flex-shrink: 0;
+}
+
+.establishment-rank.top {
+  background: var(--gradient-success);
+}
+
+.establishment-rank.improvement {
+  background: var(--gradient-warning);
+}
+
+.establishment-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.establishment-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.establishment-quality {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.establishment-quality.high {
+  background: var(--color-success-50);
+  color: var(--color-success-dark);
+}
+
+.establishment-quality.low {
+  background: var(--color-warning-50);
+  color: var(--color-warning-dark);
+}
+
+/* Alertas */
+.alert-card {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid;
+  margin-bottom: var(--spacing-md);
+}
+
+.alert-card.critical {
+  background: var(--color-error-50);
+  border-left-color: var(--color-error);
+}
+
+.alert-card.warning {
+  background: var(--color-warning-50);
+  border-left-color: var(--color-warning);
+}
+
+.alert-card.info {
+  background: var(--color-info-50);
+  border-left-color: var(--color-info);
+}
+
+.alert-title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.alert-message {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
+  
+  .dashboard-main.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
+  .stat-card-value {
+    font-size: 2rem;
+  }
+}
+

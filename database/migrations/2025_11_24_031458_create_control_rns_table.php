@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('control_rns', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('id_niño')->constrained('ninos')->onDelete('cascade');
+            $table->integer('numero_control'); // CRN1, CRN2, CRN3, CRN4
+            $table->date('fecha')->nullable();
+            $table->integer('edad')->nullable();
+            $table->string('estado', 20)->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('control_rns');
+    }
+};

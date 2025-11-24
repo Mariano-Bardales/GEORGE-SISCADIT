@@ -1,0 +1,94 @@
+/* ============================================
+   ARCHIVO PRINCIPAL DE ESTILOS - SISCADIT
+   Importa todos los archivos CSS organizados
+   ============================================ */
+
+/* 1. Variables de color y diseño (debe ir primero) */
+@import url('./variables.css');
+
+/* 2. Reset y utilidades base (Tailwind reset) */
+/* Nota: dashbord.css contiene el reset de Tailwind, se carga por separado */
+
+/* 3. Componentes principales */
+@import url('./sidebar.css');
+@import url('./dashboard-main.css');
+
+/* 4. Modales */
+@import url('./modal-agregar-nino.css');
+@import url('./modal-ver-controles.css');
+@import url('./modal-registro-controles.css');
+
+/* 5. Páginas específicas */
+/* Login.css y Formulario.css se cargan por separado según la página */
+
+/* ============================================
+   ESTILOS GLOBALES ADICIONALES
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar personalizado global */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-50);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+/* Enlaces */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+}
+
+/* Botones base */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Inputs base */
+input, textarea, select {
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
