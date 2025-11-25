@@ -211,3 +211,4 @@ CREATE TABLE documentos_adjuntos (
 - Usa soft deletes si necesitas recuperar registros eliminados
 - Considera agregar campos `activo` para desactivar sin eliminar
 
+
