@@ -294,7 +294,8 @@ class ApiController extends Controller
     public function registrarControlRecienNacido(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
+            // Validamos que venga un ID y dejamos que findNino resuelva si es id_niño o id
+            'nino_id' => 'required|integer',
             'numero_control' => 'required|integer|between:0,4',
             'fecha_control' => 'required|date',
             'peso' => 'nullable|numeric|min:0',
@@ -311,7 +312,9 @@ class ApiController extends Controller
         }
 
         try {
+            // Buscar al niño usando helper que soporta id_niño o id
             $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
             $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
             $fechaControl = Carbon::parse($request->fecha_control);
             $edadDias = $fechaNacimiento->diffInDays($fechaControl);
@@ -429,16 +432,37 @@ class ApiController extends Controller
         $mes = $request->query('mes');
         
         if ($ninoId) {
-            $query = ControlMenor1::where('id_niño', $ninoId);
-            if ($mes) {
-                $query->where('numero_control', $mes);
+            try {
+                $nino = $this->findNino($ninoId);
+                $ninoIdReal = $this->getNinoId($nino);
+                
+                $query = ControlMenor1::where('id_niño', $ninoIdReal);
+                if ($mes) {
+                    $query->where('numero_control', $mes);
+                }
+                $controles = $query->orderBy('numero_control', 'asc')->get();
+                
+                return response()->json([
+                    'success' => true, 
+                    'data' => [
+                        'controles' => $controles,
+                        'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al obtener controles: ' . $e->getMessage(),
+                    'data' => [
+                        'controles' => [],
+                        'fecha_nacimiento' => null
+                    ]
+                ], 500);
             }
-            $controles = $query->orderBy('numero_control', 'asc')->get();
         } else {
             $controles = ControlMenor1::all();
+            return response()->json(['success' => true, 'data' => ['controles' => $controles]]);
         }
-        
-        return response()->json(['success' => true, 'data' => $controles]);
     }
     
     public function registrarCredMensual(Request $request, $id = null)
@@ -496,7 +520,7 @@ class ApiController extends Controller
             } else {
                 // Crear nuevo control
                 $control = ControlMenor1::create([
-                    'id_niño' => $ninoId,
+                    'id_niño' => $ninoIdReal,
                     'numero_control' => $request->mes,
                     'fecha' => $request->fecha_control,
                     'edad' => $edadDias,

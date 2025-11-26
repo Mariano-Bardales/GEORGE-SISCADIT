@@ -212,3 +212,5 @@ CREATE TABLE documentos_adjuntos (
 - Considera agregar campos `activo` para desactivar sin eliminar
 
 
+
+

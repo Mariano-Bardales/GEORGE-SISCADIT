@@ -21,6 +21,46 @@ class ControlCredController extends Controller
     }
 
     /**
+     * Mostrar formulario independiente para registrar CRED mensual
+     */
+    public function formCredMensual(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+        $mes = (int) $request->query('mes');
+
+        if (!$ninoId || $mes < 1 || $mes > 11) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar CRED mensual.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)
+            ->orWhere('id', $ninoId)
+            ->firstOrFail();
+
+        $rangos = [
+            1 => ['min' => 29, 'max' => 59],
+            2 => ['min' => 60, 'max' => 89],
+            3 => ['min' => 90, 'max' => 119],
+            4 => ['min' => 120, 'max' => 149],
+            5 => ['min' => 150, 'max' => 179],
+            6 => ['min' => 180, 'max' => 209],
+            7 => ['min' => 210, 'max' => 239],
+            8 => ['min' => 240, 'max' => 269],
+            9 => ['min' => 270, 'max' => 299],
+            10 => ['min' => 300, 'max' => 329],
+            11 => ['min' => 330, 'max' => 359],
+        ];
+
+        $rango = $rangos[$mes] ?? null;
+
+        return view('controles.registrar-cred-mensual', [
+            'nino' => $nino,
+            'mes' => $mes,
+            'rango' => $rango,
+        ]);
+    }
+
+    /**
      * Store a newly created child in storage.
      */
     public function store(Request $request)

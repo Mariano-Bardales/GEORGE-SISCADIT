@@ -44,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/controles-cred', [ControlCredController::class, 'index'])->name('controles-cred');
     Route::post('/controles-cred', [ControlCredController::class, 'store'])->name('controles-cred.store');
+    // Página independiente para registrar un control CRED mensual
+    Route::get('/controles-cred/cred-mensual/registrar', [ControlCredController::class, 'formCredMensual'])->name('controles-cred.cred-mensual.form');
     Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
     
     // Solicitudes (solo admin) - CRUD completo

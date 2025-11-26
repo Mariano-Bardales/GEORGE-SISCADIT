@@ -934,8 +934,7 @@
           'modalTamizaje',
           'modalCNV',
           'modalVisita',
-          'modalVacuna',
-          'modalCredMensual'
+          'modalVacuna'
         ];
 
         modalesRegistro.forEach(modalId => {
@@ -1614,7 +1613,11 @@
     }
 
     function openVerControlesModal(ninoId, nombre, dni, eess) {
+      // Guardar ID del niño seleccionado en variable local y global
       ninoIdActual = ninoId;
+      if (typeof window !== 'undefined') {
+        window.ninoIdActual = ninoId;
+      }
       const modal = document.getElementById('verControlesModal');
       if (!modal) return;
 
@@ -4041,22 +4044,34 @@
             console.log(`📊 Cambiando a tab: ${tabName}, cargando datos...`);
             switch(tabName) {
               case 'cred':
-                cargarControlesCredMensual(ninoIdActual);
+                if (typeof cargarControlesCredMensual === 'function') {
+                  cargarControlesCredMensual(ninoIdActual);
+                }
                 break;
               case 'recien-nacido':
-                cargarControlesRecienNacido(ninoIdActual);
+                if (typeof cargarControlesRecienNacido === 'function') {
+                  cargarControlesRecienNacido(ninoIdActual);
+                }
                 break;
               case 'tamizaje':
-                cargarTamizaje(ninoIdActual);
+                if (typeof cargarTamizaje === 'function') {
+                  cargarTamizaje(ninoIdActual);
+                }
                 break;
               case 'cnv':
-                cargarCNV(ninoIdActual);
+                if (typeof cargarCNV === 'function') {
+                  cargarCNV(ninoIdActual);
+                }
                 break;
               case 'visitas':
-                cargarVisitas(ninoIdActual);
+                if (typeof cargarVisitas === 'function') {
+                  cargarVisitas(ninoIdActual);
+                }
                 break;
               case 'vacunas':
-                cargarVacunas(ninoIdActual);
+                if (typeof cargarVacunas === 'function') {
+                  cargarVacunas(ninoIdActual);
+                }
                 break;
             }
           }, 300);
@@ -5541,80 +5556,19 @@
         });
       }
 
-      // ========== FUNCIONES PARA MODAL DE CRED MENSUAL ==========
-      // Función para abrir modal de CRED mensual
+      // ========== FUNCIÓN PARA REGISTRO CRED MENSUAL EN PÁGINA APARTE ==========
+      // Ahora solo redirige a una página independiente con el formulario
       window.abrirModalCredMensual = function abrirModalCredMensual(mes) {
-        const currentNinoId = typeof window !== 'undefined' && window.ninoIdActual ? window.ninoIdActual : ninoIdActual;
+        // Usar siempre la variable global window.ninoIdActual para evitar errores de referencia
+        const currentNinoId = typeof window !== 'undefined' ? window.ninoIdActual : null;
         if (!currentNinoId) {
           alert('Error: No se ha seleccionado un niño. Por favor, cierre el modal y vuelva a abrir los controles.');
           return;
         }
 
-        ModalManager.abrirSeguro('modalCredMensual', () => {
-        document.getElementById('credMensualNinoId').value = currentNinoId;
-        document.getElementById('credMensualMes').value = mes;
-        document.getElementById('credMensualMesText').value = 'Mes ' + mes;
-
-        // Limpiar campos primero
-        document.getElementById('credMensualFecha').value = '';
-        document.getElementById('credMensualPeso').value = '';
-        document.getElementById('credMensualTalla').value = '';
-        document.getElementById('credMensualPerimetro').value = '';
-        document.getElementById('credMensualDesarrollo').value = '';
-        document.getElementById('credMensualObservaciones').value = '';
-
-        // Cambiar título del modal
-        const modalTitle = document.querySelector('#modalCredMensual h3');
-        const submitBtn = document.querySelector('#formCredMensual button[type="submit"]');
-        if (modalTitle) {
-          modalTitle.textContent = 'Registrar Control CRED Mensual';
-        }
-        if (submitBtn) {
-          submitBtn.textContent = 'Guardar Control';
-          submitBtn.onclick = null; // Resetear onclick
-        }
-
-        // Cargar datos existentes si hay un control registrado para este mes
-        if (currentNinoId) {
-          fetch(`{{ route("api.controles-cred-mensual") }}?nino_id=${currentNinoId}&mes=${mes}`, {
-            method: 'GET',
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success && data.data && data.data.controles && data.data.controles.length > 0) {
-              const control = data.data.controles[0]; // Tomar el primer control del mes
-
-              // Llenar campos con datos existentes
-              if (control.fecha_control) {
-                const fechaISO = formatearFechaISO(control.fecha_control);
-                document.getElementById('credMensualFecha').value = fechaISO;
-              }
-              if (control.peso) document.getElementById('credMensualPeso').value = control.peso;
-              if (control.talla) document.getElementById('credMensualTalla').value = control.talla;
-              if (control.perimetro_cefalico) document.getElementById('credMensualPerimetro').value = control.perimetro_cefalico;
-              if (control.desarrollo) document.getElementById('credMensualDesarrollo').value = control.desarrollo;
-              if (control.observaciones) document.getElementById('credMensualObservaciones').value = control.observaciones;
-
-              // Cambiar título y botón a modo edición
-              if (modalTitle) {
-                modalTitle.textContent = 'Editar Control CRED Mensual - Mes ' + mes;
-              }
-              if (submitBtn) {
-                submitBtn.textContent = 'Actualizar Control';
-                // Guardar el ID del control para actualización
-                document.getElementById('credMensualControlId').value = control.id || '';
-              }
-            }
-          })
-          .catch(error => {
-            console.error('Error al cargar control existente:', error);
-          });
-        }
-        });
+        const baseUrl = '{{ route("controles-cred.cred-mensual.form") }}';
+        const url = baseUrl + '?nino_id=' + encodeURIComponent(currentNinoId) + '&mes=' + encodeURIComponent(mes);
+        window.location.href = url;
       }
 
       function closeModalCredMensual(event) {
@@ -5676,6 +5630,11 @@
             const verControlesModal = document.getElementById('verControlesModal');
             const currentNinoId = typeof window !== 'undefined' && window.ninoIdActual ? window.ninoIdActual : ninoIdActual;
             if (currentNinoId && verControlesModal && !verControlesModal.classList.contains('hidden')) {
+              // Recargar controles CRED mensual para actualizar la tabla de análisis
+              if (typeof cargarControlesCredMensual === 'function') {
+                cargarControlesCredMensual(currentNinoId);
+              }
+              
               if (typeof cargarDatosControles === 'function') {
                 cargarDatosControles(currentNinoId).then(() => {
                   // Validar rangos después de cargar datos
@@ -5907,133 +5866,160 @@
         })
         .then(data => {
           console.log('📦 Datos recibidos controles CRED mensual:', data);
-          if (data.success && data.data && data.data.controles) {
+          
+          // Obtener fecha de nacimiento del API o del modal
+          let fechaNacimientoISO = data.data?.fecha_nacimiento || null;
+          const controles = data.data?.controles || [];
+          
+          // Si no viene del API, intentar obtenerla del elemento del modal
+          if (!fechaNacimientoISO) {
+            const fechaNacimientoHeader = document.getElementById('fechaNacimientoValue');
+            if (fechaNacimientoHeader && fechaNacimientoHeader.textContent) {
+              // Extraer fecha ISO del texto (formato: "24 de noviembre de 2025 (2025-11-24)")
+              const fechaMatch = fechaNacimientoHeader.textContent.match(/\((\d{4}-\d{2}-\d{2})\)/);
+              if (fechaMatch) {
+                fechaNacimientoISO = fechaMatch[1];
+                console.log('✅ Fecha de nacimiento obtenida del modal:', fechaNacimientoISO);
+              }
+            }
+          }
+          
+          // Si aún no hay fecha, intentar obtenerla de la tabla de niños
+          if (!fechaNacimientoISO) {
+            const ninoEnTabla = typeof todosLosNinos !== 'undefined' && todosLosNinos ? 
+              todosLosNinos.find(n => (n.id === ninoId || n.id_niño === ninoId)) : null;
+            if (ninoEnTabla && ninoEnTabla.fecha_nacimiento) {
+              const fechaStr = ninoEnTabla.fecha_nacimiento;
+              fechaNacimientoISO = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
+              console.log('✅ Fecha de nacimiento obtenida de la tabla:', fechaNacimientoISO);
+            }
+          }
+          
+          // Si aún no hay fecha, mostrar mensaje de error pero mostrar la tabla
+          if (!fechaNacimientoISO) {
+            console.warn('⚠️ No se encontró fecha de nacimiento, pero se mostrará la tabla');
+            // Intentar usar fecha actual como fallback (aunque no sea ideal)
+            const hoy = new Date();
+            fechaNacimientoISO = hoy.toISOString().split('T')[0];
+          }
+          
+          // Mostrar sección de análisis (siempre)
+          const analisisSection = document.getElementById('analisis-cred-mensual');
+          if (analisisSection) {
+            analisisSection.style.display = 'block';
+            analisisSection.style.visibility = 'visible';
+            analisisSection.style.opacity = '1';
+          }
+          
+          // Mostrar fecha de nacimiento
+          const fechaNacDisplay = document.getElementById('fecha-nacimiento-cred-mensual-display');
+          if (fechaNacDisplay && fechaNacimientoISO) {
+            try {
+              const fechaNac = crearFechaLocal(fechaNacimientoISO);
+              const fechaFormateada = fechaNac.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              });
+              fechaNacDisplay.textContent = `${fechaFormateada} (${fechaNacimientoISO})`;
+            } catch (e) {
+              fechaNacDisplay.textContent = fechaNacimientoISO;
+            }
+          }
+          // Actualizar tabla estática de 11 controles y calcular resumen
+          let totalCumple = 0;
+          let totalNoCumple = 0;
+          let totalSeguimiento = 0;
+
+          // Inicializar todos los controles como SEGUIMIENTO
+          for (let mes = 1; mes <= 11; mes++) {
+            const fechaElement = document.getElementById(`fo_cred_${mes}`);
+            const edadElement = document.getElementById(`edad_cred_${mes}`);
+            const estadoElement = document.getElementById(`estado_cred_${mes}`);
+
+            if (fechaElement) fechaElement.textContent = '-';
+            if (edadElement) edadElement.textContent = '-';
+            if (estadoElement) {
+              estadoElement.className = 'estado-badge estado-seguimiento';
+              estadoElement.textContent = 'SEGUIMIENTO';
+            }
+            totalSeguimiento++;
+          }
+
+          // Si hay controles registrados, actualizarlos en la tabla
+          if (data.success && data.data && Array.isArray(data.data.controles)) {
             console.log(`✅ Controles encontrados: ${data.data.controles.length}`);
-            if (data.data.controles.length === 0) {
-              console.log('ℹ️ No hay controles CRED mensual registrados para este niño');
-              // Limpiar todos los campos
-              for (let mes = 1; mes <= 11; mes++) {
-                const fechaEl = document.getElementById(`fo_cred_${mes}`);
-                const edadEl = document.getElementById(`edad_cred_${mes}`);
-                const estadoEl = document.getElementById(`estado_cred_${mes}`);
-                if (fechaEl) fechaEl.textContent = '-';
-                if (edadEl) edadEl.textContent = '-';
-                if (estadoEl) {
-                  estadoEl.className = 'estado-badge pendiente';
-                  estadoEl.textContent = 'PENDIENTE';
-                }
-              }
-              return;
-            }
 
-            // Limpiar primero todos los campos
-            for (let mes = 1; mes <= 11; mes++) {
-              const fechaEl = document.getElementById(`fo_cred_${mes}`);
-              const edadEl = document.getElementById(`edad_cred_${mes}`);
-              const estadoEl = document.getElementById(`estado_cred_${mes}`);
-              if (fechaEl) fechaEl.textContent = '-';
-              if (edadEl) edadEl.textContent = '-';
-              if (estadoEl) {
-                estadoEl.className = 'estado-badge pendiente';
-                estadoEl.textContent = 'PENDIENTE';
-              }
-            }
-
-            // Actualizar con los datos recibidos
             data.data.controles.forEach(control => {
-              const mes = control.mes;
+              const mes = control.numero_control || control.mes;
               if (mes < 1 || mes > 11) {
                 console.warn(`⚠️ Mes inválido: ${mes}`);
                 return;
               }
 
-              console.log(`📝 Procesando control mes ${mes}:`, control);
-
-              const fechaControl = control.fecha_control ? crearFechaLocal(control.fecha_control).toLocaleDateString('es-PE', {
+              const fechaControl = control.fecha ? crearFechaLocal(control.fecha).toLocaleDateString('es-PE', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit'
               }) : '-';
-              const edadDias = control.edad_dias || '-';
-              const estado = control.estado || 'pendiente';
+              const edadDias = control.edad || '-';
+              const estado = control.estado || 'seguimiento';
 
-              // Actualizar fecha
               const fechaElement = document.getElementById(`fo_cred_${mes}`);
-              if (fechaElement) {
-                fechaElement.textContent = fechaControl;
-                fechaElement.style.color = '#1e293b';
-                fechaElement.style.fontWeight = '500';
-                console.log(`✅ Fecha actualizada mes ${mes}: ${fechaControl}`);
-              } else {
-                console.error(`❌ No se encontró elemento fo_cred_${mes}`);
-              }
-
-              // Actualizar edad
               const edadElement = document.getElementById(`edad_cred_${mes}`);
-              if (edadElement) {
-                edadElement.textContent = edadDias;
-                edadElement.style.color = '#1e293b';
-                edadElement.style.fontWeight = '500';
-                console.log(`✅ Edad actualizada mes ${mes}: ${edadDias}`);
-              } else {
-                console.error(`❌ No se encontró elemento edad_cred_${mes}`);
-              }
-
-              // Actualizar estado
               const estadoElement = document.getElementById(`estado_cred_${mes}`);
+
+              if (fechaElement) fechaElement.textContent = fechaControl;
+              if (edadElement) edadElement.textContent = edadDias;
+
+              // Ajustar contadores y estilos según estado
               if (estadoElement) {
+                // Restar previamente contado como seguimiento
+                if (estadoElement.textContent === 'SEGUIMIENTO') {
+                  totalSeguimiento = Math.max(0, totalSeguimiento - 1);
+                }
+
                 if (estado === 'cumple') {
                   estadoElement.className = 'estado-badge cumple';
                   estadoElement.textContent = 'CUMPLE';
-                } else if (estado === 'no_cumple') {
+                  totalCumple++;
+                } else if (estado === 'no_cumple' || estado === 'no cumple') {
                   estadoElement.className = 'estado-badge no-cumple';
                   estadoElement.textContent = 'NO CUMPLE';
+                  totalNoCumple++;
                 } else {
-                  estadoElement.className = 'estado-badge pendiente';
-                  estadoElement.textContent = 'PENDIENTE';
-                }
-                console.log(`✅ Estado actualizado mes ${mes}: ${estado}`);
-              } else {
-                console.error(`❌ No se encontró elemento estado_cred_${mes}`);
-              }
-
-              // Cambiar botón de Registrar a Editar si el control existe
-              const row = fechaElement?.closest('tr');
-              if (row) {
-                const buttonCell = row.querySelector('td:last-child');
-                if (buttonCell) {
-                  const buttonText = fechaControl !== '-' ? 'Editar' : 'Registrar';
-                  const buttonIcon = fechaControl !== '-' ?
-                    '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>' :
-                    '<path d="M5 12h14"></path><path d="M12 5v14"></path>';
-                  buttonCell.innerHTML = `
-                    <button class="btn-registrar" onclick="abrirModalCredMensual(${mes})" style="padding: 6px 12px; font-size: 12px;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-                        ${buttonIcon}
-                      </svg>
-                      ${buttonText}
-                    </button>
-                  `;
+                  estadoElement.className = 'estado-badge estado-seguimiento';
+                  estadoElement.textContent = 'SEGUIMIENTO';
+                  totalSeguimiento++;
                 }
               }
             });
+          }
 
-            console.log('✅ Controles CRED mensual cargados correctamente');
-          } else {
-            console.warn('⚠️ No se encontraron controles CRED mensual. Respuesta:', data);
-            // Limpiar todos los campos si no hay datos
-            for (let mes = 1; mes <= 11; mes++) {
-              const fechaEl = document.getElementById(`fo_cred_${mes}`);
-              const edadEl = document.getElementById(`edad_cred_${mes}`);
-              const estadoEl = document.getElementById(`estado_cred_${mes}`);
-              if (fechaEl) fechaEl.textContent = '-';
-              if (edadEl) edadEl.textContent = '-';
-              if (estadoEl) {
-                estadoEl.className = 'estado-badge pendiente';
-                estadoEl.textContent = 'PENDIENTE';
-              }
+          // Actualizar tarjetas de resumen
+          const cumpleCredEl = document.getElementById('cumple-cred');
+          const seguimientoCredEl = document.getElementById('seguimiento-cred');
+          const noCumpleCredEl = document.getElementById('no-cumple-cred');
+          const estadoGeneralEl = document.getElementById('estado-general-cred');
+
+          if (cumpleCredEl) cumpleCredEl.textContent = totalCumple;
+          if (seguimientoCredEl) seguimientoCredEl.textContent = totalSeguimiento;
+          if (noCumpleCredEl) noCumpleCredEl.textContent = totalNoCumple;
+
+          if (estadoGeneralEl) {
+            if (totalCumple === 11) {
+              estadoGeneralEl.className = 'estado-badge cumple';
+              estadoGeneralEl.textContent = 'CUMPLE 100%';
+            } else if (totalNoCumple > 0) {
+              estadoGeneralEl.className = 'estado-badge no-cumple';
+              estadoGeneralEl.textContent = 'NO CUMPLE';
+            } else {
+              estadoGeneralEl.className = 'estado-badge estado-seguimiento';
+              estadoGeneralEl.textContent = 'SEGUIMIENTO';
             }
           }
+
+          console.log('✅ Controles CRED mensual cargados y tabla actualizada correctamente');
         })
         .catch(error => {
           console.error('❌ Error al cargar controles CRED mensual:', error);
