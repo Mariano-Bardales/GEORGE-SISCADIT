@@ -1,1078 +1,4655 @@
-<!DOCTYPE html>
-<html lang="es">
+<html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Sistema de Control y Alerta de Etapas de Vida del Niño - SISCADIT">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>SISCADIT - Usuarios y Solicitudes</title>
-  <link rel="stylesheet" href="{{ asset('Css/variables.css') }}">
-  <link rel="stylesheet" href="{{ asset('Css/dashbord.css') }}">
-  <link rel="stylesheet" href="{{ asset('Css/sidebar.css') }}">
-  <link rel="stylesheet" href="{{ asset('Css/dashboard-main.css') }}">
-  <link rel="stylesheet" href="{{ asset('Css/usuarios-solicitudes.css') }}">
+  <meta name="description" content="Sistema de Control y Alerta de Etapas de Vida del Niño - SISCADIT">
+  <title>SISCADIT - Gestión de Usuarios</title>
+  <link rel="stylesheet" href="/Css/dashbord.css">
+  <link rel="stylesheet" href="/Css/modal-usuario.css">
   @stack('styles')
 </head>
+
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root">
-    <div class="flex h-screen bg-slate-50 relative">
-      <x-sidebar-main activeRoute="usuarios" />
-      <main class="flex-1 overflow-auto">
-        <div class="p-8">
-          <div class="space-y-8">
-            <!-- Header -->
-            <div class="flex justify-between items-center">
-              <div>
-                <h1 class="text-4xl font-bold text-slate-800">Gestión de Usuarios y Solicitudes</h1>
-                <p class="text-slate-600 mt-2">Administración unificada de usuarios y solicitudes del sistema</p>
-              </div>
-              <div class="flex gap-3">
-                <button onclick="abrirModalCrearSolicitud()" id="btnCrearSolicitud"
-                  class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                  </svg>
-                  Nueva Solicitud
-                </button>
-                <button onclick="abrirModalCrearUsuario()" id="btnCrearUsuario"
-                  class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <line x1="19" y1="8" x2="19" y2="14"></line>
-                    <line x1="22" y1="11" x2="16" y2="11"></line>
-                  </svg>
-                  Nuevo Usuario
-                </button>
-              </div>
-            </div>
+    <div x-file-name="index" x-line-number="9" x-component="App" x-id="index_9" x-dynamic="true"
+      data-debug-wrapper="true" style="display: contents;">
+      <div class="App" x-file-name="App" x-line-number="13" x-component="div" x-id="App_13" x-dynamic="false">
+        <div x-file-name="App" x-line-number="14" x-component="BrowserRouter" x-id="App_14" x-dynamic="false"
+          data-debug-wrapper="true" style="display: contents;">
+          <div x-file-name="App" x-line-number="16" x-component="Layout" x-id="App_16" x-dynamic="true"
+            data-debug-wrapper="true" style="display: contents;">
+            <div class="flex h-screen bg-slate-50 relative" x-file-name="Layout" x-line-number="18" x-component="div"
+              x-id="Layout_18" x-dynamic="false">
+              <x-sidebar-main activeRoute="usuarios" />
+              <main class="flex-1 overflow-auto">
+                <div class="p-8">
+                  <div class="space-y-6" data-testid="usuarios-page">
+                    <!-- Header Section -->
+                    <div class="flex items-center justify-between flex-wrap gap-6">
+                      <div>
+                        <h1 class="text-4xl font-bold text-slate-700 mb-1">Gestión de Usuarios</h1>
+                        <p class="text-slate-500 text-base">Solicitudes y usuarios del sistema</p>
+                      </div>
+                    </div>
 
-            <!-- Pestañas -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div class="border-b border-slate-200">
-                <nav class="flex -mb-px">
-                  <button onclick="cambiarTab('solicitudes')" id="tab-solicitudes" 
-                    class="px-6 py-4 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-blue-50 transition-all">
-                    <span class="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="m9 15 2 2 4-4"></path>
-                      </svg>
-                      Solicitudes
-                    </span>
-                  </button>
-                  <button onclick="cambiarTab('usuarios')" id="tab-usuarios" 
-                    class="px-6 py-4 text-sm font-semibold text-slate-600 hover:text-blue-600 hover:border-blue-600 border-b-2 border-transparent transition-all">
-                    <span class="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      Usuarios
-                    </span>
-                  </button>
-                </nav>
-              </div>
+                    <!-- Tabs -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                      <div class="flex gap-2">
+                        <button id="tabSolicitudes" onclick="cambiarTab('solicitudes')" 
+                          class="flex-1 px-6 py-3 rounded-lg font-medium transition-all text-center tab-button active">
+                          <span class="flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" x2="8" y1="13" y2="13"></line>
+                              <line x1="16" x2="8" y1="17" y2="17"></line>
+                            </svg>
+                            Solicitudes
+                          </span>
+                        </button>
+                        <button id="tabUsuarios" onclick="cambiarTab('usuarios')" 
+                          class="flex-1 px-6 py-3 rounded-lg font-medium transition-all text-center tab-button">
+                          <span class="flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <line x1="19" x2="19" y1="8" y2="14"></line>
+                              <line x1="22" x2="16" y1="11" y2="11"></line>
+                            </svg>
+                            Usuarios
+                          </span>
+                        </button>
+                      </div>
+                    </div>
 
-              <!-- Contenido de Solicitudes (PRIMERO) -->
-              <div id="contenido-solicitudes" class="p-6">
-                <!-- Estadísticas de Solicitudes -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Total Solicitudes</p>
-                        <h3 class="text-3xl font-bold text-blue-700 mt-2">{{ $estadisticasSolicitudes['total'] }}</h3>
+                    <!-- Sección de Solicitudes -->
+                    <div id="seccionSolicitudes" class="tab-content">
+                      <!-- Filtros -->
+                      <div class="flex gap-4 items-center flex-wrap">
+                        <div class="search-container-cred">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                          </svg>
+                          <input type="text" id="searchInputSolicitudes" placeholder="Buscar por documento o correo..."
+                            class="search-input-cred" onkeyup="filtrarTablaSolicitudes()">
+                        </div>
                       </div>
-                      <div class="p-3 bg-blue-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-700">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
+
+                      <!-- Table Section -->
+                      <div style="margin-top: 24px; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                          <thead>
+                            <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Tipo Doc.</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">N° Documento</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Red</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Microred</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Establecimiento</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Correo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Cargo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Celular</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Motivo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tablaSolicitudesBody">
+                              <!-- Las filas se cargarán dinámicamente -->
+                            </tbody>
+                            <tfoot id="footerSolicitudes" style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
+                              <tr>
+                                <td colspan="11" style="padding: 16px 24px;">
+                                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569;">
+                                    <div style="display: flex; align-items: center; gap: 16px;">
+                                      <span style="font-weight: 600; color: #1e293b;">Total de solicitudes:</span>
+                                      <span id="totalSolicitudes" style="padding: 6px 12px; background: #eef2ff; color: #6366f1; border-radius: 999px; font-weight: 600;">0</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748b;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; margin-right: 4px; vertical-align: middle;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 16v-4"></path>
+                                        <path d="M12 8h.01"></path>
+                                      </svg>
+                                      Última actualización: <span id="ultimaActualizacionSolicitudes">--</span>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
                       </div>
                     </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm border border-amber-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Pendientes</p>
-                        <h3 class="text-3xl font-bold text-amber-700 mt-2">{{ $estadisticasSolicitudes['pendientes'] }}</h3>
+
+                    <!-- Sección de Usuarios -->
+                    <div id="seccionUsuarios" class="tab-content hidden">
+                      <!-- Filtros -->
+                      <div class="flex gap-4 items-center flex-wrap">
+                        <div class="search-container-cred">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                          </svg>
+                          <input type="text" id="searchInputUsuarios" placeholder="Buscar por nombre o correo..."
+                            class="search-input-cred" onkeyup="filtrarTablaUsuarios()">
+                        </div>
+                        <select id="filtroRol" onchange="cambiarRol()" class="bg-white border border-slate-300 text-slate-700 px-4 py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                          <option value="">Todos los roles</option>
+                          <option value="jefe_microred">Jefe de Red</option>
+                          <option value="coordinador_red">Coordinador de MicroRed</option>
+                        </select>
                       </div>
-                      <div class="p-3 bg-amber-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-700">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
+
+                      <!-- Table Section -->
+                      <div style="margin-top: 24px; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                          <thead>
+                            <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Nombre</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Correo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rol/Permiso</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Creación</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Última Actualización</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tablaUsuariosBody">
+                              <!-- Las filas se cargarán dinámicamente -->
+                            </tbody>
+                            <tfoot id="footerUsuarios" style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
+                              <tr>
+                                <td colspan="6" style="padding: 16px 24px;">
+                                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569;">
+                                    <div style="display: flex; align-items: center; gap: 16px;">
+                                      <span style="font-weight: 600; color: #1e293b;">Total de usuarios:</span>
+                                      <span id="totalUsuarios" style="padding: 6px 12px; background: #eef2ff; color: #6366f1; border-radius: 999px; font-weight: 600;">0</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748b;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; margin-right: 4px; vertical-align: middle;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 16v-4"></path>
+                                        <path d="M12 8h.01"></path>
+                                      </svg>
+                                      Última actualización: <span id="ultimaActualizacionUsuarios">--</span>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
                       </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Aprobadas</p>
-                        <h3 class="text-3xl font-bold text-green-700 mt-2">{{ $estadisticasSolicitudes['aprobadas'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-green-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-700">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-xl shadow-sm border border-red-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Rechazadas</p>
-                        <h3 class="text-3xl font-bold text-red-700 mt-2">{{ $estadisticasSolicitudes['rechazadas'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-red-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-700">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <line x1="15" y1="9" x2="9" y2="15"></line>
-                          <line x1="9" y1="9" x2="15" y2="15"></line>
-                        </svg>
+                      <!-- Paginación -->
+                      <div id="paginacionUsuarios" style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: white; border-radius: 0 0 8px 8px;">
+                        <!-- Los controles de paginación se cargarán dinámicamente -->
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <!-- Filtros y Búsqueda de Solicitudes -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-                  <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-                      <input type="text" id="buscarSolicitud" placeholder="Buscar por documento, correo o motivo..." 
-                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                    </div>
-                    <div class="w-full md:w-48">
-                      <label class="block text-sm font-medium text-slate-700 mb-2">Estado</label>
-                      <select id="filtroEstado" class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <option value="">Todos los estados</option>
-                        <option value="pendiente">Pendientes</option>
-                        <option value="aprobada">Aprobadas</option>
-                        <option value="rechazada">Rechazadas</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Tabla de Solicitudes -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div class="overflow-x-auto">
-                    <table class="w-full">
-                      <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
-                        <tr>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">ID</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Documento</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Correo</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Establecimiento</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Motivo</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Fecha</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Estado</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Usuario</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tablaSolicitudesBody" class="bg-white divide-y divide-slate-200">
-                        @forelse($solicitudes as $solicitud)
-                          <tr class="hover:bg-blue-50 transition-colors" id="solicitud-row-{{ $solicitud->id }}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">#{{ $solicitud->id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{{ $solicitud->numero_documento }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ $solicitud->correo }}</td>
-                            <td class="px-6 py-4 text-sm text-slate-600">{{ Str::limit($solicitud->id_establecimiento, 30) }}</td>
-                            <td class="px-6 py-4 text-sm text-slate-600">{{ Str::limit($solicitud->motivo, 40) }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ $solicitud->created_at->format('d/m/Y') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              <span class="px-3 py-1.5 text-xs font-bold rounded-full
-                                @if($solicitud->estado === 'pendiente') bg-amber-100 text-amber-800 border border-amber-300
-                                @elseif($solicitud->estado === 'aprobada') bg-green-100 text-green-800 border border-green-300
-                                @else bg-red-100 text-red-800 border border-red-300
-                                @endif">
-                                {{ ucfirst($solicitud->estado) }}
-                              </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              @if($solicitud->usuario)
-                                <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-300">
-                                  Creado
-                                </span>
-                                <a href="javascript:void(0)" onclick="cambiarTab('usuarios'); buscarUsuarioPorId({{ $solicitud->usuario->id }})" 
-                                  class="text-blue-600 hover:text-blue-800 text-xs ml-2 font-semibold underline" title="Ver usuario">
-                                  Ver
-                                </a>
-                              @else
-                                <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-300">
-                                  Sin usuario
-                                </span>
-                              @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                              <div class="flex items-center gap-2">
-                                <button onclick="verDetalleSolicitud({{ $solicitud->id }})" 
-                                  class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold text-xs transition-colors">
-                                  Ver
-                                </button>
-                                @if(!$solicitud->usuario)
-                                  <button onclick="crearUsuarioDesdeSolicitud({{ $solicitud->id }})" 
-                                    class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold text-xs transition-colors shadow-sm">
-                                    Crear Usuario
-                                  </button>
-                                @endif
-                                <button onclick="editarSolicitud({{ $solicitud->id }})" 
-                                  class="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 font-semibold text-xs transition-colors">
-                                  Editar
-                                </button>
-                                <button onclick="eliminarSolicitud({{ $solicitud->id }})" 
-                                  class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold text-xs transition-colors">
-                                  Eliminar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        @empty
-                          <tr>
-                            <td colspan="9" class="px-6 py-12 text-center">
-                              <div class="flex flex-col items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 mb-2">
-                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                  <polyline points="14 2 14 8 20 8"></polyline>
-                                </svg>
-                                <p class="text-slate-500 font-medium">No hay solicitudes registradas</p>
-                              </div>
-                            </td>
-                          </tr>
-                        @endforelse
-                      </tbody>
-                    </table>
-                  </div>
-                  <!-- Paginación -->
-                  <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
-                    {{ $solicitudes->links() }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Contenido de Usuarios -->
-              <div id="contenido-usuarios" class="p-6 hidden">
-                <!-- Estadísticas de Usuarios -->
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                  <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Total Usuarios</p>
-                        <h3 class="text-3xl font-bold text-blue-700 mt-2">{{ $estadisticas['total'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-blue-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-700">
-                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Administradores</p>
-                        <h3 class="text-3xl font-bold text-purple-700 mt-2">{{ $estadisticas['admin'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-purple-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-700">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Jefes de Red</p>
-                        <h3 class="text-3xl font-bold text-green-700 mt-2">{{ $estadisticas['jefe_red'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-green-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-700">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                          <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl shadow-sm border border-amber-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Coordinadores</p>
-                        <h3 class="text-3xl font-bold text-amber-700 mt-2">{{ $estadisticas['coordinador_microred'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-amber-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-700">
-                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="9" cy="7" r="4"></circle>
-                          <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
-                    <div class="flex items-center justify-between">
-                      <div>
-                        <p class="text-sm text-slate-600 font-medium">Usuarios</p>
-                        <h3 class="text-3xl font-bold text-slate-700 mt-2">{{ $estadisticas['usuario'] }}</h3>
-                      </div>
-                      <div class="p-3 bg-slate-200 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-700">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Filtros y Búsqueda de Usuarios -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-                  <div class="flex flex-col md:flex-row gap-4">
-                    <div class="flex-1">
-                      <label class="block text-sm font-medium text-slate-700 mb-2">Buscar</label>
-                      <input type="text" id="buscarUsuario" placeholder="Buscar por nombre o correo..." 
-                        class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                    </div>
-                    <div class="w-full md:w-48">
-                      <label class="block text-sm font-medium text-slate-700 mb-2">Rol</label>
-                      <select id="filtroRol" class="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <option value="">Todos los roles</option>
-                        <option value="admin">Administrador</option>
-                        <option value="jefe_red">Jefe de Red</option>
-                        <option value="coordinador_microred">Coordinador de Microred</option>
-                        <option value="usuario">Usuario</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Tabla de Usuarios -->
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div class="overflow-x-auto">
-                    <table class="w-full">
-                      <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b-2 border-slate-200">
-                        <tr>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">ID</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Nombre</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Correo</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Rol</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Solicitud</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Fecha Registro</th>
-                          <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tablaUsuariosBody" class="bg-white divide-y divide-slate-200">
-                        @forelse($usuarios as $usuario)
-                          <tr class="hover:bg-blue-50 transition-colors" data-usuario-id="{{ $usuario->id }}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">#{{ $usuario->id }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                                  {{ strtoupper(substr($usuario->name, 0, 1)) }}
-                                </div>
-                                <span class="text-sm font-semibold text-slate-900">{{ $usuario->name }}</span>
-                              </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{{ $usuario->email }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              <span class="px-3 py-1.5 text-xs font-bold rounded-full border
-                                @if($usuario->role === 'admin') bg-purple-100 text-purple-800 border-purple-300
-                                @elseif($usuario->role === 'jefe_red') bg-green-100 text-green-800 border-green-300
-                                @elseif($usuario->role === 'coordinador_microred') bg-amber-100 text-amber-800 border-amber-300
-                                @else bg-slate-100 text-slate-800 border-slate-300
-                                @endif">
-                                @if($usuario->role === 'admin') Administrador
-                                @elseif($usuario->role === 'jefe_red') Jefe de Red
-                                @elseif($usuario->role === 'coordinador_microred') Coordinador de Microred
-                                @else Usuario
-                                @endif
-                              </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                              @if($usuario->solicitud)
-                                <a href="javascript:void(0)" onclick="cambiarTab('solicitudes'); buscarSolicitudPorId({{ $usuario->solicitud->id }})" 
-                                  class="text-blue-600 hover:text-blue-800 text-sm font-semibold underline">
-                                  Ver Solicitud #{{ $usuario->solicitud->id }}
-                                </a>
-                              @else
-                                <span class="text-slate-400 text-sm">-</span>
-                              @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ $usuario->created_at->format('d/m/Y') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                              <div class="flex items-center gap-2">
-                                <button onclick="editarUsuario({{ $usuario->id }})" 
-                                  class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-semibold text-xs transition-colors">
-                                  Editar
-                                </button>
-                                @if($usuario->id !== auth()->id())
-                                  <button onclick="eliminarUsuario({{ $usuario->id }})" 
-                                    class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold text-xs transition-colors">
-                                    Eliminar
-                                  </button>
-                                @endif
-                              </div>
-                            </td>
-                          </tr>
-                        @empty
-                          <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
-                              <div class="flex flex-col items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400 mb-2">
-                                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                                  <circle cx="9" cy="7" r="4"></circle>
-                                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                </svg>
-                                <p class="text-slate-500 font-medium">No hay usuarios registrados</p>
-                              </div>
-                            </td>
-                          </tr>
-                        @endforelse
-                      </tbody>
-                    </table>
-                  </div>
-                  <!-- Paginación -->
-                  <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
-                    {{ $usuarios->links() }}
-                  </div>
-                </div>
-              </div>
-
+              </main>
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   </div>
 
-  <!-- Modal para crear/editar usuario -->
-  <div id="modalUsuario" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-md w-full">
-      <div class="p-6 border-b border-slate-200 flex justify-between items-center">
-        <h3 id="modalUsuarioTitulo" class="text-xl font-bold text-slate-800">Nuevo Usuario</h3>
-        <button onclick="cerrarModalUsuario()" class="text-slate-400 hover:text-slate-600">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18"></path>
-            <path d="m6 6 12 12"></path>
+  <!-- Modal para crear usuario desde solicitud -->
+  <div id="modalCrearUsuario" class="modal-usuario-overlay" onclick="closeModalCrearUsuario(event)">
+    <div class="modal-usuario-container" onclick="event.stopPropagation()">
+      <!-- Header del Modal con gradiente -->
+      <div class="modal-usuario-header">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" x2="19" y1="8" y2="14"></line>
+              <line x1="22" x2="16" y1="11" y2="11"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Crear Usuario desde Solicitud</h3>
+            <p class="modal-usuario-subtitle">Complete los datos para crear la cuenta de usuario</p>
+          </div>
+        </div>
+        <button onclick="closeModalCrearUsuario()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
-      <form id="formUsuario" class="p-6 space-y-4">
-        <input type="hidden" id="usuarioId" name="id">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Nombre</label>
-          <input type="text" id="usuarioNombre" name="name" required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Correo</label>
-          <input type="email" id="usuarioCorreo" name="email" required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Contraseña</label>
-          <input type="password" id="usuarioPassword" name="password"
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <p class="text-xs text-slate-500 mt-1">Dejar en blanco para mantener la actual (solo al editar)</p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Confirmar Contraseña</label>
-          <input type="password" id="usuarioPasswordConfirm" name="password_confirmation"
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-2">Rol</label>
-          <select id="usuarioRol" name="role" required
-            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <option value="usuario">Usuario</option>
-            <option value="coordinador_microred">Coordinador de Microred</option>
-            <option value="jefe_red">Jefe de Red</option>
-            <option value="admin">Administrador</option>
-          </select>
-        </div>
-        <div class="flex gap-3 pt-4">
-          <button type="button" onclick="cerrarModalUsuario()" 
-            class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors">
-            Cancelar
-          </button>
-          <button type="submit" 
-            class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-            Guardar
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal para ver detalles de solicitud -->
-  <div id="modalDetalleSolicitud" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-      <div class="p-6 border-b border-slate-200 flex justify-between items-center">
-        <h3 class="text-xl font-bold text-slate-800">Detalles de la Solicitud</h3>
-        <button onclick="cerrarModalDetalle()" class="text-slate-400 hover:text-slate-600">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18"></path>
-            <path d="m6 6 12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div id="detalleSolicitudContent" class="p-6">
-        <div class="text-center py-8">
-          <div class="spinner border-4 border-slate-200 border-t-blue-600 rounded-full w-12 h-12 mx-auto animate-spin"></div>
-          <p class="mt-4 text-slate-600">Cargando detalles...</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Función para cambiar entre pestañas
-    function cambiarTab(tab) {
-      const tabUsuarios = document.getElementById('tab-usuarios');
-      const tabSolicitudes = document.getElementById('tab-solicitudes');
-      const contenidoUsuarios = document.getElementById('contenido-usuarios');
-      const contenidoSolicitudes = document.getElementById('contenido-solicitudes');
-
-      if (tab === 'usuarios') {
-        tabUsuarios.classList.add('text-blue-600', 'border-blue-600', 'bg-blue-50');
-        tabUsuarios.classList.remove('text-slate-600', 'border-transparent');
-        tabSolicitudes.classList.remove('text-blue-600', 'border-blue-600', 'bg-blue-50');
-        tabSolicitudes.classList.add('text-slate-600', 'border-transparent');
-        contenidoUsuarios.classList.remove('hidden');
-        contenidoSolicitudes.classList.add('hidden');
-        // Mostrar botón de usuario, ocultar de solicitud
-        document.getElementById('btnCrearUsuario').classList.remove('hidden');
-        document.getElementById('btnCrearSolicitud').classList.add('hidden');
-      } else {
-        tabSolicitudes.classList.add('text-blue-600', 'border-blue-600', 'bg-blue-50');
-        tabSolicitudes.classList.remove('text-slate-600', 'border-transparent');
-        tabUsuarios.classList.remove('text-blue-600', 'border-blue-600', 'bg-blue-50');
-        tabUsuarios.classList.add('text-slate-600', 'border-transparent');
-        contenidoSolicitudes.classList.remove('hidden');
-        contenidoUsuarios.classList.add('hidden');
-        // Mostrar botón de solicitud, ocultar de usuario
-        document.getElementById('btnCrearSolicitud').classList.remove('hidden');
-        document.getElementById('btnCrearUsuario').classList.add('hidden');
-      }
-    }
-
-    // Inicializar con solicitudes primero por defecto
-    (function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      if (tab === 'usuarios') {
-        cambiarTab('usuarios');
-      } else {
-        // Por defecto mostrar solicitudes primero
-        cambiarTab('solicitudes');
-      }
-    })();
-
-    function buscarSolicitudPorId(id) {
-      cambiarTab('solicitudes');
-      setTimeout(() => {
-        const row = document.getElementById('solicitud-row-' + id);
-        if (row) {
-          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          row.classList.add('bg-blue-50');
-          setTimeout(() => row.classList.remove('bg-blue-50'), 2000);
-        }
-      }, 100);
-    }
-
-    function buscarUsuarioPorId(id) {
-      cambiarTab('usuarios');
-      setTimeout(() => {
-        const row = document.querySelector(`tr[data-usuario-id="${id}"]`);
-        if (row) {
-          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          row.classList.add('bg-blue-50');
-          setTimeout(() => row.classList.remove('bg-blue-50'), 2000);
-        }
-      }, 100);
-    }
-
-    function abrirModalCrearUsuario() {
-      document.getElementById('modalUsuarioTitulo').textContent = 'Nuevo Usuario';
-      document.getElementById('formUsuario').reset();
-      document.getElementById('usuarioId').value = '';
-      document.getElementById('usuarioPassword').required = true;
-      document.getElementById('usuarioPasswordConfirm').required = true;
-      document.getElementById('modalUsuario').classList.remove('hidden');
-    }
-
-    function editarUsuario(id) {
-      fetch(`/usuarios/${id}`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const u = data.data;
-          document.getElementById('modalUsuarioTitulo').textContent = 'Editar Usuario';
-          document.getElementById('usuarioId').value = u.id;
-          document.getElementById('usuarioNombre').value = u.name;
-          document.getElementById('usuarioCorreo').value = u.email;
-          document.getElementById('usuarioRol').value = u.role;
-          document.getElementById('usuarioPassword').required = false;
-          document.getElementById('usuarioPasswordConfirm').required = false;
-          document.getElementById('modalUsuario').classList.remove('hidden');
-        }
-      })
-      .catch(error => {
-        alert('Error al cargar el usuario');
-      });
-    }
-
-    function cerrarModalUsuario() {
-      document.getElementById('modalUsuario').classList.add('hidden');
-    }
-
-    function eliminarUsuario(id) {
-      if (!confirm('¿Está seguro de eliminar este usuario?')) {
-        return;
-      }
-
-      fetch(`/usuarios/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert(data.message || 'Error al eliminar el usuario');
-        }
-      })
-      .catch(error => {
-        alert('Error al eliminar el usuario');
-      });
-    }
-
-    document.getElementById('formUsuario').addEventListener('submit', function(e) {
-      e.preventDefault();
       
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData);
-      const id = document.getElementById('usuarioId').value;
-      const url = id ? `/usuarios/${id}` : '/usuarios';
-      const method = id ? 'PUT' : 'POST';
-
-      fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert(data.message || 'Error al guardar el usuario');
-          if (data.errors) {
-            console.error(data.errors);
-          }
-        }
-      })
-      .catch(error => {
-        alert('Error al guardar el usuario');
-      });
-    });
-
-    function verDetalleSolicitud(id) {
-      const modal = document.getElementById('modalDetalleSolicitud');
-      const content = document.getElementById('detalleSolicitudContent');
-      modal.classList.remove('hidden');
-      
-      content.innerHTML = '<div class="text-center py-8"><div class="spinner border-4 border-slate-200 border-t-blue-600 rounded-full w-12 h-12 mx-auto animate-spin"></div><p class="mt-4 text-slate-600">Cargando detalles...</p></div>';
-      
-      fetch(`/solicitudes/${id}`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const s = data.data;
-          content.innerHTML = `
-            <div class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <p class="text-sm text-slate-600">Tipo de Documento</p>
-                  <p class="font-semibold text-slate-900">${s.tipo_documento}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Número de Documento</p>
-                  <p class="font-semibold text-slate-900">${s.numero_documento}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Red</p>
-                  <p class="font-semibold text-slate-900">${s.red}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Microred</p>
-                  <p class="font-semibold text-slate-900">${s.microred}</p>
-                </div>
-                <div class="col-span-2">
-                  <p class="text-sm text-slate-600">Establecimiento</p>
-                  <p class="font-semibold text-slate-900">${s.establecimiento}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Motivo</p>
-                  <p class="font-semibold text-slate-900">${s.motivo}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Cargo</p>
-                  <p class="font-semibold text-slate-900">${s.cargo}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Celular</p>
-                  <p class="font-semibold text-slate-900">${s.celular}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Correo</p>
-                  <p class="font-semibold text-slate-900">${s.correo}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Estado</p>
-                  <span class="px-2 py-1 text-xs font-semibold rounded-full ${s.estado === 'pendiente' ? 'bg-amber-100 text-amber-800' : s.estado === 'aprobada' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${s.estado.charAt(0).toUpperCase() + s.estado.slice(1)}</span>
-                </div>
-                <div>
-                  <p class="text-sm text-slate-600">Fecha de Solicitud</p>
-                  <p class="font-semibold text-slate-900">${s.fecha_solicitud}</p>
-                </div>
-                ${s.usuario_creado ? `
-                <div class="col-span-2 border-t pt-4 mt-4">
-                  <p class="text-sm font-semibold text-slate-700 mb-2">Usuario Creado</p>
-                  <div class="bg-blue-50 p-3 rounded-lg">
-                    <p class="text-sm text-slate-600">Nombre: <span class="font-semibold">${s.usuario_creado.name}</span></p>
-                    <p class="text-sm text-slate-600">Email: <span class="font-semibold">${s.usuario_creado.email}</span></p>
-                    <button onclick="cambiarTab('usuarios'); buscarUsuarioPorId(${s.usuario_creado.id}); cerrarModalDetalle();" class="text-blue-600 hover:text-blue-800 text-sm mt-2">Ver usuario →</button>
-                  </div>
-                </div>
-                ` : !s.usuario_creado ? `
-                <div class="col-span-2 border-t pt-4 mt-4">
-                  <button onclick="crearUsuarioDesdeSolicitud(${s.id}); cerrarModalDetalle();" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
-                    Crear Usuario desde esta Solicitud
+      <!-- Contenido del Modal con scroll -->
+      <div class="modal-usuario-content">
+        <form id="formCrearUsuario" onsubmit="crearUsuario(event)">
+          <input type="hidden" id="solicitudId" name="solicitud_id">
+          <div class="space-y-5">
+            <!-- Búsqueda RENIEC -->
+            <div class="modal-usuario-section reniec">
+            <h4 class="modal-usuario-section-title">
+              <div class="modal-usuario-section-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+              </div>
+              <span>Consulta RENIEC</span>
+            </h4>
+            <p class="text-sm text-slate-700 mb-4 font-medium">Ingrese el tipo y número de documento para consultar los datos en RENIEC:</p>
+            <div class="grid grid-cols-2 gap-4 mb-3">
+              <div class="modal-usuario-form-group">
+                <label class="modal-usuario-label required">
+                  Tipo de Documento
+                </label>
+                <select id="reniecTipoDoc" class="modal-usuario-select" required disabled>
+                  <option value="1" selected>DNI</option>
+                </select>
+                <input type="hidden" id="reniecTipoDocHidden" value="1">
+                <p class="text-xs text-slate-500 mt-1">Solo se permite consulta por DNI</p>
+              </div>
+              <div class="modal-usuario-form-group">
+                <label class="modal-usuario-label required">
+                  Número de Documento
+                </label>
+                <div class="flex gap-3">
+                  <input type="text" id="reniecNumeroDoc" 
+                    class="modal-usuario-input flex-1" 
+                    placeholder="Ingrese el DNI (8 dígitos)" required maxlength="8" pattern="[0-9]{8}" 
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                  <button type="button" id="btnBuscarReniec" onclick="buscarReniec()" 
+                    class="modal-usuario-btn-reniec">
+                    <svg id="iconBuscar" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <svg id="iconLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden animate-spin">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
+                      <path d="M12 2v4" stroke="currentColor" stroke-opacity="0.75"></path>
+                    </svg>
+                    <span id="textBuscar">Buscar</span>
                   </button>
                 </div>
-                ` : ''}
               </div>
             </div>
-          `;
-        }
-      })
-      .catch(error => {
-        content.innerHTML = '<div class="text-center py-8 text-red-600">Error al cargar los detalles</div>';
-      });
-    }
+            <div id="reniecResultado" class="modal-usuario-reniec-result hidden">
+              <div class="modal-usuario-reniec-result-header">
+                <div class="modal-usuario-reniec-result-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <h5 class="modal-usuario-reniec-result-title">Datos encontrados en RENIEC</h5>
+              </div>
+              <div class="space-y-3">
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Nombres Completos:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecNombres">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Apellido Paterno:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecApellidoPaterno">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Apellido Materno:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecApellidoMaterno">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Nombres:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecNombresOnly">-</span>
+                </div>
+              </div>
+            </div>
+            <div id="reniecError" class="modal-usuario-reniec-error hidden">
+              <div class="modal-usuario-reniec-error-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="modal-usuario-reniec-error-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div id="reniecErrorContent" class="flex-1"></div>
+              </div>
+            </div>
+          </div>
 
-    function cerrarModalDetalle() {
-      document.getElementById('modalDetalleSolicitud').classList.add('hidden');
-    }
+            <!-- Información del Establecimiento -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </div>
+                <span>Información del Establecimiento</span>
+              </h4>
+              <div class="space-y-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Red</label>
+                  <input type="text" id="red" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Microred</label>
+                  <input type="text" id="microred" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Establecimiento</label>
+                  <input type="text" id="establecimiento" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
 
-    function abrirModalCrearSolicitud() {
-      document.getElementById('modalSolicitudTitulo').textContent = 'Nueva Solicitud';
-      document.getElementById('formSolicitud').reset();
-      document.getElementById('solicitudId').value = '';
-      document.getElementById('modalSolicitud').classList.remove('hidden');
-    }
+            <!-- Información Adicional -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" x2="8" y1="13" y2="13"></line>
+                    <line x1="16" x2="8" y1="17" y2="17"></line>
+                  </svg>
+                </div>
+                <span>Información Adicional</span>
+              </h4>
+              <div class="space-y-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Motivo</label>
+                  <textarea id="motivo" class="modal-usuario-textarea" rows="3" readonly></textarea>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Cargo</label>
+                  <input type="text" id="cargo" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
 
-    function editarSolicitud(id) {
-      fetch(`/solicitudes/${id}`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const s = data.data;
-          document.getElementById('modalSolicitudTitulo').textContent = 'Editar Solicitud';
-          document.getElementById('solicitudId').value = s.id;
-          
-          // Mapear tipo de documento
-          const tipoDocMap = {'DNI': 1, 'CE': 2, 'PASS': 3, 'DIE': 4, 'S/ DOCUMENTO': 5, 'CNV': 6};
-          const tipoDocValue = Object.keys(tipoDocMap).find(key => key === s.tipo_documento);
-          if (tipoDocValue) {
-            document.getElementById('solicitudTipoDoc').value = tipoDocMap[tipoDocValue];
-          }
-          
-          document.getElementById('solicitudNumeroDoc').value = s.numero_documento;
-          
-          // Mapear red
-          const redMap = {
-            'AGUAYTIA': 1, 'ATALAYA': 2, 'BAP-CURARAY': 3, 'CORONEL PORTILLO': 4,
-            'ESSALUD': 5, 'FEDERICO BASADRE - YARINACOCHA': 6,
-            'HOSPITAL AMAZONICO - YARINACOCHA': 7, 'HOSPITAL REGIONAL DE PUCALLPA': 8,
-            'NO PERTENECE A NINGUNA RED': 9
-          };
-          const redValue = Object.keys(redMap).find(key => key === s.red);
-          if (redValue) {
-            document.getElementById('solicitudRed').value = redMap[redValue];
-          }
-          
-          document.getElementById('solicitudMicrored').value = s.microred;
-          document.getElementById('solicitudEstablecimiento').value = s.establecimiento;
-          document.getElementById('solicitudMotivo').value = s.motivo;
-          document.getElementById('solicitudCargo').value = s.cargo;
-          document.getElementById('solicitudCelular').value = s.celular;
-          document.getElementById('solicitudCorreo').value = s.correo;
-          
-          document.getElementById('modalSolicitud').classList.remove('hidden');
-        }
-      })
-      .catch(error => {
-        alert('Error al cargar la solicitud');
-      });
-    }
+            <!-- Contacto -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <span>Contacto</span>
+              </h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Celular</label>
+                  <input type="text" id="celular" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Correo Electrónico</label>
+                  <input type="email" id="correo" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
 
-    function eliminarSolicitud(id) {
-      if (!confirm('¿Está seguro de eliminar esta solicitud?')) {
-        return;
-      }
-
-      fetch(`/solicitudes/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert(data.message || 'Error al eliminar la solicitud');
-        }
-      })
-      .catch(error => {
-        alert('Error al eliminar la solicitud');
-      });
-    }
-
-    function cerrarModalSolicitud() {
-      document.getElementById('modalSolicitud').classList.add('hidden');
-    }
-
-    function abrirModalCrearSolicitud() {
-      document.getElementById('modalSolicitudTitulo').textContent = 'Nueva Solicitud';
-      document.getElementById('formSolicitud').reset();
-      document.getElementById('solicitudId').value = '';
-      document.getElementById('modalSolicitud').classList.remove('hidden');
-    }
-
-    function editarSolicitud(id) {
-      fetch(`/solicitudes/${id}`, {
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          const s = data.data;
-          document.getElementById('modalSolicitudTitulo').textContent = 'Editar Solicitud';
-          document.getElementById('solicitudId').value = s.id;
-          
-          // Mapear tipo de documento
-          const tipoDocMap = {'DNI': 1, 'CE': 2, 'PASS': 3, 'DIE': 4, 'S/ DOCUMENTO': 5, 'CNV': 6};
-          const tipoDocKey = Object.keys(tipoDocMap).find(key => key === s.tipo_documento);
-          if (tipoDocKey) {
-            document.getElementById('solicitudTipoDoc').value = tipoDocMap[tipoDocKey];
-          }
-          
-          document.getElementById('solicitudNumeroDoc').value = s.numero_documento;
-          
-          // Mapear red
-          const redMap = {
-            'AGUAYTIA': 1, 'ATALAYA': 2, 'BAP-CURARAY': 3, 'CORONEL PORTILLO': 4,
-            'ESSALUD': 5, 'FEDERICO BASADRE - YARINACOCHA': 6,
-            'HOSPITAL AMAZONICO - YARINACOCHA': 7, 'HOSPITAL REGIONAL DE PUCALLPA': 8,
-            'NO PERTENECE A NINGUNA RED': 9
-          };
-          const redKey = Object.keys(redMap).find(key => key === s.red);
-          if (redKey) {
-            document.getElementById('solicitudRed').value = redMap[redKey];
-          }
-          
-          document.getElementById('solicitudMicrored').value = s.microred;
-          document.getElementById('solicitudEstablecimiento').value = s.establecimiento;
-          document.getElementById('solicitudMotivo').value = s.motivo;
-          document.getElementById('solicitudCargo').value = s.cargo;
-          document.getElementById('solicitudCelular').value = s.celular;
-          document.getElementById('solicitudCorreo').value = s.correo;
-          
-          document.getElementById('modalSolicitud').classList.remove('hidden');
-        }
-      })
-      .catch(error => {
-        alert('Error al cargar la solicitud');
-      });
-    }
-
-    function eliminarSolicitud(id) {
-      if (!confirm('¿Está seguro de eliminar esta solicitud?')) {
-        return;
-      }
-
-      fetch(`/solicitudes/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert(data.message || 'Error al eliminar la solicitud');
-        }
-      })
-      .catch(error => {
-        alert('Error al eliminar la solicitud');
-      });
-    }
-
-    function cerrarModalSolicitud() {
-      document.getElementById('modalSolicitud').classList.add('hidden');
-    }
-
-    // Manejar formulario de solicitud
-    document.getElementById('formSolicitud').addEventListener('submit', function(e) {
-      e.preventDefault();
+            <!-- Sección de Creación de Usuario -->
+            <div class="modal-usuario-section create">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <line x1="19" x2="19" y1="8" y2="14"></line>
+                    <line x1="22" x2="16" y1="11" y2="11"></line>
+                  </svg>
+                </div>
+                <span>Crear Usuario</span>
+              </h4>
+              <p class="text-sm text-slate-700 mb-6 font-medium">Complete los siguientes campos para crear la cuenta de usuario:</p>
+              <div class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Nombre de Usuario (desde RENIEC)
+                    </label>
+                    <input type="text" id="nameUsuario" name="name" 
+                      class="modal-usuario-input" 
+                      placeholder="Se llenará automáticamente desde RENIEC" required readonly>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Este campo se llenará automáticamente con los datos de RENIEC
+                    </p>
+                  </div>
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Contraseña
+                    </label>
+                    <div class="relative">
+                      <input type="password" id="passwordUsuario" name="password" 
+                        class="modal-usuario-input" 
+                        placeholder="Ingrese la contraseña" required minlength="6">
+                      <button type="button" onclick="togglePasswordVisibility('passwordUsuario')" class="password-toggle-btn" aria-label="Mostrar/Ocultar contraseña">
+                        <svg id="eyeIcon-passwordUsuario" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="eyeOffIcon-passwordUsuario" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Mínimo 6 caracteres
+                    </p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Correo Electrónico
+                    </label>
+                    <input type="email" id="correoUsuario" name="email" 
+                      class="modal-usuario-input" 
+                      placeholder="ejemplo@correo.com" required>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Se usará el correo de la solicitud por defecto
+                    </p>
+                  </div>
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Rol/Permiso
+                    </label>
+                    <select id="rolUsuario" name="role" 
+                      class="modal-usuario-select" required>
+                      <option value="">Seleccione un rol</option>
+                      <option value="jefe_microred">Jefe de Micro Red</option>
+                      <option value="coordinador_red">Coordinador de Red</option>
+                    </select>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Seleccione el nivel de acceso del usuario
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
       
-      const formData = new FormData(this);
-      const data = Object.fromEntries(formData);
-      const id = document.getElementById('solicitudId').value;
-      const url = id ? `/solicitudes/${id}` : '/solicitudes';
-      const method = id ? 'PUT' : 'POST';
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer">
+        <button type="button" onclick="closeModalCrearUsuario()" class="modal-usuario-btn modal-usuario-btn-secondary">
+          Cancelar
+        </button>
+        <button type="submit" form="formCrearUsuario" class="modal-usuario-btn modal-usuario-btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" x2="19" y1="8" y2="14"></line>
+            <line x1="22" x2="16" y1="11" y2="11"></line>
+          </svg>
+          Crear Usuario
+        </button>
+      </div>
+    </div>
+  </div>
 
+  <!-- Modal para editar usuario -->
+  <div id="modalEditarUsuario" class="modal-usuario-overlay" onclick="closeModalEditarUsuario(event)">
+    <div class="modal-usuario-container" onclick="event.stopPropagation()">
+      <!-- Header del Modal con gradiente -->
+      <div class="modal-usuario-header edit">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Editar Usuario</h3>
+            <p class="modal-usuario-subtitle">Modifique los datos del usuario</p>
+          </div>
+        </div>
+        <button onclick="closeModalEditarUsuario()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal con scroll -->
+      <div class="modal-usuario-content">
+        <form id="formEditarUsuario" onsubmit="actualizarUsuario(event)">
+          <input type="hidden" id="usuarioIdEditar" name="usuario_id">
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Información del Usuario -->
+            <div class="modal-usuario-section">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <span>Información del Usuario</span>
+              </h4>
+              
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Nombre Completo
+                  </label>
+                  <input type="text" id="nombreUsuarioEditar" name="name" 
+                    class="modal-usuario-input" 
+                    placeholder="Ingrese el nombre completo" required>
+                </div>
+                
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    Correo Electrónico
+                  </label>
+                  <input type="email" id="correoUsuarioEditar" name="email" 
+                    class="modal-usuario-input" 
+                    placeholder="Ingrese el correo electrónico" required>
+                </div>
+                
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Rol/Permiso
+                  </label>
+                  <select id="rolUsuarioEditar" name="role" 
+                    class="modal-usuario-select" required>
+                    <option value="">Seleccione un rol</option>
+                    <option value="jefe_microred">Red</option>
+                    <option value="coordinador_red">MicroRed</option>
+                    <option value="usuario">Cancelar Permisos</option>
+                  </select>
+                  <p style="font-size: 0.75rem; color: #475569; margin-top: 0.5rem; font-weight: 500; display: flex; align-items: flex-start; gap: 0.375rem; line-height: 1.5;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6; margin-top: 0.125rem; flex-shrink: 0;">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 16v-4"></path>
+                      <path d="M12 8h.01"></path>
+                    </svg>
+                    <span>Seleccione el rol del usuario. Use "Cancelar Permisos" para quitar los permisos especiales.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cambio de Contraseña (Opcional) -->
+            <div class="modal-usuario-section">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <span>Cambiar Contraseña (Opcional)</span>
+              </h4>
+              <p style="font-size: 0.875rem; color: #475569; margin-bottom: 1rem; font-weight: 500;">Deje en blanco si no desea cambiar la contraseña</p>
+              
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #64748b;">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Nueva Contraseña
+                  </label>
+                  <div class="relative">
+                    <input type="password" id="nuevaPasswordEditar" name="password" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese nueva contraseña (mínimo 6 caracteres)" minlength="6">
+                    <button type="button" onclick="togglePasswordVisibility('nuevaPasswordEditar')" class="password-toggle-btn" aria-label="Mostrar/Ocultar contraseña">
+                      <svg id="eyeIcon-nuevaPasswordEditar" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <svg id="eyeOffIcon-nuevaPasswordEditar" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <p style="font-size: 0.75rem; color: #475569; margin-top: 0.5rem; font-weight: 500;">Deje en blanco si no desea cambiar la contraseña. Mínimo 6 caracteres si la cambia.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer">
+        <button type="button" onclick="closeModalEditarUsuario()" class="modal-usuario-btn modal-usuario-btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Cancelar</span>
+        </button>
+        <button type="submit" form="formEditarUsuario" class="modal-usuario-btn modal-usuario-btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para confirmar eliminación de usuario -->
+  <div id="modalConfirmarEliminar" class="modal-usuario-overlay" onclick="closeModalConfirmarEliminar(event)">
+    <div class="modal-usuario-container" style="max-width: 32rem;" onclick="event.stopPropagation()">
+      <!-- Header del Modal -->
+      <div class="modal-usuario-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon" style="background: rgba(255, 255, 255, 0.25);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Confirmar Eliminación</h3>
+            <p class="modal-usuario-subtitle">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+        <button onclick="closeModalConfirmarEliminar()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal -->
+      <div class="modal-usuario-content" style="padding: 2rem; text-align: center;">
+        <div style="margin-bottom: 1.5rem;">
+          <div style="margin: 0 auto; width: 5rem; height: 5rem; background-color: #fee2e2; border-radius: 9999px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </div>
+          <h4 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">¿Está seguro de eliminar este usuario?</h4>
+          <p style="color: #475569; margin-bottom: 0.25rem; font-size: 0.875rem;">
+            El usuario <strong id="nombreUsuarioEliminar" style="color: #0f172a; font-weight: 600;"></strong> será eliminado permanentemente.
+          </p>
+          <p style="font-size: 0.875rem; color: #dc2626; font-weight: 600; margin-top: 0.75rem;">
+            ⚠️ Esta acción no se puede deshacer
+          </p>
+        </div>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer" style="display: flex; gap: 0.75rem; justify-content: space-between;">
+        <button type="button" onclick="closeModalConfirmarEliminar()" class="modal-usuario-btn modal-usuario-btn-secondary" style="flex: 0 1 auto; min-width: 140px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Cancelar
+        </button>
+        <button type="button" onclick="confirmarEliminarUsuario()" class="modal-usuario-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c); color: white; flex: 1; margin-left: 0.75rem; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          Sí, Eliminar Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out forwards;
+    }
+
+    .animate-slide-out {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+    
+    #reniecResultado:not(.hidden) {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Mejoras para botones de acción */
+    button[onclick*="abrirModalEditarUsuario"],
+    button[onclick*="eliminarUsuario"] {
+      position: relative;
+      isolation: isolate;
+    }
+    
+    button[onclick*="abrirModalEditarUsuario"]::before,
+    button[onclick*="eliminarUsuario"]::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    button[onclick*="abrirModalEditarUsuario"]:active::before,
+    button[onclick*="eliminarUsuario"]:active::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .tab-button {
+      background: transparent;
+      color: #64748b;
+      border: none;
+    }
+    .tab-button.active {
+      background: linear-gradient(to right, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .tab-content {
+      display: block;
+    }
+    .tab-content.hidden {
+      display: none;
+    }
+  </style>
+
+  <script src="/JS/dashbord.js"></script>
+  <script src="/JS/formulario-selec-de-EESS.js"></script>
+  <script>
+    let solicitudesActuales = [];
+    let usuariosActuales = [];
+    let estadoActual = 'pendiente'; // Solo mostrar solicitudes pendientes por defecto
+    let tabActual = 'solicitudes';
+    let paginaActualUsuarios = 1;
+    let paginacionUsuarios = null;
+
+    // Función helper para obtener el nombre del establecimiento
+    function obtenerNombreEstablecimiento(codigoRed, codigoMicrored, idEstablecimiento) {
+      if (!codigoRed || !codigoMicrored || !idEstablecimiento) return 'N/A';
+      
+      try {
+        // Usar los datos del archivo formulario-selec-de-EESS.js si están disponibles
+        if (typeof data !== 'undefined' && data[codigoRed] && data[codigoRed][codigoMicrored]) {
+          const establecimiento = data[codigoRed][codigoMicrored].find(e => e.value === idEstablecimiento);
+          if (establecimiento) return establecimiento.text;
+        }
+      } catch (e) {
+        console.error('Error al obtener nombre de establecimiento:', e);
+      }
+      
+      // Si no se encuentra, mostrar el código sin el prefijo EST_ y con espacios
+      return idEstablecimiento.replace(/^EST_/, '').replace(/_/g, ' ') || idEstablecimiento;
+    }
+
+    // Cambiar entre tabs
+    function cambiarTab(tab) {
+      tabActual = tab;
+      const tabSolicitudes = document.getElementById('tabSolicitudes');
+      const tabUsuarios = document.getElementById('tabUsuarios');
+      const seccionSolicitudes = document.getElementById('seccionSolicitudes');
+      const seccionUsuarios = document.getElementById('seccionUsuarios');
+
+      if (tab === 'solicitudes') {
+        tabSolicitudes.classList.add('active');
+        tabUsuarios.classList.remove('active');
+        seccionSolicitudes.classList.remove('hidden');
+        seccionUsuarios.classList.add('hidden');
+        cargarSolicitudes(estadoActual);
+      } else {
+        tabSolicitudes.classList.remove('active');
+        tabUsuarios.classList.add('active');
+        seccionSolicitudes.classList.add('hidden');
+        seccionUsuarios.classList.remove('hidden');
+        cargarUsuarios();
+      }
+    }
+
+    // Cargar solicitudes
+    function cargarSolicitudes(estado = null) {
+      // Cargar solo solicitudes pendientes por defecto
+      estadoActual = estado || 'pendiente';
+      const url = `{{ route('api.solicitudes') }}?estado=${estadoActual}`;
       fetch(url, {
-        method: method,
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify(data)
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.data) {
+          solicitudesActuales = data.data;
+          renderizarTabla(solicitudesActuales);
+          if (data.estadisticas) {
+            // Contar solo solicitudes pendientes para el footer
+            const pendientes = solicitudesActuales.filter(s => s.estado === 'pendiente').length;
+            actualizarFooterSolicitudes(pendientes || data.estadisticas.pendientes || 0);
+          }
+        } else {
+          console.error('Error al cargar solicitudes:', data.message);
+          document.getElementById('tablaSolicitudesBody').innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center text-slate-500">No se pudieron cargar las solicitudes</td></tr>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('tablaSolicitudesBody').innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center text-red-500">Error al cargar las solicitudes</td></tr>';
+      });
+    }
+
+    function renderizarTabla(solicitudes) {
+      const tbody = document.getElementById('tablaSolicitudesBody');
+      if (!tbody) return;
+
+      // Filtrar solo solicitudes pendientes (por si acaso vienen aprobadas)
+      const solicitudesPendientes = solicitudes.filter(s => s.estado === 'pendiente');
+
+      if (solicitudesPendientes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="px-6 py-4 text-center text-slate-500">No hay solicitudes pendientes</td></tr>';
+        return;
+      }
+
+      const tiposDocumento = {
+        1: 'DNI',
+        2: 'CE',
+        3: 'PASS',
+        4: 'DIE',
+        5: 'S/ DOCUMENTO',
+        6: 'CNV'
+      };
+
+      const nombresRedes = {
+        1: 'AGUAYTIA',
+        2: 'ATALAYA',
+        3: 'BAP-CURARAY',
+        4: 'CORONEL PORTILLO',
+        5: 'ESSALUD',
+        6: 'FEDERICO BASADRE - YARINACOCHA',
+        7: 'HOSPITAL AMAZONICO - YARINACOCHA',
+        8: 'HOSPITAL REGIONAL DE PUCALLPA',
+        9: 'NO PERTENECE A NINGUNA RED'
+      };
+
+
+      tbody.innerHTML = solicitudesPendientes.map(solicitud => {
+        const fecha = new Date(solicitud.created_at).toLocaleDateString('es-PE');
+        const tipoDoc = tiposDocumento[solicitud.id_tipo_documento] || 'N/A';
+        const nombreRed = nombresRedes[solicitud.codigo_red] || `Red ${solicitud.codigo_red}`;
+        const nombreMicrored = solicitud.codigo_microred || 'N/A';
+        const nombreEstablecimiento = obtenerNombreEstablecimiento(
+          solicitud.codigo_red, 
+          solicitud.codigo_microred, 
+          solicitud.id_establecimiento
+        );
+        const btnAccion = solicitud.estado === 'pendiente' 
+          ? `<div class="flex items-center gap-2">
+              <button onclick="abrirModalCrearUsuario(${solicitud.id})" 
+                class="btn-crear-usuario"
+                title="Crear usuario desde esta solicitud">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="19" x2="19" y1="8" y2="14"></line>
+                  <line x1="22" x2="16" y1="11" y2="11"></line>
+                </svg>
+                <span>Crear Usuario</span>
+              </button>
+              <button onclick="rechazarSolicitud(${solicitud.id}, '${solicitud.numero_documento.replace(/'/g, "\\'")}')" 
+                class="btn-rechazar-solicitud"
+                title="Rechazar y eliminar esta solicitud">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" x2="10" y1="11" y2="17"></line>
+                  <line x1="14" x2="14" y1="11" y2="17"></line>
+                </svg>
+                <span>Rechazar</span>
+              </button>
+            </div>`
+          : '<span class="text-slate-400 text-sm font-medium">-</span>';
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${tipoDoc}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.numero_documento}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${nombreRed}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${nombreMicrored}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">${nombreEstablecimiento}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.correo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.cargo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.celular}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">${solicitud.motivo.substring(0, 50)}${solicitud.motivo.length > 50 ? '...' : ''}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fecha}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${btnAccion}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Actualizar footer de solicitudes
+      actualizarFooterSolicitudes(solicitudesPendientes.length);
+    }
+    
+    function actualizarFooterSolicitudes(total) {
+      const totalElement = document.getElementById('totalSolicitudes');
+      const fechaElement = document.getElementById('ultimaActualizacionSolicitudes');
+      
+      if (totalElement) {
+        totalElement.textContent = total;
+      }
+      
+      if (fechaElement) {
+        const ahora = new Date();
+        fechaElement.textContent = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function filtrarTablaSolicitudes() {
+      const searchTerm = document.getElementById('searchInputSolicitudes').value.toLowerCase();
+      const filas = document.querySelectorAll('#tablaSolicitudesBody tr');
+      
+      filas.forEach(fila => {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    // Cargar usuarios
+    function cargarUsuarios(pagina = 1) {
+      paginaActualUsuarios = pagina;
+      const rol = document.getElementById('filtroRol')?.value || '';
+      const url = `{{ route("api.usuarios") }}?page=${pagina}&per_page=10${rol ? '&rol=' + rol : ''}`;
+      
+      return fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+        // Verificar si la respuesta es un error 403 (Forbidden)
+        if (response.status === 403) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'No tiene permisos para acceder a esta funcionalidad');
+          });
+        }
+        // Verificar otros errores HTTP
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Error al cargar los usuarios');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success && data.data) {
+          usuariosActuales = data.data;
+          paginacionUsuarios = data.pagination;
+          renderizarTablaUsuarios(usuariosActuales);
+          renderizarPaginacionUsuarios(paginacionUsuarios);
+          actualizarFooterUsuarios(data.estadisticas, paginacionUsuarios);
+          return data; // Devolver los datos para verificación
+        } else {
+          console.error('Error al cargar usuarios:', data.message);
+          const tbody = document.getElementById('tablaUsuariosBody');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+              <div class="flex flex-col items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" x2="12" y1="8" y2="12"></line>
+                  <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                </svg>
+                <span class="font-semibold">${data.message || 'No se pudieron cargar los usuarios'}</span>
+              </div>
+            </td></tr>`;
+          }
+          throw new Error(data.message || 'Error al cargar usuarios');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        const tbody = document.getElementById('tablaUsuariosBody');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+            <div class="flex flex-col items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" x2="12" y1="8" y2="12"></line>
+                <line x1="12" x2="12.01" y1="16" y2="16"></line>
+              </svg>
+              <span class="font-semibold">${error.message || 'Error al cargar los usuarios'}</span>
+              <span class="text-sm text-slate-600">Verifique que tenga permisos de administrador (DIRESA)</span>
+            </div>
+          </td></tr>`;
+        }
+        throw error; // Re-lanzar el error para que pueda ser manejado
+      });
+    }
+
+    function renderizarTablaUsuarios(usuarios) {
+      const tbody = document.getElementById('tablaUsuariosBody');
+      if (!tbody) return;
+
+      if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">No hay usuarios registrados</td></tr>';
+        return;
+      }
+
+      const rolesBadge = {
+        'admin': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Administrador</span>',
+        'medico': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Médico</span>',
+        'usuario': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Usuario</span>',
+        'jefe_microred': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
+        'coordinador_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de MicroRed</span>'
+      };
+
+      tbody.innerHTML = usuarios.map(usuario => {
+        const fechaCreacion = new Date(usuario.created_at).toLocaleDateString('es-PE');
+        const fechaActualizacion = new Date(usuario.updated_at).toLocaleDateString('es-PE');
+        const rolBadge = rolesBadge[usuario.role] || rolesBadge['usuario'];
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${usuario.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${usuario.email}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${rolBadge}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaCreacion}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaActualizacion}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2.5">
+                <button onclick="abrirModalEditarUsuario(${usuario.id})" 
+                  class="btn-editar-usuario"
+                  title="Editar usuario">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Editar</span>
+                </button>
+                <button onclick="eliminarUsuario(${usuario.id}, '${usuario.name.replace(/'/g, "\\'")}')" 
+                  class="btn-eliminar-usuario"
+                  title="Eliminar usuario">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function actualizarFooterUsuarios(estadisticas, pagination) {
+      const totalElement = document.getElementById('totalUsuarios');
+      const fechaElement = document.getElementById('ultimaActualizacionUsuarios');
+      
+      if (totalElement && estadisticas) {
+        totalElement.textContent = estadisticas.total || 0;
+      }
+      
+      if (fechaElement) {
+        const ahora = new Date();
+        fechaElement.textContent = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function filtrarTablaUsuarios() {
+      const searchTerm = document.getElementById('searchInputUsuarios').value.toLowerCase();
+      const filas = document.querySelectorAll('#tablaUsuariosBody tr');
+      
+      filas.forEach(fila => {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    function cambiarRol() {
+      // Recargar usuarios desde la página 1 cuando se cambia el filtro
+      cargarUsuarios(1);
+    }
+
+    function renderizarPaginacionUsuarios(pagination) {
+      const contenedor = document.getElementById('paginacionUsuarios');
+      if (!contenedor || !pagination) {
+        return;
+      }
+
+      const { current_page, last_page, total, from, to } = pagination;
+
+      if (last_page <= 1) {
+        contenedor.innerHTML = '';
+        return;
+      }
+
+      let html = '<div class="flex items-center justify-between">';
+      
+      // Información de resultados
+      html += `<div class="text-sm text-slate-600">
+        Mostrando <span class="font-semibold text-slate-900">${from || 0}</span> a 
+        <span class="font-semibold text-slate-900">${to || 0}</span> de 
+        <span class="font-semibold text-slate-900">${total}</span> usuarios
+      </div>`;
+
+      // Controles de paginación
+      html += '<div class="flex items-center gap-2">';
+      
+      // Botón Anterior
+      if (current_page > 1) {
+        html += `<button onclick="cargarUsuarios(${current_page - 1})" 
+          class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Anterior
+        </button>`;
+      } else {
+        html += `<button disabled 
+          class="px-4 py-2 text-sm font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Anterior
+        </button>`;
+      }
+
+      // Números de página
+      html += '<div class="flex items-center gap-1">';
+      const maxPages = 5;
+      let startPage = Math.max(1, current_page - Math.floor(maxPages / 2));
+      let endPage = Math.min(last_page, startPage + maxPages - 1);
+      
+      if (endPage - startPage < maxPages - 1) {
+        startPage = Math.max(1, endPage - maxPages + 1);
+      }
+
+      if (startPage > 1) {
+        html += `<button onclick="cargarUsuarios(1)" 
+          class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">1</button>`;
+        if (startPage > 2) {
+          html += '<span class="px-2 text-slate-400">...</span>';
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        if (i === current_page) {
+          html += `<button disabled 
+            class="px-3 py-2 text-sm font-semibold text-white bg-purple-600 border border-purple-600 rounded-lg">${i}</button>`;
+        } else {
+          html += `<button onclick="cargarUsuarios(${i})" 
+            class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">${i}</button>`;
+        }
+      }
+
+      if (endPage < last_page) {
+        if (endPage < last_page - 1) {
+          html += '<span class="px-2 text-slate-400">...</span>';
+        }
+        html += `<button onclick="cargarUsuarios(${last_page})" 
+          class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">${last_page}</button>`;
+      }
+
+      html += '</div>';
+
+      // Botón Siguiente
+      if (current_page < last_page) {
+        html += `<button onclick="cargarUsuarios(${current_page + 1})" 
+          class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          Siguiente
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>`;
+      } else {
+        html += `<button disabled 
+          class="px-4 py-2 text-sm font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+          Siguiente
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>`;
+      }
+
+      html += '</div></div>';
+      contenedor.innerHTML = html;
+    }
+
+    // Función anterior de cambiarRol (mantener por compatibilidad si se usa en otro lugar)
+    function cambiarRolFiltro() {
+      const rol = document.getElementById('filtroRol').value;
+      const filas = document.querySelectorAll('#tablaUsuariosBody tr');
+      
+      filas.forEach(fila => {
+        const rolBadge = fila.querySelector('td:nth-child(3) span');
+        if (!rolBadge) return;
+        
+        const rolUsuario = rolBadge.textContent.toLowerCase();
+        let coincide = false;
+        
+        if (!rol) {
+          // Si no hay filtro, mostrar todos
+          coincide = true;
+        } else if (rol === 'jefe_microred') {
+          // Filtrar por Jefe de Red
+          coincide = rolUsuario.includes('jefe');
+        } else if (rol === 'coordinador_red') {
+          // Filtrar por Coordinador de MicroRed
+          coincide = rolUsuario.includes('coordinador');
+        }
+        
+        fila.style.display = coincide ? '' : 'none';
+      });
+    }
+
+    // Función para abrir el modal de edición de usuario
+    async function abrirModalEditarUsuario(usuarioId) {
+      try {
+        // Buscar el usuario en la lista actual
+        const usuario = usuariosActuales.find(u => u.id === usuarioId);
+        
+        if (!usuario) {
+          alert('No se pudo encontrar la información del usuario');
+          return;
+        }
+
+        // Prellenar el formulario
+        document.getElementById('usuarioIdEditar').value = usuario.id;
+        document.getElementById('nombreUsuarioEditar').value = usuario.name || '';
+        document.getElementById('correoUsuarioEditar').value = usuario.email || '';
+        document.getElementById('rolUsuarioEditar').value = usuario.role || '';
+        const passwordInput = document.getElementById('nuevaPasswordEditar');
+        if (passwordInput) {
+          passwordInput.value = '';
+          passwordInput.type = 'password';
+          // Resetear iconos de visibilidad
+          const eyeIcon = document.getElementById('eyeIcon-nuevaPasswordEditar');
+          const eyeOffIcon = document.getElementById('eyeOffIcon-nuevaPasswordEditar');
+          if (eyeIcon && eyeOffIcon) {
+            eyeIcon.classList.add('hidden');
+            eyeOffIcon.classList.remove('hidden');
+          }
+        }
+
+        // Mostrar el modal
+        const modal = document.getElementById('modalEditarUsuario');
+        if (modal) {
+          modal.classList.add('show');
+          modal.scrollTop = 0;
+        }
+      } catch (error) {
+        console.error('Error al abrir modal de edición:', error);
+        alert('Error al cargar los datos del usuario. Por favor, intente nuevamente.');
+      }
+    }
+
+    // Función para cerrar el modal de edición
+    function closeModalEditarUsuario(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalEditarUsuario').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalEditarUsuario').classList.remove('show');
+      }
+    }
+
+    // Función para actualizar usuario
+    async function actualizarUsuario(event) {
+      event.preventDefault();
+      
+      const usuarioId = document.getElementById('usuarioIdEditar').value;
+      const nombre = document.getElementById('nombreUsuarioEditar').value;
+      const correo = document.getElementById('correoUsuarioEditar').value;
+      const rol = document.getElementById('rolUsuarioEditar').value;
+      const nuevaPassword = document.getElementById('nuevaPasswordEditar').value;
+
+      if (!nombre || !correo || !rol) {
+        // Mostrar mensaje de error de validación
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Campos requeridos</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">Por favor, complete todos los campos requeridos</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 4000);
+        return;
+      }
+
+      try {
+        const formData = {
+          usuario_id: usuarioId,
+          name: nombre,
+          email: correo,
+          role: rol
+        };
+        
+        // Solo agregar password si tiene un valor (no vacío)
+        if (nuevaPassword && nuevaPassword.trim() !== '') {
+          if (nuevaPassword.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+          }
+          formData.password = nuevaPassword.trim();
+        }
+
+        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioId, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Manejar errores de validación
+          let errorMessage = 'Error al actualizar el usuario';
+          if (data.errors) {
+            const errors = Object.values(data.errors).flat();
+            errorMessage = errors.join(', ');
+          } else if (data.message) {
+            errorMessage = data.message;
+          }
+          
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al actualizar</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+          return;
+        }
+
+        if (data.success) {
+          // Cerrar el modal
+          closeModalEditarUsuario();
+
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario actualizado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">Los cambios del usuario han sido guardados correctamente.</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          // Recargar la lista de usuarios
+          cargarUsuarios();
+        } else {
+          // Mostrar mensaje de error
+          const errorMessage = data.message || 'Error al actualizar el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al actualizar usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">Error al actualizar el usuario. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      }
+    }
+
+    // Variables para el modal de confirmación
+    let usuarioIdAEliminar = null;
+    let nombreUsuarioAEliminar = '';
+
+    // Función para rechazar y eliminar permanentemente una solicitud
+    function rechazarSolicitud(solicitudId, numeroDoc) {
+      if (!confirm(`¿Está seguro de que desea rechazar y eliminar permanentemente la solicitud con DNI ${numeroDoc}?\n\nEsta acción no se puede deshacer y eliminará todos los datos de la solicitud de la base de datos.`)) {
+        return;
+      }
+
+      fetch(`{{ route("api.solicitudes.destroy", ":id") }}`.replace(':id', solicitudId), {
+        method: 'DELETE',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert('Solicitud guardada correctamente');
-          location.reload();
+          // Recargar la tabla de solicitudes
+          cargarSolicitudes();
+          // Mostrar mensaje de éxito
+          alert('Solicitud rechazada y eliminada permanentemente de la base de datos.');
         } else {
-          alert(data.message || 'Error al guardar la solicitud');
-          if (data.errors) {
-            console.error(data.errors);
-          }
+          alert('Error al rechazar la solicitud: ' + (data.message || 'Error desconocido'));
         }
       })
       .catch(error => {
-        alert('Error al guardar la solicitud');
-        console.error(error);
+        console.error('Error:', error);
+        alert('Error al rechazar la solicitud. Por favor, intente nuevamente.');
       });
-    });
+    }
 
-    function crearUsuarioDesdeSolicitud(id) {
-      if (!confirm('¿Está seguro de crear un usuario desde esta solicitud? Se generará una contraseña temporal.')) {
+    // Función para abrir el modal de confirmación de eliminación
+    function eliminarUsuario(usuarioId, nombreUsuario) {
+      usuarioIdAEliminar = usuarioId;
+      nombreUsuarioAEliminar = nombreUsuario;
+      
+      // Mostrar el nombre del usuario en el modal
+      document.getElementById('nombreUsuarioEliminar').textContent = nombreUsuario;
+      
+      // Abrir el modal
+      const modal = document.getElementById('modalConfirmarEliminar');
+      if (modal) {
+        modal.classList.add('show');
+      }
+    }
+
+    // Función para cerrar el modal de confirmación
+    function closeModalConfirmarEliminar(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalConfirmarEliminar').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalConfirmarEliminar').classList.remove('show');
+      }
+      // Limpiar variables
+      usuarioIdAEliminar = null;
+      nombreUsuarioAEliminar = '';
+    }
+
+    // Función para confirmar y ejecutar la eliminación
+    async function confirmarEliminarUsuario() {
+      if (!usuarioIdAEliminar) {
+        console.error('No hay usuario seleccionado para eliminar');
         return;
       }
 
-      fetch(`/solicitudes/${id}/crear-usuario`, {
+      // Obtener el botón de eliminar para deshabilitarlo y mostrar loading
+      const btnEliminar = document.querySelector('#modalConfirmarEliminar button[onclick*="confirmarEliminarUsuario"]');
+      const btnCancelar = document.querySelector('#modalConfirmarEliminar button[onclick*="closeModalConfirmarEliminar"]');
+      
+      // Guardar el contenido original del botón
+      const contenidoOriginal = btnEliminar ? btnEliminar.innerHTML : '';
+      
+      // Deshabilitar botones y mostrar loading
+      if (btnEliminar) {
+        btnEliminar.disabled = true;
+        btnEliminar.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Eliminando...
+        `;
+      }
+      if (btnCancelar) {
+        btnCancelar.disabled = true;
+      }
+
+      try {
+        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioIdAEliminar, {
+          method: 'DELETE',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
+          }
+        });
+
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+
+        const data = await response.json();
+
+        // Restaurar botones
+        if (btnEliminar) {
+          btnEliminar.disabled = false;
+          btnEliminar.innerHTML = contenidoOriginal;
+        }
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        // Verificar respuesta del servidor
+        if (response.ok && data.success) {
+          // Cerrar el modal
+          closeModalConfirmarEliminar();
+
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario eliminado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">El usuario "${nombreUsuarioAEliminar}" ha sido eliminado del sistema</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          // Recargar la lista de usuarios para verificar que se eliminó
+          await cargarUsuarios();
+
+          // Verificar que el usuario ya no está en la lista
+          setTimeout(() => {
+            const usuarioEliminado = usuariosActuales.find(u => u.id === usuarioIdAEliminar);
+            if (usuarioEliminado) {
+              console.warn('El usuario aún aparece en la lista después de eliminarlo');
+              // Forzar recarga
+              cargarUsuarios();
+            } else {
+              console.log('Usuario eliminado correctamente y verificado');
+            }
+          }, 500);
+
+        } else {
+          // Mostrar mensaje de error
+          const errorMessage = data.message || 'Error al eliminar el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al eliminar usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        
+        // Restaurar botones en caso de error
+        if (btnEliminar) {
+          btnEliminar.disabled = false;
+          btnEliminar.innerHTML = contenidoOriginal;
+        }
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">No se pudo conectar con el servidor. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      }
+    }
+
+    function abrirModalCrearUsuario(solicitudId) {
+      console.log('Abriendo modal para solicitud ID:', solicitudId);
+      console.log('Solicitudes actuales:', solicitudesActuales);
+      
+      const solicitud = solicitudesActuales.find(s => s.id === solicitudId);
+      if (!solicitud) {
+        console.error('Solicitud no encontrada:', solicitudId);
+        alert('Error: No se pudo encontrar la solicitud seleccionada.');
+        return;
+      }
+
+      console.log('Solicitud encontrada:', solicitud);
+
+      const tiposDocumento = {
+        1: 'DNI',
+        2: 'CE',
+        3: 'PASS',
+        4: 'DIE',
+        5: 'S/ DOCUMENTO',
+        6: 'CNV'
+      };
+
+      const redes = {
+        1: 'AGUAYTIA',
+        2: 'ATALAYA',
+        3: 'BAP-CURARAY',
+        4: 'CORONEL PORTILLO',
+        5: 'ESSALUD',
+        6: 'FEDERICO BASADRE - YARINACOCHA',
+        7: 'HOSPITAL AMAZONICO - YARINACOCHA',
+        8: 'HOSPITAL REGIONAL DE PUCALLPA',
+        9: 'NO PERTENECE A NINGUNA RED'
+      };
+
+      // Prellenar todos los campos del modal
+      try {
+        // ID de la solicitud (oculto)
+        const solicitudIdInput = document.getElementById('solicitudId');
+        if (solicitudIdInput) solicitudIdInput.value = solicitud.id || '';
+
+        // Información del Documento
+        const tipoDocInput = document.getElementById('tipoDocumento');
+        if (tipoDocInput) tipoDocInput.value = tiposDocumento[solicitud.id_tipo_documento] || 'N/A';
+
+        const numDocInput = document.getElementById('numeroDocumento');
+        if (numDocInput) numDocInput.value = solicitud.numero_documento || '';
+
+        // Información del Establecimiento
+        const redInput = document.getElementById('red');
+        if (redInput) redInput.value = redes[solicitud.codigo_red] || `Código: ${solicitud.codigo_red}`;
+
+        const microredInput = document.getElementById('microred');
+        if (microredInput) microredInput.value = solicitud.codigo_microred || 'N/A';
+
+        const establecimientoInput = document.getElementById('establecimiento');
+        if (establecimientoInput) {
+          const nombreEstablecimiento = obtenerNombreEstablecimiento(
+            solicitud.codigo_red, 
+            solicitud.codigo_microred, 
+            solicitud.id_establecimiento
+          );
+          establecimientoInput.value = nombreEstablecimiento || solicitud.id_establecimiento || 'N/A';
+        }
+
+        // Información Adicional
+        const motivoInput = document.getElementById('motivo');
+        if (motivoInput) motivoInput.value = solicitud.motivo || '';
+
+        const cargoInput = document.getElementById('cargo');
+        if (cargoInput) cargoInput.value = solicitud.cargo || '';
+
+        // Contacto
+        const celularInput = document.getElementById('celular');
+        if (celularInput) celularInput.value = solicitud.celular || '';
+
+        const correoInput = document.getElementById('correo');
+        if (correoInput) correoInput.value = solicitud.correo || '';
+
+        // Prellenar campos de RENIEC con datos de la solicitud
+        // Solo DNI está permitido, así que siempre usar valor 1
+        const reniecTipoDoc = document.getElementById('reniecTipoDoc');
+        if (reniecTipoDoc) reniecTipoDoc.value = '1'; // Siempre DNI
+        
+        const reniecTipoDocHidden = document.getElementById('reniecTipoDocHidden');
+        if (reniecTipoDocHidden) reniecTipoDocHidden.value = '1';
+
+        const reniecNumeroDoc = document.getElementById('reniecNumeroDoc');
+        if (reniecNumeroDoc) {
+          // Solo prellenar si el tipo de documento de la solicitud es DNI (1)
+          if (solicitud.id_tipo_documento === 1 || solicitud.id_tipo_documento === '1') {
+            reniecNumeroDoc.value = solicitud.numero_documento || '';
+          } else {
+            reniecNumeroDoc.value = '';
+          }
+        }
+
+        // Limpiar resultado de RENIEC
+        const reniecResultado = document.getElementById('reniecResultado');
+        if (reniecResultado) reniecResultado.classList.add('hidden');
+        const reniecError = document.getElementById('reniecError');
+        if (reniecError) reniecError.classList.add('hidden');
+
+        // Campos de creación de usuario (inicializar vacíos)
+        const nameUsuarioInput = document.getElementById('nameUsuario');
+        if (nameUsuarioInput) {
+          nameUsuarioInput.value = '';
+          nameUsuarioInput.readOnly = true;
+        }
+
+        const passwordUsuarioInput = document.getElementById('passwordUsuario');
+        if (passwordUsuarioInput) {
+          passwordUsuarioInput.value = '';
+        }
+
+        const correoUsuarioInput = document.getElementById('correoUsuario');
+        if (correoUsuarioInput) {
+          correoUsuarioInput.value = solicitud.correo || '';
+        }
+
+        const rolUsuarioInput = document.getElementById('rolUsuario');
+        if (rolUsuarioInput) rolUsuarioInput.value = ''; // Resetear rol
+
+        // Mostrar el modal
+        const modal = document.getElementById('modalCrearUsuario');
+        if (modal) {
+          modal.classList.add('show');
+          // Hacer scroll al inicio del modal
+          modal.scrollTop = 0;
+        } else {
+          console.error('Modal no encontrado');
+          alert('Error: No se pudo abrir el modal.');
+        }
+      } catch (error) {
+        console.error('Error al prellenar el modal:', error);
+        alert('Error al cargar los datos de la solicitud. Por favor, intente nuevamente.');
+      }
+    }
+
+      function buscarReniec() {
+      // Solo DNI está permitido
+      const tipoDoc = '1'; // Siempre DNI
+      const numeroDoc = document.getElementById('reniecNumeroDoc').value.trim();
+
+      if (!numeroDoc) {
+        mostrarErrorReniec('Por favor, ingrese el número de DNI');
+        return;
+      }
+
+      // Validar DNI (8 dígitos)
+      if (numeroDoc.length !== 8 || !/^\d+$/.test(numeroDoc)) {
+        mostrarErrorReniec('El DNI debe tener exactamente 8 dígitos numéricos');
+        return;
+      }
+
+      const resultadoDiv = document.getElementById('reniecResultado');
+      const errorDiv = document.getElementById('reniecError');
+      const nameUsuarioInput = document.getElementById('nameUsuario');
+      const btnBuscar = document.getElementById('btnBuscarReniec');
+      const iconBuscar = document.getElementById('iconBuscar');
+      const iconLoading = document.getElementById('iconLoading');
+      const textBuscar = document.getElementById('textBuscar');
+
+      // Mostrar loading
+      resultadoDiv.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+      btnBuscar.disabled = true;
+      iconBuscar.classList.add('hidden');
+      iconLoading.classList.remove('hidden');
+      textBuscar.textContent = 'Buscando...';
+
+      // Siempre usar tipo_documento=1 (DNI) ya que solo DNI está permitido
+      fetch(`{{ route("api.consultar-reniec") }}?tipo_documento=1&numero_documento=${encodeURIComponent(numeroDoc)}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
+      })
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+        
+        const data = await response.json();
+        
+        // Si la respuesta no es exitosa, lanzar un error con los datos
+        if (!response.ok) {
+          const error = new Error(data.message || 'Error en la petición');
+          error.response = data;
+          error.status = response.status;
+          throw error;
+        }
+        
+        return data;
+      })
+      .then(data => {
+        // Restaurar botón
+        btnBuscar.disabled = false;
+        iconBuscar.classList.remove('hidden');
+        iconLoading.classList.add('hidden');
+        textBuscar.textContent = 'Buscar';
+
+        if (data.success && data.data) {
+          // Mostrar datos de RENIEC (soporta tanto camelCase como snake_case)
+          const nombresCompletos = data.data.nombres_completos || data.data.nombreCompleto || 
+            `${data.data.nombres || ''} ${data.data.apellidoPaterno || data.data.apellido_paterno || ''} ${data.data.apellidoMaterno || data.data.apellido_materno || ''}`.trim();
+          const apellidoPaterno = data.data.apellido_paterno || data.data.apellidoPaterno || '-';
+          const apellidoMaterno = data.data.apellido_materno || data.data.apellidoMaterno || '-';
+          const nombres = data.data.nombres || '-';
+          
+          document.getElementById('reniecNombres').textContent = nombresCompletos || '-';
+          document.getElementById('reniecApellidoPaterno').textContent = apellidoPaterno;
+          document.getElementById('reniecApellidoMaterno').textContent = apellidoMaterno;
+          document.getElementById('reniecNombresOnly').textContent = nombres;
+          
+          resultadoDiv.classList.remove('hidden');
+          errorDiv.classList.add('hidden');
+
+          // Si hay una nota (datos estimados), mostrarla en el resultado
+          const existingNote = resultadoDiv.querySelector('.note-warning');
+          if (existingNote) {
+            existingNote.remove();
+          }
+          
+          if (data.data.note) {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex items-start gap-2';
+            noteDiv.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600 flex-shrink-0 mt-0.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>${data.data.note}</span>
+            `;
+            noteDiv.classList.add('note-warning');
+            resultadoDiv.appendChild(noteDiv);
+          }
+
+          // Prellenar nombre de usuario con los datos
+          if (nameUsuarioInput) {
+            const nombreCompleto = nombresCompletos || '';
+            nameUsuarioInput.value = nombreCompleto;
+            // Si los datos vienen de la solicitud, permitir edición
+            nameUsuarioInput.readOnly = !(data.data.source === 'solicitud');
+            
+            // Cambiar el estilo del campo si es editable
+            if (!nameUsuarioInput.readOnly) {
+              nameUsuarioInput.classList.remove('bg-gray-100');
+              nameUsuarioInput.classList.add('bg-white');
+            }
+          }
+        } else {
+          let errorMessage = data.message || 'No se encontraron datos en RENIEC';
+          let suggestion = '';
+          
+          if (data.suggestion) {
+            suggestion = `<div class="mt-3 pt-3 border-t border-red-200"><strong>Sugerencia:</strong> ${data.suggestion}</div>`;
+          }
+          
+          mostrarErrorReniec(errorMessage + suggestion);
+        }
+      })
+      .catch(error => {
+        console.error('Error al consultar RENIEC:', error);
+        
+        // Restaurar botón
+        btnBuscar.disabled = false;
+        iconBuscar.classList.remove('hidden');
+        iconLoading.classList.add('hidden');
+        textBuscar.textContent = 'Buscar';
+
+        let mensajeError = '';
+        let suggestion = '';
+
+        // Si hay una respuesta con datos del servidor
+        if (error.response) {
+          mensajeError = error.response.message || 'Error al consultar RENIEC';
+          suggestion = error.response.suggestion || '';
+        } else if (error.message.includes('JSON')) {
+          mensajeError = 'El servidor no respondió correctamente. Verifique su conexión a internet.';
+        } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          mensajeError = 'No se pudo conectar con el servidor. Verifique su conexión a internet.';
+          suggestion = 'Asegúrese de tener una conexión estable a internet e intente nuevamente.';
+        } else {
+          mensajeError = error.message || 'Error al consultar RENIEC. Por favor, intente nuevamente.';
+        }
+
+        if (suggestion) {
+          mensajeError += `<div class="mt-3 pt-3 border-t border-red-200"><strong>Sugerencia:</strong> ${suggestion}</div>`;
+        }
+        
+        mostrarErrorReniec(mensajeError);
+      });
+    }
+
+    function mostrarErrorReniec(mensaje) {
+      const errorDiv = document.getElementById('reniecError');
+      const errorContent = document.getElementById('reniecErrorContent');
+      const resultadoDiv = document.getElementById('reniecResultado');
+      
+      errorContent.innerHTML = typeof mensaje === 'string' ? mensaje.replace(/\n/g, '<br>') : mensaje;
+      errorDiv.classList.remove('hidden');
+      resultadoDiv.classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      const eyeIcon = document.getElementById(`eyeIcon-${inputId}`);
+      const eyeOffIcon = document.getElementById(`eyeOffIcon-${inputId}`);
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      } else {
+        input.type = 'password';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      }
+    }
+
+    function closeModalCrearUsuario(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalCrearUsuario').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalCrearUsuario').classList.remove('show');
+      }
+      
+      // Limpiar campos al cerrar
+      const reniecTipoDoc = document.getElementById('reniecTipoDoc');
+      if (reniecTipoDoc) reniecTipoDoc.value = '1'; // Siempre DNI
+      document.getElementById('reniecNumeroDoc').value = '';
+      document.getElementById('reniecResultado').classList.add('hidden');
+      document.getElementById('reniecError').classList.add('hidden');
+      document.getElementById('nameUsuario').value = '';
+      document.getElementById('passwordUsuario').value = '';
+      document.getElementById('correoUsuario').value = '';
+      document.getElementById('rolUsuario').value = '';
+    }
+
+    function crearUsuario(event) {
+      event.preventDefault();
+      
+      const formData = new FormData(event.target);
+      const data = {
+        solicitud_id: formData.get('solicitud_id'),
+        name: formData.get('name'),
+        password: formData.get('password'),
+        email: formData.get('email'),
+        role: formData.get('role')
+      };
+
+      // Validaciones del formulario
+      if (!data.name || data.name.trim() === '') {
+        alert('Por favor, ingrese el nombre de usuario. Debe consultar RENIEC primero.');
+        return;
+      }
+
+      if (!data.email || data.email.trim() === '') {
+        alert('Por favor, ingrese el correo electrónico');
+        return;
+      }
+
+      if (!data.password || data.password.trim() === '') {
+        alert('Por favor, ingrese la contraseña');
+        return;
+      }
+
+      if (data.password.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres');
+        return;
+      }
+
+      if (!data.role) {
+        alert('Por favor, seleccione un rol');
+        return;
+      }
+
+      if (!data.solicitud_id) {
+        alert('Error: No se encontró el ID de la solicitud');
+        return;
+      }
+
+      // Mostrar loading en el botón de submit
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Creando usuario...
+        `;
+      }
+
+      fetch('{{ route("api.crear-usuario-solicitud") }}', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('Respuesta no JSON:', text);
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+        
+        const data = await response.json();
+        
+        // Si la respuesta no es exitosa, lanzar error con los datos
+        if (!response.ok) {
+          const error = new Error(data.message || 'Error al crear el usuario');
+          error.response = data;
+          error.status = response.status;
+          throw error;
+        }
+        
+        return data;
+      })
+      .then(data => {
+        // Restaurar botón
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+
+        if (data.success) {
+          // Mostrar mensaje de éxito con mejor diseño
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario creado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">La cuenta de usuario ha sido creada y la solicitud ha sido eliminada.</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          closeModalCrearUsuario();
+          cargarSolicitudes(estadoActual);
+          // Si estamos en la pestaña de usuarios, recargar también esa tabla
+          if (tabActual === 'usuarios') {
+            cargarUsuarios();
+          }
+        } else {
+          // Mostrar mensaje de error con mejor diseño
+          const errorMessage = data.message || 'No se pudo crear el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al crear usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      })
+      .catch(error => {
+        console.error('Error al crear usuario:', error);
+        
+        // Restaurar botón
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+
+        // Obtener mensaje de error
+        let errorMessage = 'No se pudo crear el usuario';
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.response && error.response.message) {
+          errorMessage = error.response.message;
+        } else if (error.status === 422) {
+          errorMessage = 'Datos inválidos. Verifique que todos los campos estén completos.';
+        } else if (error.status === 500) {
+          errorMessage = 'Error del servidor. Por favor, intente más tarde.';
+        }
+
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al crear usuario</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      });
+    }
+
+    // Cargar solicitudes al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarSolicitudes();
+    });
+  </script>
+</body>
+
+</html>
+
+
+
+
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="description" content="Sistema de Control y Alerta de Etapas de Vida del Niño - SISCADIT">
+  <title>SISCADIT - Gestión de Usuarios</title>
+  <link rel="stylesheet" href="/Css/dashbord.css">
+  <link rel="stylesheet" href="/Css/modal-usuario.css">
+  @stack('styles')
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root">
+    <div x-file-name="index" x-line-number="9" x-component="App" x-id="index_9" x-dynamic="true"
+      data-debug-wrapper="true" style="display: contents;">
+      <div class="App" x-file-name="App" x-line-number="13" x-component="div" x-id="App_13" x-dynamic="false">
+        <div x-file-name="App" x-line-number="14" x-component="BrowserRouter" x-id="App_14" x-dynamic="false"
+          data-debug-wrapper="true" style="display: contents;">
+          <div x-file-name="App" x-line-number="16" x-component="Layout" x-id="App_16" x-dynamic="true"
+            data-debug-wrapper="true" style="display: contents;">
+            <div class="flex h-screen bg-slate-50 relative" x-file-name="Layout" x-line-number="18" x-component="div"
+              x-id="Layout_18" x-dynamic="false">
+              <x-sidebar-main activeRoute="usuarios" />
+              <main class="flex-1 overflow-auto">
+                <div class="p-8">
+                  <div class="space-y-6" data-testid="usuarios-page">
+                    <!-- Header Section -->
+                    <div class="flex items-center justify-between flex-wrap gap-6">
+                      <div>
+                        <h1 class="text-4xl font-bold text-slate-700 mb-1">Gestión de Usuarios</h1>
+                        <p class="text-slate-500 text-base">Solicitudes y usuarios del sistema</p>
+                      </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="bg-white rounded-xl border border-slate-200 p-1 shadow-sm">
+                      <div class="flex gap-2">
+                        <button id="tabSolicitudes" onclick="cambiarTab('solicitudes')" 
+                          class="flex-1 px-6 py-3 rounded-lg font-medium transition-all text-center tab-button active">
+                          <span class="flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" x2="8" y1="13" y2="13"></line>
+                              <line x1="16" x2="8" y1="17" y2="17"></line>
+                            </svg>
+                            Solicitudes
+                          </span>
+                        </button>
+                        <button id="tabUsuarios" onclick="cambiarTab('usuarios')" 
+                          class="flex-1 px-6 py-3 rounded-lg font-medium transition-all text-center tab-button">
+                          <span class="flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="9" cy="7" r="4"></circle>
+                              <line x1="19" x2="19" y1="8" y2="14"></line>
+                              <line x1="22" x2="16" y1="11" y2="11"></line>
+                            </svg>
+                            Usuarios
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Sección de Solicitudes -->
+                    <div id="seccionSolicitudes" class="tab-content">
+                      <!-- Filtros -->
+                      <div class="flex gap-4 items-center flex-wrap">
+                        <div class="search-container-cred">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                          </svg>
+                          <input type="text" id="searchInputSolicitudes" placeholder="Buscar por documento o correo..."
+                            class="search-input-cred" onkeyup="filtrarTablaSolicitudes()">
+                        </div>
+                      </div>
+
+                      <!-- Table Section -->
+                      <div style="margin-top: 24px; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                          <thead>
+                            <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Tipo Doc.</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">N° Documento</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Red</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Microred</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Establecimiento</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Correo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Cargo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Celular</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Motivo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tablaSolicitudesBody">
+                              <!-- Las filas se cargarán dinámicamente -->
+                            </tbody>
+                            <tfoot id="footerSolicitudes" style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
+                              <tr>
+                                <td colspan="11" style="padding: 16px 24px;">
+                                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569;">
+                                    <div style="display: flex; align-items: center; gap: 16px;">
+                                      <span style="font-weight: 600; color: #1e293b;">Total de solicitudes:</span>
+                                      <span id="totalSolicitudes" style="padding: 6px 12px; background: #eef2ff; color: #6366f1; border-radius: 999px; font-weight: 600;">0</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748b;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; margin-right: 4px; vertical-align: middle;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 16v-4"></path>
+                                        <path d="M12 8h.01"></path>
+                                      </svg>
+                                      Última actualización: <span id="ultimaActualizacionSolicitudes">--</span>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                      </div>
+                    </div>
+
+                    <!-- Sección de Usuarios -->
+                    <div id="seccionUsuarios" class="tab-content hidden">
+                      <!-- Filtros -->
+                      <div class="flex gap-4 items-center flex-wrap">
+                        <div class="search-container-cred">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                          </svg>
+                          <input type="text" id="searchInputUsuarios" placeholder="Buscar por nombre o correo..."
+                            class="search-input-cred" onkeyup="filtrarTablaUsuarios()">
+                        </div>
+                        <select id="filtroRol" onchange="cambiarRol()" class="bg-white border border-slate-300 text-slate-700 px-4 py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                          <option value="">Todos los roles</option>
+                          <option value="jefe_microred">Jefe de Red</option>
+                          <option value="coordinador_red">Coordinador de MicroRed</option>
+                        </select>
+                      </div>
+
+                      <!-- Table Section -->
+                      <div style="margin-top: 24px; overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                          <thead>
+                            <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Nombre</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Correo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rol/Permiso</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Creación</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Última Actualización</th>
+                                <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody id="tablaUsuariosBody">
+                              <!-- Las filas se cargarán dinámicamente -->
+                            </tbody>
+                            <tfoot id="footerUsuarios" style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
+                              <tr>
+                                <td colspan="6" style="padding: 16px 24px;">
+                                  <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569;">
+                                    <div style="display: flex; align-items: center; gap: 16px;">
+                                      <span style="font-weight: 600; color: #1e293b;">Total de usuarios:</span>
+                                      <span id="totalUsuarios" style="padding: 6px 12px; background: #eef2ff; color: #6366f1; border-radius: 999px; font-weight: 600;">0</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748b;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; margin-right: 4px; vertical-align: middle;">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <path d="M12 16v-4"></path>
+                                        <path d="M12 8h.01"></path>
+                                      </svg>
+                                      Última actualización: <span id="ultimaActualizacionUsuarios">--</span>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                      </div>
+                      <!-- Paginación -->
+                      <div id="paginacionUsuarios" style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: white; border-radius: 0 0 8px 8px;">
+                        <!-- Los controles de paginación se cargarán dinámicamente -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para crear usuario desde solicitud -->
+  <div id="modalCrearUsuario" class="modal-usuario-overlay" onclick="closeModalCrearUsuario(event)">
+    <div class="modal-usuario-container" onclick="event.stopPropagation()">
+      <!-- Header del Modal con gradiente -->
+      <div class="modal-usuario-header">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" x2="19" y1="8" y2="14"></line>
+              <line x1="22" x2="16" y1="11" y2="11"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Crear Usuario desde Solicitud</h3>
+            <p class="modal-usuario-subtitle">Complete los datos para crear la cuenta de usuario</p>
+          </div>
+        </div>
+        <button onclick="closeModalCrearUsuario()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal con scroll -->
+      <div class="modal-usuario-content">
+        <form id="formCrearUsuario" onsubmit="crearUsuario(event)">
+          <input type="hidden" id="solicitudId" name="solicitud_id">
+          <div class="space-y-5">
+            <!-- Búsqueda RENIEC -->
+            <div class="modal-usuario-section reniec">
+            <h4 class="modal-usuario-section-title">
+              <div class="modal-usuario-section-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+              </div>
+              <span>Consulta RENIEC</span>
+            </h4>
+            <p class="text-sm text-slate-700 mb-4 font-medium">Ingrese el tipo y número de documento para consultar los datos en RENIEC:</p>
+            <div class="grid grid-cols-2 gap-4 mb-3">
+              <div class="modal-usuario-form-group">
+                <label class="modal-usuario-label required">
+                  Tipo de Documento
+                </label>
+                <select id="reniecTipoDoc" class="modal-usuario-select" required disabled>
+                  <option value="1" selected>DNI</option>
+                </select>
+                <input type="hidden" id="reniecTipoDocHidden" value="1">
+                <p class="text-xs text-slate-500 mt-1">Solo se permite consulta por DNI</p>
+              </div>
+              <div class="modal-usuario-form-group">
+                <label class="modal-usuario-label required">
+                  Número de Documento
+                </label>
+                <div class="flex gap-3">
+                  <input type="text" id="reniecNumeroDoc" 
+                    class="modal-usuario-input flex-1" 
+                    placeholder="Ingrese el DNI (8 dígitos)" required maxlength="8" pattern="[0-9]{8}" 
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                  <button type="button" id="btnBuscarReniec" onclick="buscarReniec()" 
+                    class="modal-usuario-btn-reniec">
+                    <svg id="iconBuscar" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-all">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <svg id="iconLoading" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden animate-spin">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"></circle>
+                      <path d="M12 2v4" stroke="currentColor" stroke-opacity="0.75"></path>
+                    </svg>
+                    <span id="textBuscar">Buscar</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="reniecResultado" class="modal-usuario-reniec-result hidden">
+              <div class="modal-usuario-reniec-result-header">
+                <div class="modal-usuario-reniec-result-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <h5 class="modal-usuario-reniec-result-title">Datos encontrados en RENIEC</h5>
+              </div>
+              <div class="space-y-3">
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Nombres Completos:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecNombres">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Apellido Paterno:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecApellidoPaterno">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Apellido Materno:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecApellidoMaterno">-</span>
+                </div>
+                <div class="modal-usuario-reniec-data">
+                  <span class="modal-usuario-reniec-label">Nombres:</span>
+                  <span class="modal-usuario-reniec-value" id="reniecNombresOnly">-</span>
+                </div>
+              </div>
+            </div>
+            <div id="reniecError" class="modal-usuario-reniec-error hidden">
+              <div class="modal-usuario-reniec-error-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="modal-usuario-reniec-error-icon">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div id="reniecErrorContent" class="flex-1"></div>
+              </div>
+            </div>
+          </div>
+
+            <!-- Información del Establecimiento -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </div>
+                <span>Información del Establecimiento</span>
+              </h4>
+              <div class="space-y-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Red</label>
+                  <input type="text" id="red" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Microred</label>
+                  <input type="text" id="microred" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Establecimiento</label>
+                  <input type="text" id="establecimiento" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información Adicional -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" x2="8" y1="13" y2="13"></line>
+                    <line x1="16" x2="8" y1="17" y2="17"></line>
+                  </svg>
+                </div>
+                <span>Información Adicional</span>
+              </h4>
+              <div class="space-y-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Motivo</label>
+                  <textarea id="motivo" class="modal-usuario-textarea" rows="3" readonly></textarea>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Cargo</label>
+                  <input type="text" id="cargo" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="modal-usuario-section info">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <span>Contacto</span>
+              </h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Celular</label>
+                  <input type="text" id="celular" class="modal-usuario-input" readonly>
+                </div>
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">Correo Electrónico</label>
+                  <input type="email" id="correo" class="modal-usuario-input" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sección de Creación de Usuario -->
+            <div class="modal-usuario-section create">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <line x1="19" x2="19" y1="8" y2="14"></line>
+                    <line x1="22" x2="16" y1="11" y2="11"></line>
+                  </svg>
+                </div>
+                <span>Crear Usuario</span>
+              </h4>
+              <p class="text-sm text-slate-700 mb-6 font-medium">Complete los siguientes campos para crear la cuenta de usuario:</p>
+              <div class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Nombre de Usuario (desde RENIEC)
+                    </label>
+                    <input type="text" id="nameUsuario" name="name" 
+                      class="modal-usuario-input" 
+                      placeholder="Se llenará automáticamente desde RENIEC" required readonly>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Este campo se llenará automáticamente con los datos de RENIEC
+                    </p>
+                  </div>
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Contraseña
+                    </label>
+                    <div class="relative">
+                      <input type="password" id="passwordUsuario" name="password" 
+                        class="modal-usuario-input" 
+                        placeholder="Ingrese la contraseña" required minlength="6">
+                      <button type="button" onclick="togglePasswordVisibility('passwordUsuario')" class="password-toggle-btn" aria-label="Mostrar/Ocultar contraseña">
+                        <svg id="eyeIcon-passwordUsuario" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <svg id="eyeOffIcon-passwordUsuario" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Mínimo 6 caracteres
+                    </p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Correo Electrónico
+                    </label>
+                    <input type="email" id="correoUsuario" name="email" 
+                      class="modal-usuario-input" 
+                      placeholder="ejemplo@correo.com" required>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Se usará el correo de la solicitud por defecto
+                    </p>
+                  </div>
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      Rol/Permiso
+                    </label>
+                    <select id="rolUsuario" name="role" 
+                      class="modal-usuario-select" required>
+                      <option value="">Seleccione un rol</option>
+                      <option value="jefe_microred">Jefe de Micro Red</option>
+                      <option value="coordinador_red">Coordinador de Red</option>
+                    </select>
+                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 16v-4"></path>
+                        <path d="M12 8h.01"></path>
+                      </svg>
+                      Seleccione el nivel de acceso del usuario
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer">
+        <button type="button" onclick="closeModalCrearUsuario()" class="modal-usuario-btn modal-usuario-btn-secondary">
+          Cancelar
+        </button>
+        <button type="submit" form="formCrearUsuario" class="modal-usuario-btn modal-usuario-btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <line x1="19" x2="19" y1="8" y2="14"></line>
+            <line x1="22" x2="16" y1="11" y2="11"></line>
+          </svg>
+          Crear Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para editar usuario -->
+  <div id="modalEditarUsuario" class="modal-usuario-overlay" onclick="closeModalEditarUsuario(event)">
+    <div class="modal-usuario-container" onclick="event.stopPropagation()">
+      <!-- Header del Modal con gradiente -->
+      <div class="modal-usuario-header edit">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Editar Usuario</h3>
+            <p class="modal-usuario-subtitle">Modifique los datos del usuario</p>
+          </div>
+        </div>
+        <button onclick="closeModalEditarUsuario()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal con scroll -->
+      <div class="modal-usuario-content">
+        <form id="formEditarUsuario" onsubmit="actualizarUsuario(event)">
+          <input type="hidden" id="usuarioIdEditar" name="usuario_id">
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Información del Usuario -->
+            <div class="modal-usuario-section">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <span>Información del Usuario</span>
+              </h4>
+              
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Nombre Completo
+                  </label>
+                  <input type="text" id="nombreUsuarioEditar" name="name" 
+                    class="modal-usuario-input" 
+                    placeholder="Ingrese el nombre completo" required>
+                </div>
+                
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    Correo Electrónico
+                  </label>
+                  <input type="email" id="correoUsuarioEditar" name="email" 
+                    class="modal-usuario-input" 
+                    placeholder="Ingrese el correo electrónico" required>
+                </div>
+                
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Rol/Permiso
+                  </label>
+                  <select id="rolUsuarioEditar" name="role" 
+                    class="modal-usuario-select" required>
+                    <option value="">Seleccione un rol</option>
+                    <option value="jefe_microred">Red</option>
+                    <option value="coordinador_red">MicroRed</option>
+                    <option value="usuario">Cancelar Permisos</option>
+                  </select>
+                  <p style="font-size: 0.75rem; color: #475569; margin-top: 0.5rem; font-weight: 500; display: flex; align-items: flex-start; gap: 0.375rem; line-height: 1.5;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3b82f6; margin-top: 0.125rem; flex-shrink: 0;">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <path d="M12 16v-4"></path>
+                      <path d="M12 8h.01"></path>
+                    </svg>
+                    <span>Seleccione el rol del usuario. Use "Cancelar Permisos" para quitar los permisos especiales.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cambio de Contraseña (Opcional) -->
+            <div class="modal-usuario-section">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </div>
+                <span>Cambiar Contraseña (Opcional)</span>
+              </h4>
+              <p style="font-size: 0.875rem; color: #475569; margin-bottom: 1rem; font-weight: 500;">Deje en blanco si no desea cambiar la contraseña</p>
+              
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #64748b;">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Nueva Contraseña
+                  </label>
+                  <div class="relative">
+                    <input type="password" id="nuevaPasswordEditar" name="password" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese nueva contraseña (mínimo 6 caracteres)" minlength="6">
+                    <button type="button" onclick="togglePasswordVisibility('nuevaPasswordEditar')" class="password-toggle-btn" aria-label="Mostrar/Ocultar contraseña">
+                      <svg id="eyeIcon-nuevaPasswordEditar" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="hidden">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <svg id="eyeOffIcon-nuevaPasswordEditar" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    </button>
+                  </div>
+                  <p style="font-size: 0.75rem; color: #475569; margin-top: 0.5rem; font-weight: 500;">Deje en blanco si no desea cambiar la contraseña. Mínimo 6 caracteres si la cambia.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer">
+        <button type="button" onclick="closeModalEditarUsuario()" class="modal-usuario-btn modal-usuario-btn-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Cancelar</span>
+        </button>
+        <button type="submit" form="formEditarUsuario" class="modal-usuario-btn modal-usuario-btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          <span>Guardar Cambios</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para confirmar eliminación de usuario -->
+  <div id="modalConfirmarEliminar" class="modal-usuario-overlay" onclick="closeModalConfirmarEliminar(event)">
+    <div class="modal-usuario-container" style="max-width: 32rem;" onclick="event.stopPropagation()">
+      <!-- Header del Modal -->
+      <div class="modal-usuario-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon" style="background: rgba(255, 255, 255, 0.25);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Confirmar Eliminación</h3>
+            <p class="modal-usuario-subtitle">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+        <button onclick="closeModalConfirmarEliminar()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal -->
+      <div class="modal-usuario-content" style="padding: 2rem; text-align: center;">
+        <div style="margin-bottom: 1.5rem;">
+          <div style="margin: 0 auto; width: 5rem; height: 5rem; background-color: #fee2e2; border-radius: 9999px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </div>
+          <h4 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">¿Está seguro de eliminar este usuario?</h4>
+          <p style="color: #475569; margin-bottom: 0.25rem; font-size: 0.875rem;">
+            El usuario <strong id="nombreUsuarioEliminar" style="color: #0f172a; font-weight: 600;"></strong> será eliminado permanentemente.
+          </p>
+          <p style="font-size: 0.875rem; color: #dc2626; font-weight: 600; margin-top: 0.75rem;">
+            ⚠️ Esta acción no se puede deshacer
+          </p>
+        </div>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer" style="display: flex; gap: 0.75rem; justify-content: space-between;">
+        <button type="button" onclick="closeModalConfirmarEliminar()" class="modal-usuario-btn modal-usuario-btn-secondary" style="flex: 0 1 auto; min-width: 140px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Cancelar
+        </button>
+        <button type="button" onclick="confirmarEliminarUsuario()" class="modal-usuario-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c); color: white; flex: 1; margin-left: 0.75rem; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          Sí, Eliminar Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out forwards;
+    }
+
+    .animate-slide-out {
+      animation: slideOut 0.3s ease-in forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+    
+    #reniecResultado:not(.hidden) {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Mejoras para botones de acción */
+    button[onclick*="abrirModalEditarUsuario"],
+    button[onclick*="eliminarUsuario"] {
+      position: relative;
+      isolation: isolate;
+    }
+    
+    button[onclick*="abrirModalEditarUsuario"]::before,
+    button[onclick*="eliminarUsuario"]::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    button[onclick*="abrirModalEditarUsuario"]:active::before,
+    button[onclick*="eliminarUsuario"]:active::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .tab-button {
+      background: transparent;
+      color: #64748b;
+      border: none;
+    }
+    .tab-button.active {
+      background: linear-gradient(to right, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    .tab-content {
+      display: block;
+    }
+    .tab-content.hidden {
+      display: none;
+    }
+  </style>
+
+  <script src="/JS/dashbord.js"></script>
+  <script src="/JS/formulario-selec-de-EESS.js"></script>
+  <script>
+    let solicitudesActuales = [];
+    let usuariosActuales = [];
+    let estadoActual = 'pendiente'; // Solo mostrar solicitudes pendientes por defecto
+    let tabActual = 'solicitudes';
+    let paginaActualUsuarios = 1;
+    let paginacionUsuarios = null;
+
+    // Función helper para obtener el nombre del establecimiento
+    function obtenerNombreEstablecimiento(codigoRed, codigoMicrored, idEstablecimiento) {
+      if (!codigoRed || !codigoMicrored || !idEstablecimiento) return 'N/A';
+      
+      try {
+        // Usar los datos del archivo formulario-selec-de-EESS.js si están disponibles
+        if (typeof data !== 'undefined' && data[codigoRed] && data[codigoRed][codigoMicrored]) {
+          const establecimiento = data[codigoRed][codigoMicrored].find(e => e.value === idEstablecimiento);
+          if (establecimiento) return establecimiento.text;
+        }
+      } catch (e) {
+        console.error('Error al obtener nombre de establecimiento:', e);
+      }
+      
+      // Si no se encuentra, mostrar el código sin el prefijo EST_ y con espacios
+      return idEstablecimiento.replace(/^EST_/, '').replace(/_/g, ' ') || idEstablecimiento;
+    }
+
+    // Cambiar entre tabs
+    function cambiarTab(tab) {
+      tabActual = tab;
+      const tabSolicitudes = document.getElementById('tabSolicitudes');
+      const tabUsuarios = document.getElementById('tabUsuarios');
+      const seccionSolicitudes = document.getElementById('seccionSolicitudes');
+      const seccionUsuarios = document.getElementById('seccionUsuarios');
+
+      if (tab === 'solicitudes') {
+        tabSolicitudes.classList.add('active');
+        tabUsuarios.classList.remove('active');
+        seccionSolicitudes.classList.remove('hidden');
+        seccionUsuarios.classList.add('hidden');
+        cargarSolicitudes(estadoActual);
+      } else {
+        tabSolicitudes.classList.remove('active');
+        tabUsuarios.classList.add('active');
+        seccionSolicitudes.classList.add('hidden');
+        seccionUsuarios.classList.remove('hidden');
+        cargarUsuarios();
+      }
+    }
+
+    // Cargar solicitudes
+    function cargarSolicitudes(estado = null) {
+      // Cargar solo solicitudes pendientes por defecto
+      estadoActual = estado || 'pendiente';
+      const url = `{{ route('api.solicitudes') }}?estado=${estadoActual}`;
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.data) {
+          solicitudesActuales = data.data;
+          renderizarTabla(solicitudesActuales);
+          if (data.estadisticas) {
+            // Contar solo solicitudes pendientes para el footer
+            const pendientes = solicitudesActuales.filter(s => s.estado === 'pendiente').length;
+            actualizarFooterSolicitudes(pendientes || data.estadisticas.pendientes || 0);
+          }
+        } else {
+          console.error('Error al cargar solicitudes:', data.message);
+          document.getElementById('tablaSolicitudesBody').innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center text-slate-500">No se pudieron cargar las solicitudes</td></tr>';
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('tablaSolicitudesBody').innerHTML = '<tr><td colspan="12" class="px-6 py-4 text-center text-red-500">Error al cargar las solicitudes</td></tr>';
+      });
+    }
+
+    function renderizarTabla(solicitudes) {
+      const tbody = document.getElementById('tablaSolicitudesBody');
+      if (!tbody) return;
+
+      // Filtrar solo solicitudes pendientes (por si acaso vienen aprobadas)
+      const solicitudesPendientes = solicitudes.filter(s => s.estado === 'pendiente');
+
+      if (solicitudesPendientes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="px-6 py-4 text-center text-slate-500">No hay solicitudes pendientes</td></tr>';
+        return;
+      }
+
+      const tiposDocumento = {
+        1: 'DNI',
+        2: 'CE',
+        3: 'PASS',
+        4: 'DIE',
+        5: 'S/ DOCUMENTO',
+        6: 'CNV'
+      };
+
+      const nombresRedes = {
+        1: 'AGUAYTIA',
+        2: 'ATALAYA',
+        3: 'BAP-CURARAY',
+        4: 'CORONEL PORTILLO',
+        5: 'ESSALUD',
+        6: 'FEDERICO BASADRE - YARINACOCHA',
+        7: 'HOSPITAL AMAZONICO - YARINACOCHA',
+        8: 'HOSPITAL REGIONAL DE PUCALLPA',
+        9: 'NO PERTENECE A NINGUNA RED'
+      };
+
+
+      tbody.innerHTML = solicitudesPendientes.map(solicitud => {
+        const fecha = new Date(solicitud.created_at).toLocaleDateString('es-PE');
+        const tipoDoc = tiposDocumento[solicitud.id_tipo_documento] || 'N/A';
+        const nombreRed = nombresRedes[solicitud.codigo_red] || `Red ${solicitud.codigo_red}`;
+        const nombreMicrored = solicitud.codigo_microred || 'N/A';
+        const nombreEstablecimiento = obtenerNombreEstablecimiento(
+          solicitud.codigo_red, 
+          solicitud.codigo_microred, 
+          solicitud.id_establecimiento
+        );
+        const btnAccion = solicitud.estado === 'pendiente' 
+          ? `<div class="flex items-center gap-2">
+              <button onclick="abrirModalCrearUsuario(${solicitud.id})" 
+                class="btn-crear-usuario"
+                title="Crear usuario desde esta solicitud">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="19" x2="19" y1="8" y2="14"></line>
+                  <line x1="22" x2="16" y1="11" y2="11"></line>
+                </svg>
+                <span>Crear Usuario</span>
+              </button>
+              <button onclick="rechazarSolicitud(${solicitud.id}, '${solicitud.numero_documento.replace(/'/g, "\\'")}')" 
+                class="btn-rechazar-solicitud"
+                title="Rechazar y eliminar esta solicitud">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" x2="10" y1="11" y2="17"></line>
+                  <line x1="14" x2="14" y1="11" y2="17"></line>
+                </svg>
+                <span>Rechazar</span>
+              </button>
+            </div>`
+          : '<span class="text-slate-400 text-sm font-medium">-</span>';
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${tipoDoc}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.numero_documento}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${nombreRed}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${nombreMicrored}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">${nombreEstablecimiento}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.correo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.cargo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.celular}</td>
+            <td class="px-6 py-4 text-sm text-slate-900">${solicitud.motivo.substring(0, 50)}${solicitud.motivo.length > 50 ? '...' : ''}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fecha}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${btnAccion}</td>
+          </tr>
+        `;
+      }).join('');
+      
+      // Actualizar footer de solicitudes
+      actualizarFooterSolicitudes(solicitudesPendientes.length);
+    }
+    
+    function actualizarFooterSolicitudes(total) {
+      const totalElement = document.getElementById('totalSolicitudes');
+      const fechaElement = document.getElementById('ultimaActualizacionSolicitudes');
+      
+      if (totalElement) {
+        totalElement.textContent = total;
+      }
+      
+      if (fechaElement) {
+        const ahora = new Date();
+        fechaElement.textContent = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function filtrarTablaSolicitudes() {
+      const searchTerm = document.getElementById('searchInputSolicitudes').value.toLowerCase();
+      const filas = document.querySelectorAll('#tablaSolicitudesBody tr');
+      
+      filas.forEach(fila => {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    // Cargar usuarios
+    function cargarUsuarios(pagina = 1) {
+      paginaActualUsuarios = pagina;
+      const rol = document.getElementById('filtroRol')?.value || '';
+      const url = `{{ route("api.usuarios") }}?page=${pagina}&per_page=10${rol ? '&rol=' + rol : ''}`;
+      
+      return fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+        // Verificar si la respuesta es un error 403 (Forbidden)
+        if (response.status === 403) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'No tiene permisos para acceder a esta funcionalidad');
+          });
+        }
+        // Verificar otros errores HTTP
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || 'Error al cargar los usuarios');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success && data.data) {
+          usuariosActuales = data.data;
+          paginacionUsuarios = data.pagination;
+          renderizarTablaUsuarios(usuariosActuales);
+          renderizarPaginacionUsuarios(paginacionUsuarios);
+          actualizarFooterUsuarios(data.estadisticas, paginacionUsuarios);
+          return data; // Devolver los datos para verificación
+        } else {
+          console.error('Error al cargar usuarios:', data.message);
+          const tbody = document.getElementById('tablaUsuariosBody');
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+              <div class="flex flex-col items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" x2="12" y1="8" y2="12"></line>
+                  <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                </svg>
+                <span class="font-semibold">${data.message || 'No se pudieron cargar los usuarios'}</span>
+              </div>
+            </td></tr>`;
+          }
+          throw new Error(data.message || 'Error al cargar usuarios');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        const tbody = document.getElementById('tablaUsuariosBody');
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+            <div class="flex flex-col items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" x2="12" y1="8" y2="12"></line>
+                <line x1="12" x2="12.01" y1="16" y2="16"></line>
+              </svg>
+              <span class="font-semibold">${error.message || 'Error al cargar los usuarios'}</span>
+              <span class="text-sm text-slate-600">Verifique que tenga permisos de administrador (DIRESA)</span>
+            </div>
+          </td></tr>`;
+        }
+        throw error; // Re-lanzar el error para que pueda ser manejado
+      });
+    }
+
+    function renderizarTablaUsuarios(usuarios) {
+      const tbody = document.getElementById('tablaUsuariosBody');
+      if (!tbody) return;
+
+      if (usuarios.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">No hay usuarios registrados</td></tr>';
+        return;
+      }
+
+      const rolesBadge = {
+        'admin': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">Administrador</span>',
+        'medico': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Médico</span>',
+        'usuario': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Usuario</span>',
+        'jefe_microred': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
+        'coordinador_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de MicroRed</span>'
+      };
+
+      tbody.innerHTML = usuarios.map(usuario => {
+        const fechaCreacion = new Date(usuario.created_at).toLocaleDateString('es-PE');
+        const fechaActualizacion = new Date(usuario.updated_at).toLocaleDateString('es-PE');
+        const rolBadge = rolesBadge[usuario.role] || rolesBadge['usuario'];
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${usuario.name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${usuario.email}</td>
+            <td class="px-6 py-4 whitespace-nowrap">${rolBadge}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaCreacion}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaActualizacion}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-2.5">
+                <button onclick="abrirModalEditarUsuario(${usuario.id})" 
+                  class="btn-editar-usuario"
+                  title="Editar usuario">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>Editar</span>
+                </button>
+                <button onclick="eliminarUsuario(${usuario.id}, '${usuario.name.replace(/'/g, "\\'")}')" 
+                  class="btn-eliminar-usuario"
+                  title="Eliminar usuario">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  <span>Eliminar</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function actualizarFooterUsuarios(estadisticas, pagination) {
+      const totalElement = document.getElementById('totalUsuarios');
+      const fechaElement = document.getElementById('ultimaActualizacionUsuarios');
+      
+      if (totalElement && estadisticas) {
+        totalElement.textContent = estadisticas.total || 0;
+      }
+      
+      if (fechaElement) {
+        const ahora = new Date();
+        fechaElement.textContent = ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function filtrarTablaUsuarios() {
+      const searchTerm = document.getElementById('searchInputUsuarios').value.toLowerCase();
+      const filas = document.querySelectorAll('#tablaUsuariosBody tr');
+      
+      filas.forEach(fila => {
+        const texto = fila.textContent.toLowerCase();
+        fila.style.display = texto.includes(searchTerm) ? '' : 'none';
+      });
+    }
+
+    function cambiarRol() {
+      // Recargar usuarios desde la página 1 cuando se cambia el filtro
+      cargarUsuarios(1);
+    }
+
+    function renderizarPaginacionUsuarios(pagination) {
+      const contenedor = document.getElementById('paginacionUsuarios');
+      if (!contenedor || !pagination) {
+        return;
+      }
+
+      const { current_page, last_page, total, from, to } = pagination;
+
+      if (last_page <= 1) {
+        contenedor.innerHTML = '';
+        return;
+      }
+
+      let html = '<div class="flex items-center justify-between">';
+      
+      // Información de resultados
+      html += `<div class="text-sm text-slate-600">
+        Mostrando <span class="font-semibold text-slate-900">${from || 0}</span> a 
+        <span class="font-semibold text-slate-900">${to || 0}</span> de 
+        <span class="font-semibold text-slate-900">${total}</span> usuarios
+      </div>`;
+
+      // Controles de paginación
+      html += '<div class="flex items-center gap-2">';
+      
+      // Botón Anterior
+      if (current_page > 1) {
+        html += `<button onclick="cargarUsuarios(${current_page - 1})" 
+          class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Anterior
+        </button>`;
+      } else {
+        html += `<button disabled 
+          class="px-4 py-2 text-sm font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Anterior
+        </button>`;
+      }
+
+      // Números de página
+      html += '<div class="flex items-center gap-1">';
+      const maxPages = 5;
+      let startPage = Math.max(1, current_page - Math.floor(maxPages / 2));
+      let endPage = Math.min(last_page, startPage + maxPages - 1);
+      
+      if (endPage - startPage < maxPages - 1) {
+        startPage = Math.max(1, endPage - maxPages + 1);
+      }
+
+      if (startPage > 1) {
+        html += `<button onclick="cargarUsuarios(1)" 
+          class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">1</button>`;
+        if (startPage > 2) {
+          html += '<span class="px-2 text-slate-400">...</span>';
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        if (i === current_page) {
+          html += `<button disabled 
+            class="px-3 py-2 text-sm font-semibold text-white bg-purple-600 border border-purple-600 rounded-lg">${i}</button>`;
+        } else {
+          html += `<button onclick="cargarUsuarios(${i})" 
+            class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">${i}</button>`;
+        }
+      }
+
+      if (endPage < last_page) {
+        if (endPage < last_page - 1) {
+          html += '<span class="px-2 text-slate-400">...</span>';
+        }
+        html += `<button onclick="cargarUsuarios(${last_page})" 
+          class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">${last_page}</button>`;
+      }
+
+      html += '</div>';
+
+      // Botón Siguiente
+      if (current_page < last_page) {
+        html += `<button onclick="cargarUsuarios(${current_page + 1})" 
+          class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+          Siguiente
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>`;
+      } else {
+        html += `<button disabled 
+          class="px-4 py-2 text-sm font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-lg cursor-not-allowed">
+          Siguiente
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>`;
+      }
+
+      html += '</div></div>';
+      contenedor.innerHTML = html;
+    }
+
+    // Función anterior de cambiarRol (mantener por compatibilidad si se usa en otro lugar)
+    function cambiarRolFiltro() {
+      const rol = document.getElementById('filtroRol').value;
+      const filas = document.querySelectorAll('#tablaUsuariosBody tr');
+      
+      filas.forEach(fila => {
+        const rolBadge = fila.querySelector('td:nth-child(3) span');
+        if (!rolBadge) return;
+        
+        const rolUsuario = rolBadge.textContent.toLowerCase();
+        let coincide = false;
+        
+        if (!rol) {
+          // Si no hay filtro, mostrar todos
+          coincide = true;
+        } else if (rol === 'jefe_microred') {
+          // Filtrar por Jefe de Red
+          coincide = rolUsuario.includes('jefe');
+        } else if (rol === 'coordinador_red') {
+          // Filtrar por Coordinador de MicroRed
+          coincide = rolUsuario.includes('coordinador');
+        }
+        
+        fila.style.display = coincide ? '' : 'none';
+      });
+    }
+
+    // Función para abrir el modal de edición de usuario
+    async function abrirModalEditarUsuario(usuarioId) {
+      try {
+        // Buscar el usuario en la lista actual
+        const usuario = usuariosActuales.find(u => u.id === usuarioId);
+        
+        if (!usuario) {
+          alert('No se pudo encontrar la información del usuario');
+          return;
+        }
+
+        // Prellenar el formulario
+        document.getElementById('usuarioIdEditar').value = usuario.id;
+        document.getElementById('nombreUsuarioEditar').value = usuario.name || '';
+        document.getElementById('correoUsuarioEditar').value = usuario.email || '';
+        document.getElementById('rolUsuarioEditar').value = usuario.role || '';
+        const passwordInput = document.getElementById('nuevaPasswordEditar');
+        if (passwordInput) {
+          passwordInput.value = '';
+          passwordInput.type = 'password';
+          // Resetear iconos de visibilidad
+          const eyeIcon = document.getElementById('eyeIcon-nuevaPasswordEditar');
+          const eyeOffIcon = document.getElementById('eyeOffIcon-nuevaPasswordEditar');
+          if (eyeIcon && eyeOffIcon) {
+            eyeIcon.classList.add('hidden');
+            eyeOffIcon.classList.remove('hidden');
+          }
+        }
+
+        // Mostrar el modal
+        const modal = document.getElementById('modalEditarUsuario');
+        if (modal) {
+          modal.classList.add('show');
+          modal.scrollTop = 0;
+        }
+      } catch (error) {
+        console.error('Error al abrir modal de edición:', error);
+        alert('Error al cargar los datos del usuario. Por favor, intente nuevamente.');
+      }
+    }
+
+    // Función para cerrar el modal de edición
+    function closeModalEditarUsuario(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalEditarUsuario').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalEditarUsuario').classList.remove('show');
+      }
+    }
+
+    // Función para actualizar usuario
+    async function actualizarUsuario(event) {
+      event.preventDefault();
+      
+      const usuarioId = document.getElementById('usuarioIdEditar').value;
+      const nombre = document.getElementById('nombreUsuarioEditar').value;
+      const correo = document.getElementById('correoUsuarioEditar').value;
+      const rol = document.getElementById('rolUsuarioEditar').value;
+      const nuevaPassword = document.getElementById('nuevaPasswordEditar').value;
+
+      if (!nombre || !correo || !rol) {
+        // Mostrar mensaje de error de validación
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Campos requeridos</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">Por favor, complete todos los campos requeridos</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 4000);
+        return;
+      }
+
+      try {
+        const formData = {
+          usuario_id: usuarioId,
+          name: nombre,
+          email: correo,
+          role: rol
+        };
+        
+        // Solo agregar password si tiene un valor (no vacío)
+        if (nuevaPassword && nuevaPassword.trim() !== '') {
+          if (nuevaPassword.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+          }
+          formData.password = nuevaPassword.trim();
+        }
+
+        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioId, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          // Manejar errores de validación
+          let errorMessage = 'Error al actualizar el usuario';
+          if (data.errors) {
+            const errors = Object.values(data.errors).flat();
+            errorMessage = errors.join(', ');
+          } else if (data.message) {
+            errorMessage = data.message;
+          }
+          
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al actualizar</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+          return;
+        }
+
+        if (data.success) {
+          // Cerrar el modal
+          closeModalEditarUsuario();
+
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario actualizado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">Los cambios del usuario han sido guardados correctamente.</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          // Recargar la lista de usuarios
+          cargarUsuarios();
+        } else {
+          // Mostrar mensaje de error
+          const errorMessage = data.message || 'Error al actualizar el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al actualizar usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">Error al actualizar el usuario. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      }
+    }
+
+    // Variables para el modal de confirmación
+    let usuarioIdAEliminar = null;
+    let nombreUsuarioAEliminar = '';
+
+    // Función para rechazar y eliminar permanentemente una solicitud
+    function rechazarSolicitud(solicitudId, numeroDoc) {
+      if (!confirm(`¿Está seguro de que desea rechazar y eliminar permanentemente la solicitud con DNI ${numeroDoc}?\n\nEsta acción no se puede deshacer y eliminará todos los datos de la solicitud de la base de datos.`)) {
+        return;
+      }
+
+      fetch(`{{ route("api.solicitudes.destroy", ":id") }}`.replace(':id', solicitudId), {
+        method: 'DELETE',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
         }
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          let mensaje = 'Usuario creado correctamente.\n\n';
-          if (data.password_temporal) {
-            mensaje += `Contraseña temporal: ${data.password_temporal}\n\n`;
-            mensaje += `Email: ${data.email}\n\n`;
-            mensaje += '¡IMPORTANTE! Guarde esta contraseña, no se mostrará nuevamente.';
-          }
-          alert(mensaje);
-          location.reload();
+          // Recargar la tabla de solicitudes
+          cargarSolicitudes();
+          // Mostrar mensaje de éxito
+          alert('Solicitud rechazada y eliminada permanentemente de la base de datos.');
         } else {
-          alert(data.message || 'Error al crear el usuario');
+          alert('Error al rechazar la solicitud: ' + (data.message || 'Error desconocido'));
         }
       })
       .catch(error => {
-        alert('Error al crear el usuario');
-        console.error(error);
+        console.error('Error:', error);
+        alert('Error al rechazar la solicitud. Por favor, intente nuevamente.');
       });
     }
 
-    // Filtros de usuarios
-    document.getElementById('buscarUsuario')?.addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') {
-        const buscar = this.value;
-        const rol = document.getElementById('filtroRol').value;
-        window.location.href = `/usuarios?buscar=${buscar}&rol=${rol}`;
+    // Función para abrir el modal de confirmación de eliminación
+    function eliminarUsuario(usuarioId, nombreUsuario) {
+      usuarioIdAEliminar = usuarioId;
+      nombreUsuarioAEliminar = nombreUsuario;
+      
+      // Mostrar el nombre del usuario en el modal
+      document.getElementById('nombreUsuarioEliminar').textContent = nombreUsuario;
+      
+      // Abrir el modal
+      const modal = document.getElementById('modalConfirmarEliminar');
+      if (modal) {
+        modal.classList.add('show');
       }
-    });
+    }
 
-    document.getElementById('filtroRol')?.addEventListener('change', function() {
-      const buscar = document.getElementById('buscarUsuario').value;
-      const rol = this.value;
-      window.location.href = `/usuarios?buscar=${buscar}&rol=${rol}`;
-    });
-
-    // Filtros de solicitudes
-    document.getElementById('buscarSolicitud')?.addEventListener('keyup', function(e) {
-      if (e.key === 'Enter') {
-        const buscar = this.value;
-        const estado = document.getElementById('filtroEstado').value;
-        window.location.href = `/usuarios?tab=solicitudes&buscar_solicitud=${buscar}&estado=${estado}`;
+    // Función para cerrar el modal de confirmación
+    function closeModalConfirmarEliminar(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalConfirmarEliminar').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalConfirmarEliminar').classList.remove('show');
       }
-    });
+      // Limpiar variables
+      usuarioIdAEliminar = null;
+      nombreUsuarioAEliminar = '';
+    }
 
-    document.getElementById('filtroEstado')?.addEventListener('change', function() {
-      const buscar = document.getElementById('buscarSolicitud').value;
-      const estado = this.value;
-      window.location.href = `/usuarios?tab=solicitudes&buscar_solicitud=${buscar}&estado=${estado}`;
-    });
+    // Función para confirmar y ejecutar la eliminación
+    async function confirmarEliminarUsuario() {
+      if (!usuarioIdAEliminar) {
+        console.error('No hay usuario seleccionado para eliminar');
+        return;
+      }
 
+      // Obtener el botón de eliminar para deshabilitarlo y mostrar loading
+      const btnEliminar = document.querySelector('#modalConfirmarEliminar button[onclick*="confirmarEliminarUsuario"]');
+      const btnCancelar = document.querySelector('#modalConfirmarEliminar button[onclick*="closeModalConfirmarEliminar"]');
+      
+      // Guardar el contenido original del botón
+      const contenidoOriginal = btnEliminar ? btnEliminar.innerHTML : '';
+      
+      // Deshabilitar botones y mostrar loading
+      if (btnEliminar) {
+        btnEliminar.disabled = true;
+        btnEliminar.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Eliminando...
+        `;
+      }
+      if (btnCancelar) {
+        btnCancelar.disabled = true;
+      }
+
+      try {
+        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioIdAEliminar, {
+          method: 'DELETE',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json'
+          }
+        });
+
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+
+        const data = await response.json();
+
+        // Restaurar botones
+        if (btnEliminar) {
+          btnEliminar.disabled = false;
+          btnEliminar.innerHTML = contenidoOriginal;
+        }
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        // Verificar respuesta del servidor
+        if (response.ok && data.success) {
+          // Cerrar el modal
+          closeModalConfirmarEliminar();
+
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario eliminado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">El usuario "${nombreUsuarioAEliminar}" ha sido eliminado del sistema</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          // Recargar la lista de usuarios para verificar que se eliminó
+          await cargarUsuarios();
+
+          // Verificar que el usuario ya no está en la lista
+          setTimeout(() => {
+            const usuarioEliminado = usuariosActuales.find(u => u.id === usuarioIdAEliminar);
+            if (usuarioEliminado) {
+              console.warn('El usuario aún aparece en la lista después de eliminarlo');
+              // Forzar recarga
+              cargarUsuarios();
+            } else {
+              console.log('Usuario eliminado correctamente y verificado');
+            }
+          }, 500);
+
+        } else {
+          // Mostrar mensaje de error
+          const errorMessage = data.message || 'Error al eliminar el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al eliminar usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        
+        // Restaurar botones en caso de error
+        if (btnEliminar) {
+          btnEliminar.disabled = false;
+          btnEliminar.innerHTML = contenidoOriginal;
+        }
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">No se pudo conectar con el servidor. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      }
+    }
+
+    function abrirModalCrearUsuario(solicitudId) {
+      console.log('Abriendo modal para solicitud ID:', solicitudId);
+      console.log('Solicitudes actuales:', solicitudesActuales);
+      
+      const solicitud = solicitudesActuales.find(s => s.id === solicitudId);
+      if (!solicitud) {
+        console.error('Solicitud no encontrada:', solicitudId);
+        alert('Error: No se pudo encontrar la solicitud seleccionada.');
+        return;
+      }
+
+      console.log('Solicitud encontrada:', solicitud);
+
+      const tiposDocumento = {
+        1: 'DNI',
+        2: 'CE',
+        3: 'PASS',
+        4: 'DIE',
+        5: 'S/ DOCUMENTO',
+        6: 'CNV'
+      };
+
+      const redes = {
+        1: 'AGUAYTIA',
+        2: 'ATALAYA',
+        3: 'BAP-CURARAY',
+        4: 'CORONEL PORTILLO',
+        5: 'ESSALUD',
+        6: 'FEDERICO BASADRE - YARINACOCHA',
+        7: 'HOSPITAL AMAZONICO - YARINACOCHA',
+        8: 'HOSPITAL REGIONAL DE PUCALLPA',
+        9: 'NO PERTENECE A NINGUNA RED'
+      };
+
+      // Prellenar todos los campos del modal
+      try {
+        // ID de la solicitud (oculto)
+        const solicitudIdInput = document.getElementById('solicitudId');
+        if (solicitudIdInput) solicitudIdInput.value = solicitud.id || '';
+
+        // Información del Documento
+        const tipoDocInput = document.getElementById('tipoDocumento');
+        if (tipoDocInput) tipoDocInput.value = tiposDocumento[solicitud.id_tipo_documento] || 'N/A';
+
+        const numDocInput = document.getElementById('numeroDocumento');
+        if (numDocInput) numDocInput.value = solicitud.numero_documento || '';
+
+        // Información del Establecimiento
+        const redInput = document.getElementById('red');
+        if (redInput) redInput.value = redes[solicitud.codigo_red] || `Código: ${solicitud.codigo_red}`;
+
+        const microredInput = document.getElementById('microred');
+        if (microredInput) microredInput.value = solicitud.codigo_microred || 'N/A';
+
+        const establecimientoInput = document.getElementById('establecimiento');
+        if (establecimientoInput) {
+          const nombreEstablecimiento = obtenerNombreEstablecimiento(
+            solicitud.codigo_red, 
+            solicitud.codigo_microred, 
+            solicitud.id_establecimiento
+          );
+          establecimientoInput.value = nombreEstablecimiento || solicitud.id_establecimiento || 'N/A';
+        }
+
+        // Información Adicional
+        const motivoInput = document.getElementById('motivo');
+        if (motivoInput) motivoInput.value = solicitud.motivo || '';
+
+        const cargoInput = document.getElementById('cargo');
+        if (cargoInput) cargoInput.value = solicitud.cargo || '';
+
+        // Contacto
+        const celularInput = document.getElementById('celular');
+        if (celularInput) celularInput.value = solicitud.celular || '';
+
+        const correoInput = document.getElementById('correo');
+        if (correoInput) correoInput.value = solicitud.correo || '';
+
+        // Prellenar campos de RENIEC con datos de la solicitud
+        // Solo DNI está permitido, así que siempre usar valor 1
+        const reniecTipoDoc = document.getElementById('reniecTipoDoc');
+        if (reniecTipoDoc) reniecTipoDoc.value = '1'; // Siempre DNI
+        
+        const reniecTipoDocHidden = document.getElementById('reniecTipoDocHidden');
+        if (reniecTipoDocHidden) reniecTipoDocHidden.value = '1';
+
+        const reniecNumeroDoc = document.getElementById('reniecNumeroDoc');
+        if (reniecNumeroDoc) {
+          // Solo prellenar si el tipo de documento de la solicitud es DNI (1)
+          if (solicitud.id_tipo_documento === 1 || solicitud.id_tipo_documento === '1') {
+            reniecNumeroDoc.value = solicitud.numero_documento || '';
+          } else {
+            reniecNumeroDoc.value = '';
+          }
+        }
+
+        // Limpiar resultado de RENIEC
+        const reniecResultado = document.getElementById('reniecResultado');
+        if (reniecResultado) reniecResultado.classList.add('hidden');
+        const reniecError = document.getElementById('reniecError');
+        if (reniecError) reniecError.classList.add('hidden');
+
+        // Campos de creación de usuario (inicializar vacíos)
+        const nameUsuarioInput = document.getElementById('nameUsuario');
+        if (nameUsuarioInput) {
+          nameUsuarioInput.value = '';
+          nameUsuarioInput.readOnly = true;
+        }
+
+        const passwordUsuarioInput = document.getElementById('passwordUsuario');
+        if (passwordUsuarioInput) {
+          passwordUsuarioInput.value = '';
+        }
+
+        const correoUsuarioInput = document.getElementById('correoUsuario');
+        if (correoUsuarioInput) {
+          correoUsuarioInput.value = solicitud.correo || '';
+        }
+
+        const rolUsuarioInput = document.getElementById('rolUsuario');
+        if (rolUsuarioInput) rolUsuarioInput.value = ''; // Resetear rol
+
+        // Mostrar el modal
+        const modal = document.getElementById('modalCrearUsuario');
+        if (modal) {
+          modal.classList.add('show');
+          // Hacer scroll al inicio del modal
+          modal.scrollTop = 0;
+        } else {
+          console.error('Modal no encontrado');
+          alert('Error: No se pudo abrir el modal.');
+        }
+      } catch (error) {
+        console.error('Error al prellenar el modal:', error);
+        alert('Error al cargar los datos de la solicitud. Por favor, intente nuevamente.');
+      }
+    }
+
+      function buscarReniec() {
+      // Solo DNI está permitido
+      const tipoDoc = '1'; // Siempre DNI
+      const numeroDoc = document.getElementById('reniecNumeroDoc').value.trim();
+
+      if (!numeroDoc) {
+        mostrarErrorReniec('Por favor, ingrese el número de DNI');
+        return;
+      }
+
+      // Validar DNI (8 dígitos)
+      if (numeroDoc.length !== 8 || !/^\d+$/.test(numeroDoc)) {
+        mostrarErrorReniec('El DNI debe tener exactamente 8 dígitos numéricos');
+        return;
+      }
+
+      const resultadoDiv = document.getElementById('reniecResultado');
+      const errorDiv = document.getElementById('reniecError');
+      const nameUsuarioInput = document.getElementById('nameUsuario');
+      const btnBuscar = document.getElementById('btnBuscarReniec');
+      const iconBuscar = document.getElementById('iconBuscar');
+      const iconLoading = document.getElementById('iconLoading');
+      const textBuscar = document.getElementById('textBuscar');
+
+      // Mostrar loading
+      resultadoDiv.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+      btnBuscar.disabled = true;
+      iconBuscar.classList.add('hidden');
+      iconLoading.classList.remove('hidden');
+      textBuscar.textContent = 'Buscando...';
+
+      // Siempre usar tipo_documento=1 (DNI) ya que solo DNI está permitido
+      fetch(`{{ route("api.consultar-reniec") }}?tipo_documento=1&numero_documento=${encodeURIComponent(numeroDoc)}`, {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        }
+      })
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+        
+        const data = await response.json();
+        
+        // Si la respuesta no es exitosa, lanzar un error con los datos
+        if (!response.ok) {
+          const error = new Error(data.message || 'Error en la petición');
+          error.response = data;
+          error.status = response.status;
+          throw error;
+        }
+        
+        return data;
+      })
+      .then(data => {
+        // Restaurar botón
+        btnBuscar.disabled = false;
+        iconBuscar.classList.remove('hidden');
+        iconLoading.classList.add('hidden');
+        textBuscar.textContent = 'Buscar';
+
+        if (data.success && data.data) {
+          // Mostrar datos de RENIEC (soporta tanto camelCase como snake_case)
+          const nombresCompletos = data.data.nombres_completos || data.data.nombreCompleto || 
+            `${data.data.nombres || ''} ${data.data.apellidoPaterno || data.data.apellido_paterno || ''} ${data.data.apellidoMaterno || data.data.apellido_materno || ''}`.trim();
+          const apellidoPaterno = data.data.apellido_paterno || data.data.apellidoPaterno || '-';
+          const apellidoMaterno = data.data.apellido_materno || data.data.apellidoMaterno || '-';
+          const nombres = data.data.nombres || '-';
+          
+          document.getElementById('reniecNombres').textContent = nombresCompletos || '-';
+          document.getElementById('reniecApellidoPaterno').textContent = apellidoPaterno;
+          document.getElementById('reniecApellidoMaterno').textContent = apellidoMaterno;
+          document.getElementById('reniecNombresOnly').textContent = nombres;
+          
+          resultadoDiv.classList.remove('hidden');
+          errorDiv.classList.add('hidden');
+
+          // Si hay una nota (datos estimados), mostrarla en el resultado
+          const existingNote = resultadoDiv.querySelector('.note-warning');
+          if (existingNote) {
+            existingNote.remove();
+          }
+          
+          if (data.data.note) {
+            const noteDiv = document.createElement('div');
+            noteDiv.className = 'mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 flex items-start gap-2';
+            noteDiv.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-600 flex-shrink-0 mt-0.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <span>${data.data.note}</span>
+            `;
+            noteDiv.classList.add('note-warning');
+            resultadoDiv.appendChild(noteDiv);
+          }
+
+          // Prellenar nombre de usuario con los datos
+          if (nameUsuarioInput) {
+            const nombreCompleto = nombresCompletos || '';
+            nameUsuarioInput.value = nombreCompleto;
+            // Si los datos vienen de la solicitud, permitir edición
+            nameUsuarioInput.readOnly = !(data.data.source === 'solicitud');
+            
+            // Cambiar el estilo del campo si es editable
+            if (!nameUsuarioInput.readOnly) {
+              nameUsuarioInput.classList.remove('bg-gray-100');
+              nameUsuarioInput.classList.add('bg-white');
+            }
+          }
+        } else {
+          let errorMessage = data.message || 'No se encontraron datos en RENIEC';
+          let suggestion = '';
+          
+          if (data.suggestion) {
+            suggestion = `<div class="mt-3 pt-3 border-t border-red-200"><strong>Sugerencia:</strong> ${data.suggestion}</div>`;
+          }
+          
+          mostrarErrorReniec(errorMessage + suggestion);
+        }
+      })
+      .catch(error => {
+        console.error('Error al consultar RENIEC:', error);
+        
+        // Restaurar botón
+        btnBuscar.disabled = false;
+        iconBuscar.classList.remove('hidden');
+        iconLoading.classList.add('hidden');
+        textBuscar.textContent = 'Buscar';
+
+        let mensajeError = '';
+        let suggestion = '';
+
+        // Si hay una respuesta con datos del servidor
+        if (error.response) {
+          mensajeError = error.response.message || 'Error al consultar RENIEC';
+          suggestion = error.response.suggestion || '';
+        } else if (error.message.includes('JSON')) {
+          mensajeError = 'El servidor no respondió correctamente. Verifique su conexión a internet.';
+        } else if (error.message.includes('fetch') || error.message.includes('Failed to fetch')) {
+          mensajeError = 'No se pudo conectar con el servidor. Verifique su conexión a internet.';
+          suggestion = 'Asegúrese de tener una conexión estable a internet e intente nuevamente.';
+        } else {
+          mensajeError = error.message || 'Error al consultar RENIEC. Por favor, intente nuevamente.';
+        }
+
+        if (suggestion) {
+          mensajeError += `<div class="mt-3 pt-3 border-t border-red-200"><strong>Sugerencia:</strong> ${suggestion}</div>`;
+        }
+        
+        mostrarErrorReniec(mensajeError);
+      });
+    }
+
+    function mostrarErrorReniec(mensaje) {
+      const errorDiv = document.getElementById('reniecError');
+      const errorContent = document.getElementById('reniecErrorContent');
+      const resultadoDiv = document.getElementById('reniecResultado');
+      
+      errorContent.innerHTML = typeof mensaje === 'string' ? mensaje.replace(/\n/g, '<br>') : mensaje;
+      errorDiv.classList.remove('hidden');
+      resultadoDiv.classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      const eyeIcon = document.getElementById(`eyeIcon-${inputId}`);
+      const eyeOffIcon = document.getElementById(`eyeOffIcon-${inputId}`);
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeIcon.classList.remove('hidden');
+        eyeOffIcon.classList.add('hidden');
+      } else {
+        input.type = 'password';
+        eyeIcon.classList.add('hidden');
+        eyeOffIcon.classList.remove('hidden');
+      }
+    }
+
+    function closeModalCrearUsuario(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalCrearUsuario').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalCrearUsuario').classList.remove('show');
+      }
+      
+      // Limpiar campos al cerrar
+      const reniecTipoDoc = document.getElementById('reniecTipoDoc');
+      if (reniecTipoDoc) reniecTipoDoc.value = '1'; // Siempre DNI
+      document.getElementById('reniecNumeroDoc').value = '';
+      document.getElementById('reniecResultado').classList.add('hidden');
+      document.getElementById('reniecError').classList.add('hidden');
+      document.getElementById('nameUsuario').value = '';
+      document.getElementById('passwordUsuario').value = '';
+      document.getElementById('correoUsuario').value = '';
+      document.getElementById('rolUsuario').value = '';
+    }
+
+    function crearUsuario(event) {
+      event.preventDefault();
+      
+      const formData = new FormData(event.target);
+      const data = {
+        solicitud_id: formData.get('solicitud_id'),
+        name: formData.get('name'),
+        password: formData.get('password'),
+        email: formData.get('email'),
+        role: formData.get('role')
+      };
+
+      // Validaciones del formulario
+      if (!data.name || data.name.trim() === '') {
+        alert('Por favor, ingrese el nombre de usuario. Debe consultar RENIEC primero.');
+        return;
+      }
+
+      if (!data.email || data.email.trim() === '') {
+        alert('Por favor, ingrese el correo electrónico');
+        return;
+      }
+
+      if (!data.password || data.password.trim() === '') {
+        alert('Por favor, ingrese la contraseña');
+        return;
+      }
+
+      if (data.password.length < 8) {
+        alert('La contraseña debe tener al menos 8 caracteres');
+        return;
+      }
+
+      if (!data.role) {
+        alert('Por favor, seleccione un rol');
+        return;
+      }
+
+      if (!data.solicitud_id) {
+        alert('Error: No se encontró el ID de la solicitud');
+        return;
+      }
+
+      // Mostrar loading en el botón de submit
+      const submitBtn = event.target.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Creando usuario...
+        `;
+      }
+
+      fetch('{{ route("api.crear-usuario-solicitud") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+      .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('Respuesta no JSON:', text);
+          throw new Error('El servidor no devolvió una respuesta JSON válida');
+        }
+        
+        const data = await response.json();
+        
+        // Si la respuesta no es exitosa, lanzar error con los datos
+        if (!response.ok) {
+          const error = new Error(data.message || 'Error al crear el usuario');
+          error.response = data;
+          error.status = response.status;
+          throw error;
+        }
+        
+        return data;
+      })
+      .then(data => {
+        // Restaurar botón
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+
+        if (data.success) {
+          // Mostrar mensaje de éxito con mejor diseño
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario creado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">La cuenta de usuario ha sido creada y la solicitud ha sido eliminada.</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          closeModalCrearUsuario();
+          cargarSolicitudes(estadoActual);
+          // Si estamos en la pestaña de usuarios, recargar también esa tabla
+          if (tabActual === 'usuarios') {
+            cargarUsuarios();
+          }
+        } else {
+          // Mostrar mensaje de error con mejor diseño
+          const errorMessage = data.message || 'No se pudo crear el usuario';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al crear usuario</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
+        }
+      })
+      .catch(error => {
+        console.error('Error al crear usuario:', error);
+        
+        // Restaurar botón
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+
+        // Obtener mensaje de error
+        let errorMessage = 'No se pudo crear el usuario';
+        if (error.message) {
+          errorMessage = error.message;
+        } else if (error.response && error.response.message) {
+          errorMessage = error.response.message;
+        } else if (error.status === 422) {
+          errorMessage = 'Datos inválidos. Verifique que todos los campos estén completos.';
+        } else if (error.status === 500) {
+          errorMessage = 'Error del servidor. Por favor, intente más tarde.';
+        }
+
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al crear usuario</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      });
+    }
+
+    // Cargar solicitudes al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarSolicitudes();
+    });
   </script>
 </body>
+
 </html>
+
+
+
+

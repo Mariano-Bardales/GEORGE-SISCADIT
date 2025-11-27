@@ -27,15 +27,14 @@ class ControlCredController extends Controller
     {
         $ninoId = $request->query('nino_id');
         $mes = (int) $request->query('mes');
+        $controlId = $request->query('control_id'); // Para editar
 
         if (!$ninoId || $mes < 1 || $mes > 11) {
             return redirect()->route('controles-cred')
                 ->with('error', 'Parámetros inválidos para registrar CRED mensual.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)
-            ->orWhere('id', $ninoId)
-            ->firstOrFail();
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
 
         $rangos = [
             1 => ['min' => 29, 'max' => 59],
@@ -53,10 +52,209 @@ class ControlCredController extends Controller
 
         $rango = $rangos[$mes] ?? null;
 
+        // Buscar control existente si se está editando
+        $control = null;
+        $ninoIdReal = $nino->id_niño;
+        
+        if ($controlId) {
+            $control = DB::table('controles_menor1')
+                ->where('id_cred', $controlId)
+                ->where('id_niño', $ninoIdReal)
+                ->where(function($query) use ($mes) {
+                    $query->where('mes', $mes)
+                          ->orWhere('numero_control', $mes);
+                })
+                ->first();
+        } else {
+            // Buscar por mes si no hay ID específico
+            $control = DB::table('controles_menor1')
+                ->where('id_niño', $ninoIdReal)
+                ->where(function($query) use ($mes) {
+                    $query->where('mes', $mes)
+                          ->orWhere('numero_control', $mes);
+                })
+                ->first();
+        }
+
         return view('controles.registrar-cred-mensual', [
             'nino' => $nino,
             'mes' => $mes,
             'rango' => $rango,
+            'control' => $control,
+            'fechaNacimiento' => $nino->fecha_nacimiento ? \Carbon\Carbon::parse($nino->fecha_nacimiento)->format('Y-m-d') : null,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para registrar Control Recién Nacido
+     */
+    public function formRecienNacido(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+        $numeroControl = (int) $request->query('numero_control');
+
+        if (!$ninoId || $numeroControl < 1 || $numeroControl > 4) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar control Recién Nacido.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+
+        $rangos = [
+            1 => ['min' => 2, 'max' => 6],
+            2 => ['min' => 7, 'max' => 13],
+            3 => ['min' => 14, 'max' => 20],
+            4 => ['min' => 21, 'max' => 28],
+        ];
+
+        $rango = $rangos[$numeroControl] ?? null;
+
+        // Buscar control existente
+        $control = DB::table('controles_rn')
+            ->where('id_niño', $nino->id_niño)
+            ->where('numero_control', $numeroControl)
+            ->first();
+
+        return view('controles.registrar-recien-nacido', [
+            'nino' => $nino,
+            'numeroControl' => $numeroControl,
+            'rango' => $rango,
+            'control' => $control,
+            'fechaNacimiento' => $nino->fecha_nacimiento ? \Carbon\Carbon::parse($nino->fecha_nacimiento)->format('Y-m-d') : null,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para registrar Tamizaje Neonatal
+     */
+    public function formTamizaje(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+
+        if (!$ninoId) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar Tamizaje.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+
+        // Buscar tamizaje existente
+        $tamizaje = DB::table('tamizaje_neonatal')
+            ->where('id_niño', $nino->id_niño)
+            ->first();
+
+        return view('controles.registrar-tamizaje', [
+            'nino' => $nino,
+            'tamizaje' => $tamizaje,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para registrar CNV
+     */
+    public function formCNV(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+
+        if (!$ninoId) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar CNV.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+
+        // Buscar CNV existente (está en la tabla recien_nacidos)
+        $cnv = DB::table('recien_nacidos')
+            ->where('id_niño', $nino->id_niño)
+            ->first();
+
+        return view('controles.registrar-cnv', [
+            'nino' => $nino,
+            'cnv' => $cnv,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para registrar Visita Domiciliaria
+     */
+    public function formVisita(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+        $periodo = $request->query('periodo');
+
+        if (!$ninoId || !$periodo) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar Visita Domiciliaria.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+
+        $periodos = [
+            '28d' => ['texto' => '28 días', 'min' => 28, 'max' => 28],
+            '2-5m' => ['texto' => '2-5 meses', 'min' => 60, 'max' => 150],
+            '6-8m' => ['texto' => '6-8 meses', 'min' => 180, 'max' => 240],
+            '9-11m' => ['texto' => '9-11 meses', 'min' => 270, 'max' => 330],
+        ];
+
+        $periodoData = $periodos[$periodo] ?? null;
+        if (!$periodoData) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Período inválido.');
+        }
+
+        // Buscar visita existente
+        $visita = DB::table('visitas_domiciliarias')
+            ->where('id_niño', $nino->id_niño)
+            ->where('grupo_visita', $periodo)
+            ->first();
+
+        return view('controles.registrar-visita', [
+            'nino' => $nino,
+            'periodo' => $periodo,
+            'periodoTexto' => $periodoData['texto'],
+            'rango' => ['min' => $periodoData['min'], 'max' => $periodoData['max']],
+            'visita' => $visita,
+        ]);
+    }
+
+    /**
+     * Mostrar formulario para registrar Vacuna RN
+     */
+    public function formVacuna(Request $request)
+    {
+        $ninoId = $request->query('nino_id');
+        $tipoVacuna = $request->query('tipo');
+
+        if (!$ninoId || !in_array($tipoVacuna, ['BCG', 'HVB'])) {
+            return redirect()->route('controles-cred')
+                ->with('error', 'Parámetros inválidos para registrar Vacuna.');
+        }
+
+        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+
+        // Buscar vacuna existente
+        $vacuna = DB::table('vacuna_rn')
+            ->where('id_niño', $nino->id_niño)
+            ->first();
+
+        $fechaVacuna = null;
+        $edadVacuna = null;
+
+        if ($vacuna) {
+            if ($tipoVacuna === 'BCG') {
+                $fechaVacuna = $vacuna->fecha_bcg ?? null;
+                $edadVacuna = $vacuna->edad_bcg ?? null;
+            } else {
+                $fechaVacuna = $vacuna->fecha_hvb ?? null;
+                $edadVacuna = $vacuna->edad_hvb ?? null;
+            }
+        }
+
+        return view('controles.registrar-vacuna', [
+            'nino' => $nino,
+            'tipoVacuna' => $tipoVacuna,
+            'fechaVacuna' => $fechaVacuna,
+            'edadVacuna' => $edadVacuna,
         ]);
     }
 
@@ -194,7 +392,7 @@ class ControlCredController extends Controller
             ]);
             
             // Obtener el ID real del niño creado (puede ser id_niño)
-            $ninoId = $nino->id_niño ?? $nino->id;
+            $ninoId = $nino->id_niño;
 
             // Obtener el nombre de la red y microred seleccionadas
             $nombreRed = null;
@@ -257,4 +455,3 @@ class ControlCredController extends Controller
         }
     }
 }
-

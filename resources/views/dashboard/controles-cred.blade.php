@@ -543,8 +543,6 @@
     </div>
   </div>
 
-  @include('controles.modales-registro.modal-registro-tamizaje')
-
   <!-- Modal para Registrar CNV -->
     <div id="modalCNV" class="modal-registro-overlay modal-tipo-cnv hidden" onclick="closeModalCNV(event)">
       <div class="modal-registro-content modal-tipo-cnv" onclick="event.stopPropagation()">
@@ -610,7 +608,12 @@
             <!-- Sección Datos al Nacer -->
             <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.625rem; border: 1.5px solid #e2e8f0;">
               <h4 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.25rem;">👶</span>
+                <span style="display: inline-flex; width: 24px; height: 24px; border-radius: 999px; background: #3b82f6; align-items: center; justify-content: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="8" r="4"></circle>
+                    <path d="M5 21c1.5-3 4-5 7-5s5.5 2 7 5"></path>
+                  </svg>
+                </span>
                 Datos al Nacer
               </h4>
 
@@ -786,8 +789,6 @@
         </div>
     </div>
   </div>
-
-  @include('controles.modales-registro.modal-registro-vacuna')
 
   <!-- Modal para Registrar Control CRED Mensual -->
     <div id="modalCredMensual" class="modal-registro-overlay modal-tipo-cred-mensual hidden" onclick="closeModalCredMensual(event)">
@@ -1473,19 +1474,6 @@
       const modal = document.getElementById('datosExtrasModal');
       if (!modal) return;
 
-      // Registrar en logs
-      fetch('{{ route("logs.view-extras") }}', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-          nombre: nombre,
-          documento: documento
-        })
-      }).catch(err => console.error('Error al registrar log:', err));
-
       // Obtener datos reales desde la base de datos
       fetch('{{ route("api.nino.datos-extras") }}?documento=' + encodeURIComponent(documento), {
         method: 'GET',
@@ -1621,20 +1609,14 @@
       const modal = document.getElementById('verControlesModal');
       if (!modal) return;
 
-      // Registrar en logs
-      if (nombre && dni) {
-        fetch('{{ route("logs.view-controls") }}', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-          },
-          body: JSON.stringify({
-            nombre: nombre,
-            documento: dni
-          })
-        }).catch(err => console.error('Error al registrar log:', err));
-      }
+      // Logging removido - las rutas de logs fueron eliminadas del sistema
+
+      // Ocultar todos los tabs primero
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.style.display = 'none';
+        tab.style.visibility = 'hidden';
+        tab.style.opacity = '0';
+      });
 
       // Asegurar que el tab activo por defecto se muestre correctamente
       setTimeout(() => {
@@ -1752,6 +1734,12 @@
             if (fechaNacimientoVacunas) {
               fechaNacimientoVacunas.textContent = fechaFormateada + ' (' + fechaISO + ')';
             }
+
+            // Mostrar en la sección de Visitas Domiciliarias
+            const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
+            if (fechaNacimientoVisitas) {
+              fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
+            }
           } else {
             // Si no se encuentra, intentar obtener desde la tabla de niños
             const ninoEnTabla = todosLosNinos.find(n => n.id === ninoId);
@@ -1785,6 +1773,11 @@
               const fechaNacimientoTamizaje = document.getElementById('fecha-nacimiento-tamizaje');
               if (fechaNacimientoTamizaje) {
                 fechaNacimientoTamizaje.textContent = fechaFormateada + ' (' + fechaISO + ')';
+              }
+
+              const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
+              if (fechaNacimientoVisitas) {
+                fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
               }
 
               const fechaNacimientoVacunas = document.getElementById('fecha-nacimiento-vacunas');
@@ -1834,6 +1827,11 @@
             const fechaNacimientoTamizaje = document.getElementById('fecha-nacimiento-tamizaje');
             if (fechaNacimientoTamizaje) {
               fechaNacimientoTamizaje.textContent = fechaFormateada + ' (' + fechaISO + ')';
+            }
+
+            const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
+            if (fechaNacimientoVisitas) {
+              fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
             }
 
             const fechaNacimientoVacunas = document.getElementById('fecha-nacimiento-vacunas');
@@ -2609,7 +2607,7 @@
       const botonesTamizaje = document.querySelectorAll('button[onclick*="abrirModalTamizaje()"]');
       const estadoTamizaje = document.getElementById('cumple-tamizaje');
       const fechaTamizajeEl = document.getElementById('fecha-tamizaje-1');
-      const tieneTamizaje = estadoTamizaje && !estadoTamizaje.textContent.includes('PENDIENTE');
+      const tieneTamizaje = estadoTamizaje && !estadoTamizaje.textContent.toUpperCase().includes('SEGUIMIENTO');
 
       let edadDiasTamizaje = null;
       let cumpleTamizaje = false;
@@ -4246,70 +4244,9 @@
           return;
         }
 
-        // Usar ModalManager para abrir de forma segura
-        ModalManager.abrirSeguro('modalRegistroControl', () => {
-        // Configurar valores básicos
-        document.getElementById('controlNumero').value = numeroControl;
-        document.getElementById('controlNinoId').value = currentNinoId;
-        document.getElementById('controlRango').textContent = rangoMin + ' - ' + rangoMax;
-        document.getElementById('controlFecha').value = '';
-
-        // Actualizar subtítulo del modal
-        const controlNumeroTexto = document.getElementById('controlNumeroTexto');
-        if (controlNumeroTexto) {
-          if (numeroControl === 0) {
-            controlNumeroTexto.textContent = 'Nacimiento';
-          } else {
-            controlNumeroTexto.textContent = numeroControl;
-          }
-        }
-
-        // Actualizar descripción del rango
-        const controlRangoDescripcion = document.getElementById('controlRangoDescripcion');
-        if (controlRangoDescripcion) {
-          if (numeroControl === 0) {
-            controlRangoDescripcion.textContent = 'Día 0-1: Control inmediato al nacimiento';
-          } else if (numeroControl === 1) {
-            controlRangoDescripcion.textContent = 'Días 2-6: Primera semana de vida';
-          } else if (numeroControl === 2) {
-            controlRangoDescripcion.textContent = 'Días 7-13: Segunda semana de vida';
-          } else if (numeroControl === 3) {
-            controlRangoDescripcion.textContent = 'Días 14-20: Tercera semana de vida';
-          } else if (numeroControl === 4) {
-            controlRangoDescripcion.textContent = 'Días 21-28: Cuarta semana de vida';
-          }
-        }
-
-        // Actualizar descripción del control
-        const controlDescripcion = document.getElementById('controlDescripcion');
-        if (controlDescripcion) {
-          const descripciones = {
-            0: 'Control inmediato al nacimiento. Verificar adaptación extrauterina, signos vitales, peso, talla y perímetro cefálico.',
-            1: 'Control de la primera semana. Evaluar adaptación, alimentación, eliminación, peso y signos de alarma.',
-            2: 'Control de la segunda semana. Monitoreo del crecimiento, lactancia materna y detección temprana de problemas.',
-            3: 'Control de la tercera semana. Continuar evaluación del crecimiento y desarrollo, orientar sobre cuidados.',
-            4: 'Control de la cuarta semana. Evaluación final del primer mes, verificar cumplimiento de todos los controles necesarios.'
-          };
-          controlDescripcion.textContent = descripciones[numeroControl] || 'Este control permite verificar la adaptación extrauterina, detectar signos de alarma y orientar sobre lactancia materna.';
-        }
-
-        // Limpiar campos del formulario
-        const pesoInput = document.getElementById('controlPeso');
-        const tallaInput = document.getElementById('controlTalla');
-        const perimetroInput = document.getElementById('controlPerimetroCefalico');
-        const lactanciaSelect = document.getElementById('controlLactancia');
-        const observacionesTextarea = document.getElementById('controlObservaciones');
-
-        if (pesoInput) pesoInput.value = '';
-        if (tallaInput) tallaInput.value = '';
-        if (perimetroInput) perimetroInput.value = '';
-        if (lactanciaSelect) lactanciaSelect.value = '';
-        if (observacionesTextarea) observacionesTextarea.value = '';
-
-        // Limpiar checkboxes de signos de alarma
-        const checkboxes = document.querySelectorAll('input[name="signos_alarma[]"]');
-        checkboxes.forEach(cb => cb.checked = false);
-        });
+        // Redirigir a la página de registro
+        const url = `{{ route('controles-cred.recien-nacido.form') }}?nino_id=${currentNinoId}&numero_control=${numeroControl}`;
+        window.open(url, '_blank');
       }
 
       function closeModalRegistro(event) {
@@ -4444,12 +4381,13 @@
           if (control.estado === 'cumple') {
             estadoElement.className = 'estado-badge cumple';
             estadoElement.textContent = 'CUMPLE';
-          } else if (control.estado === 'no_cumple') {
+          } else if (control.estado === 'no_cumple' || control.estado === 'no cumple') {
             estadoElement.className = 'estado-badge no-cumple';
             estadoElement.textContent = 'NO CUMPLE';
           } else {
-            estadoElement.className = 'estado-badge pendiente';
-            estadoElement.textContent = 'PENDIENTE';
+            // Estado por defecto: SEGUIMIENTO
+            estadoElement.className = 'estado-badge estado-seguimiento';
+            estadoElement.textContent = 'SEGUIMIENTO';
           }
         }
 
@@ -4655,63 +4593,9 @@
           return;
         }
 
-        ModalManager.abrirSeguro('modalTamizaje', () => {
-        document.getElementById('tamizajeNinoId').value = currentNinoId;
-
-        // Limpiar campos primero
-        document.getElementById('tamizajeFecha').value = '';
-        document.getElementById('tamizajeResultado').value = '';
-        document.getElementById('tamizajeObservaciones').value = '';
-        const checkboxes = document.querySelectorAll('input[name="enfermedades[]"]');
-        checkboxes.forEach(cb => cb.checked = false);
-
-        // Cargar datos existentes si hay un tamizaje registrado
-        fetch(`{{ route("api.tamizaje") }}?nino_id=${currentNinoId}`, {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && data.data && data.data.tamizaje) {
-            const tamizaje = data.data.tamizaje;
-
-            // Llenar campos con datos existentes
-            if (tamizaje.fecha_tamizaje) {
-              const fechaISO = formatearFechaISO(tamizaje.fecha_tamizaje);
-              document.getElementById('tamizajeFecha').value = fechaISO;
-            }
-            if (tamizaje.resultado) {
-              document.getElementById('tamizajeResultado').value = tamizaje.resultado;
-            }
-            if (tamizaje.observaciones) {
-              document.getElementById('tamizajeObservaciones').value = tamizaje.observaciones;
-            }
-
-            // Marcar checkboxes de enfermedades si existen
-            if (tamizaje.enfermedades_detectadas) {
-              try {
-                const enfermedades = typeof tamizaje.enfermedades_detectadas === 'string'
-                  ? JSON.parse(tamizaje.enfermedades_detectadas)
-                  : tamizaje.enfermedades_detectadas;
-                if (Array.isArray(enfermedades)) {
-                  enfermedades.forEach(enfermedad => {
-                    const checkbox = document.querySelector(`input[name="enfermedades[]"][value="${enfermedad}"]`);
-                    if (checkbox) checkbox.checked = true;
-                  });
-                }
-              } catch (e) {
-                console.error('Error al parsear enfermedades:', e);
-              }
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error al cargar tamizaje existente:', error);
-          });
-        });
+        // Redirigir a la página de registro
+        const url = `{{ route('controles-cred.tamizaje.form') }}?nino_id=${currentNinoId}`;
+        window.open(url, '_blank');
       }
 
       function closeModalTamizaje(event) {
@@ -4856,41 +4740,9 @@
           return;
         }
 
-        ModalManager.abrirSeguro('modalCNV', () => {
-        document.getElementById('cnvNinoId').value = currentNinoId;
-
-        // Limpiar campos primero
-        document.getElementById('cnvPeso').value = '';
-        document.getElementById('cnvEdadGestacional').value = '';
-        document.getElementById('cnvClasificacion').value = '';
-        document.getElementById('cnvTalla').value = '';
-        document.getElementById('cnvObservaciones').value = '';
-
-        // Cargar datos existentes si hay un CNV registrado
-        fetch(`{{ route("api.cnv") }}?nino_id=${currentNinoId}`, {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && data.data && data.data.cnv) {
-            const cnv = data.data.cnv;
-
-            // Llenar campos con datos existentes
-            if (cnv.peso_nacer) document.getElementById('cnvPeso').value = cnv.peso_nacer;
-            if (cnv.edad_gestacional) document.getElementById('cnvEdadGestacional').value = cnv.edad_gestacional;
-            if (cnv.clasificacion) document.getElementById('cnvClasificacion').value = cnv.clasificacion;
-            if (cnv.talla) document.getElementById('cnvTalla').value = cnv.talla;
-            if (cnv.observaciones) document.getElementById('cnvObservaciones').value = cnv.observaciones;
-          }
-        })
-        .catch(error => {
-          console.error('Error al cargar CNV existente:', error);
-          });
-        });
+        // Redirigir a la página de registro
+        const url = `{{ route('controles-cred.cnv.form') }}?nino_id=${currentNinoId}`;
+        window.open(url, '_blank');
       }
 
       function closeModalCNV(event) {
@@ -5035,69 +4887,9 @@
           return;
         }
 
-        ModalManager.abrirSeguro('modalVisita', () => {
-        document.getElementById('visitaNinoId').value = currentNinoId;
-        document.getElementById('visitaPeriodo').value = periodo;
-        document.getElementById('visitaPeriodoText').value = periodo;
-
-        // Limpiar campos primero
-        document.getElementById('visitaFecha').value = '';
-        document.getElementById('visitaTipo').value = '';
-        document.getElementById('visitaObservaciones').value = '';
-        const checkboxes = document.querySelectorAll('input[name="actividades[]"]');
-        checkboxes.forEach(cb => cb.checked = false);
-
-        // Cargar datos existentes si hay una visita registrada para este período
-        fetch(`{{ route("api.visitas") }}?nino_id=${currentNinoId}`, {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && data.data && data.data.visitas) {
-            const visitas = data.data.visitas;
-            // Buscar visita para este período
-            const visita = visitas.find(v => v.periodo === periodo);
-
-            if (visita) {
-              // Llenar campos con datos existentes
-              if (visita.fecha_visita) {
-                const fechaISO = formatearFechaISO(visita.fecha_visita);
-                document.getElementById('visitaFecha').value = fechaISO;
-              }
-              if (visita.tipo) {
-                document.getElementById('visitaTipo').value = visita.tipo;
-              }
-              if (visita.observaciones) {
-                document.getElementById('visitaObservaciones').value = visita.observaciones;
-              }
-
-              // Marcar checkboxes de actividades si existen
-              if (visita.actividades_realizadas) {
-                try {
-                  const actividades = typeof visita.actividades_realizadas === 'string'
-                    ? JSON.parse(visita.actividades_realizadas)
-                    : visita.actividades_realizadas;
-                  if (Array.isArray(actividades)) {
-                    actividades.forEach(actividad => {
-                      const checkbox = document.querySelector(`input[name="actividades[]"][value="${actividad}"]`);
-                      if (checkbox) checkbox.checked = true;
-                    });
-                  }
-                } catch (e) {
-                  console.error('Error al parsear actividades:', e);
-                }
-              }
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error al cargar visita existente:', error);
-          });
-        });
+        // Redirigir a la página de registro
+        const url = `{{ route('controles-cred.visitas.form') }}?nino_id=${currentNinoId}&periodo=${periodo}`;
+        window.open(url, '_blank');
       }
 
       function closeModalVisita(event) {
@@ -5301,63 +5093,14 @@
           return;
         }
 
-        ModalManager.abrirSeguro('modalVacuna', () => {
-        document.getElementById('vacunaNinoId').value = currentNinoId;
+        if (!nombreVacuna || !['BCG', 'HVB'].includes(nombreVacuna)) {
+          alert('Error: Tipo de vacuna inválido.');
+          return;
+        }
 
-        // Limpiar campos primero
-        document.getElementById('vacunaFechaBCG').value = '';
-        document.getElementById('vacunaEdadBCG').value = '';
-        document.getElementById('vacunaFechaHVB').value = '';
-        document.getElementById('vacunaEdadHVB').value = '';
-
-        // Cargar datos existentes de BCG y HVB
-        fetch(`{{ route("api.vacunas") }}?nino_id=${currentNinoId}`, {
-          method: 'GET',
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && data.data && data.data.vacunas) {
-            const vacunas = data.data.vacunas;
-
-            // Buscar BCG
-            const vacunaBCG = vacunas.find(v => {
-              const nombre = (v.nombre_vacuna || '').toUpperCase();
-              return nombre === 'BCG' || nombre.includes('BCG');
-            });
-
-            // Buscar HVB
-            const vacunaHVB = vacunas.find(v => {
-              const nombre = (v.nombre_vacuna || '').toUpperCase();
-              return nombre.includes('HVB') || nombre.includes('HEPATITIS');
-            });
-
-            // Llenar datos de BCG si existe
-            if (vacunaBCG) {
-              if (vacunaBCG.fecha_aplicacion) {
-                const fechaISO = formatearFechaISO(vacunaBCG.fecha_aplicacion);
-                document.getElementById('vacunaFechaBCG').value = fechaISO;
-                calcularEdadDiasVacuna('BCG');
-              }
-            }
-
-            // Llenar datos de HVB si existe
-            if (vacunaHVB) {
-              if (vacunaHVB.fecha_aplicacion) {
-                const fechaISO = formatearFechaISO(vacunaHVB.fecha_aplicacion);
-                document.getElementById('vacunaFechaHVB').value = fechaISO;
-                calcularEdadDiasVacuna('HVB');
-              }
-            }
-          }
-        })
-        .catch(error => {
-          console.error('Error al cargar vacunas:', error);
-        });
-        });
+        // Redirigir a la página de registro
+        const url = `{{ route('controles-cred.vacunas.form') }}?nino_id=${currentNinoId}&tipo=${nombreVacuna}`;
+        window.open(url, '_blank');
       }
 
       function closeModalVacuna(event) {
@@ -5558,7 +5301,7 @@
 
       // ========== FUNCIÓN PARA REGISTRO CRED MENSUAL EN PÁGINA APARTE ==========
       // Ahora solo redirige a una página independiente con el formulario
-      window.abrirModalCredMensual = function abrirModalCredMensual(mes) {
+      window.abrirModalCredMensual = function abrirModalCredMensual(mes, controlId = null) {
         // Usar siempre la variable global window.ninoIdActual para evitar errores de referencia
         const currentNinoId = typeof window !== 'undefined' ? window.ninoIdActual : null;
         if (!currentNinoId) {
@@ -5567,7 +5310,10 @@
         }
 
         const baseUrl = '{{ route("controles-cred.cred-mensual.form") }}';
-        const url = baseUrl + '?nino_id=' + encodeURIComponent(currentNinoId) + '&mes=' + encodeURIComponent(mes);
+        let url = baseUrl + '?nino_id=' + encodeURIComponent(currentNinoId) + '&mes=' + encodeURIComponent(mes);
+        if (controlId) {
+          url += '&control_id=' + encodeURIComponent(controlId);
+        }
         window.location.href = url;
       }
 
@@ -5762,8 +5508,8 @@
               if (fechaEl) fechaEl.textContent = '-';
               if (edadEl) edadEl.textContent = '-';
               if (estadoEl) {
-                estadoEl.className = 'estado-badge pendiente';
-                estadoEl.textContent = 'PENDIENTE';
+                estadoEl.className = 'estado-badge estado-seguimiento';
+                estadoEl.textContent = 'SEGUIMIENTO';
               }
               if (accionEl) {
                 const rangoMin = [2, 7, 14, 21][num - 1];
@@ -5798,9 +5544,12 @@
                 if (cumplimiento.cumple) {
                   estadoGeneral.className = 'estado-badge cumple';
                   estadoGeneral.textContent = 'CUMPLE';
+                } else if (cumplimiento.no_cumple) {
+                  estadoGeneral.className = 'estado-badge no-cumple';
+                  estadoGeneral.textContent = 'NO CUMPLE';
                 } else {
-                  estadoGeneral.className = 'estado-badge pendiente';
-                  estadoGeneral.textContent = 'PENDIENTE';
+                  estadoGeneral.className = 'estado-badge estado-seguimiento';
+                  estadoGeneral.textContent = 'SEGUIMIENTO';
                 }
               }
             }
@@ -5816,8 +5565,8 @@
               if (fechaEl) fechaEl.textContent = '-';
               if (edadEl) edadEl.textContent = '-';
               if (estadoEl) {
-                estadoEl.className = 'estado-badge pendiente';
-                estadoEl.textContent = 'PENDIENTE';
+                estadoEl.className = 'estado-badge estado-seguimiento';
+                estadoEl.textContent = 'SEGUIMIENTO';
               }
             }
           }
@@ -5968,9 +5717,25 @@
               const fechaElement = document.getElementById(`fo_cred_${mes}`);
               const edadElement = document.getElementById(`edad_cred_${mes}`);
               const estadoElement = document.getElementById(`estado_cred_${mes}`);
+              const btnElement = document.getElementById(`btn-cred-${mes}`);
 
               if (fechaElement) fechaElement.textContent = fechaControl;
               if (edadElement) edadElement.textContent = edadDias;
+
+              // Actualizar botón a "Editar" si hay registro
+              if (btnElement && control.id) {
+                btnElement.setAttribute('data-control-id', control.id);
+                btnElement.setAttribute('onclick', `abrirModalCredMensual(${mes}, ${control.id})`);
+                const btnText = btnElement.querySelector('.btn-text');
+                if (btnText) {
+                  btnText.textContent = 'Editar';
+                }
+                // Cambiar icono a editar
+                const btnIcon = btnElement.querySelector('.btn-icon');
+                if (btnIcon) {
+                  btnIcon.innerHTML = '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>';
+                }
+              }
 
               // Ajustar contadores y estilos según estado
               if (estadoElement) {
@@ -6034,6 +5799,57 @@
           return;
         }
 
+        // Calcular y mostrar la fecha límite (29 días) según la fecha de nacimiento
+        try {
+          const fechaLimiteEl = document.getElementById('tamizaje-fecha-limite');
+
+          if (fechaLimiteEl) {
+            let fechaNacimientoISO = null;
+
+            // 1) Intentar obtenerla del encabezado del modal (fechaNacimientoValue)
+            const fechaNacimientoHeader = document.getElementById('fechaNacimientoValue');
+            if (fechaNacimientoHeader && fechaNacimientoHeader.textContent) {
+              const match = fechaNacimientoHeader.textContent.match(/\((\d{4}-\d{2}-\d{2})\)/);
+              if (match) {
+                fechaNacimientoISO = match[1];
+              } else {
+                const directa = fechaNacimientoHeader.textContent.match(/(\d{4}-\d{2}-\d{2})/);
+                if (directa) {
+                  fechaNacimientoISO = directa[1];
+                }
+              }
+            }
+
+            // 2) Si no, intentar obtenerla desde la lista de niños cargada en memoria
+            if (!fechaNacimientoISO && typeof todosLosNinos !== 'undefined' && todosLosNinos) {
+              const ninoEnTabla = todosLosNinos.find(n => (n.id === ninoId || n.id_niño === ninoId));
+              if (ninoEnTabla && ninoEnTabla.fecha_nacimiento) {
+                const fechaStr = ninoEnTabla.fecha_nacimiento;
+                fechaNacimientoISO = fechaStr.includes('T') ? fechaStr.split('T')[0] : fechaStr;
+              }
+            }
+
+            if (fechaNacimientoISO) {
+              const fechaNac = crearFechaLocal(fechaNacimientoISO);
+              const fechaLimite = new Date(fechaNac.getTime());
+              fechaLimite.setDate(fechaLimite.getDate() + 29);
+
+              const fechaFormateada = fechaLimite.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              });
+
+              fechaLimiteEl.textContent = fechaFormateada;
+            } else {
+              // Fallback si no hay fecha de nacimiento disponible
+              fechaLimiteEl.textContent = '-';
+            }
+          }
+        } catch (e) {
+          console.warn('No se pudo calcular el rango de 29 días para tamizaje:', e);
+        }
+
         fetch(`{{ route("api.tamizaje") }}?nino_id=${ninoId}`, {
           method: 'GET',
           headers: {
@@ -6060,8 +5876,8 @@
           if (fechaGalen1) fechaGalen1.textContent = '-';
           if (edadGalen1) edadGalen1.textContent = '-';
           if (cumpleTN) {
-            cumpleTN.className = 'estado-badge pendiente';
-            cumpleTN.textContent = 'PENDIENTE';
+            cumpleTN.className = 'estado-badge estado-seguimiento';
+            cumpleTN.textContent = 'SEGUIMIENTO';
           }
 
           if (data.success && data.data && data.data.tamizaje) {
@@ -6128,9 +5944,9 @@
                 cumpleTN.textContent = 'NO CUMPLE';
                 console.log('⚠️ Cumple TN: NO CUMPLE (según campo cumple)');
               } else {
-                cumpleTN.className = 'estado-badge pendiente';
-                cumpleTN.textContent = 'PENDIENTE';
-                console.log('ℹ️ Cumple TN: PENDIENTE');
+                cumpleTN.className = 'estado-badge estado-seguimiento';
+                cumpleTN.textContent = 'SEGUIMIENTO';
+                console.log('ℹ️ Cumple TN: SEGUIMIENTO');
               }
             }
 
@@ -6422,8 +6238,9 @@
                   const labelText = label.textContent.trim();
 
                   if (labelText.includes('Peso')) {
-                    if (cnv.peso_nacer) {
-                      span.textContent = cnv.peso_nacer + ' g';
+                    if (cnv.peso || cnv.peso_nacer) {
+                      const peso = cnv.peso || cnv.peso_nacer;
+                      span.textContent = peso + ' g';
                       span.style.color = '#1e293b';
                       span.style.fontWeight = '600';
                     } else {
@@ -6541,6 +6358,11 @@
               const fechaNacimientoTamizaje = document.getElementById('fecha-nacimiento-tamizaje');
               if (fechaNacimientoTamizaje && (!fechaNacimientoTamizaje.textContent || fechaNacimientoTamizaje.textContent === '-')) {
                 fechaNacimientoTamizaje.textContent = fechaFormateada + ' (' + fechaISO + ')';
+              }
+
+              const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
+              if (fechaNacimientoVisitas && (!fechaNacimientoVisitas.textContent || fechaNacimientoVisitas.textContent === '-')) {
+                fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
               }
 
               const fechaNacimientoVacunas = document.getElementById('fecha-nacimiento-vacunas');
@@ -7135,9 +6957,12 @@
             if (datos.controles_recien_nacido.cumplimiento.cumple) {
               estadoGeneral.className = 'estado-badge cumple';
               estadoGeneral.textContent = 'CUMPLE';
+            } else if (datos.controles_recien_nacido.cumplimiento.no_cumple) {
+              estadoGeneral.className = 'estado-badge no-cumple';
+              estadoGeneral.textContent = 'NO CUMPLE';
             } else {
-              estadoGeneral.className = 'estado-badge pendiente';
-              estadoGeneral.textContent = 'PENDIENTE';
+              estadoGeneral.className = 'estado-badge estado-seguimiento';
+              estadoGeneral.textContent = 'SEGUIMIENTO';
             }
           }
         }
@@ -7206,9 +7031,12 @@
           if (datos.tamizaje.cumple) {
             cumpleTamizaje.className = 'estado-badge cumple';
             cumpleTamizaje.textContent = 'CUMPLE';
+          } else if (datos.tamizaje.cumple === false) {
+            cumpleTamizaje.className = 'estado-badge no-cumple';
+            cumpleTamizaje.textContent = 'NO CUMPLE';
           } else {
-            cumpleTamizaje.className = 'estado-badge pendiente';
-            cumpleTamizaje.textContent = 'PENDIENTE';
+            cumpleTamizaje.className = 'estado-badge estado-seguimiento';
+            cumpleTamizaje.textContent = 'SEGUIMIENTO';
           }
         }
       }

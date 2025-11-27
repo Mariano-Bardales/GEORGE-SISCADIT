@@ -284,11 +284,75 @@ class ApiController extends Controller
         if ($ninoId) {
             // Buscar por id_niño (puede ser id_niño o id dependiendo del modelo)
             $controles = ControlRn::where('id_niño', $ninoId)->orderBy('numero_control', 'asc')->get();
+            
+            // Si no hay controles reales, generar datos de ejemplo
+            if ($controles->isEmpty()) {
+                try {
+                    $nino = $this->findNino($ninoId);
+                    $ninoIdReal = $this->getNinoId($nino);
+                    $controles = $this->generarDatosEjemploRecienNacido($nino, $ninoIdReal);
+                } catch (\Exception $e) {
+                    // Si no se encuentra el niño, devolver vacío
+                    $controles = collect([]);
+                }
+            }
         } else {
             $controles = ControlRn::all();
         }
         
         return response()->json(['success' => true, 'data' => $controles]);
+    }
+    
+    /**
+     * Generar datos de ejemplo para controles recién nacido
+     */
+    private function generarDatosEjemploRecienNacido($nino, $ninoIdReal)
+    {
+        $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : Carbon::now()->subDays(15);
+        $hoy = Carbon::now();
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        
+        // Solo generar si el niño tiene 28 días o menos
+        if ($edadDias > 28) {
+            return collect([]);
+        }
+        
+        $controlesEjemplo = collect();
+        $rangos = [
+            0 => ['min' => 0, 'max' => 1, 'peso' => 3.2, 'talla' => 49, 'pc' => 34],
+            1 => ['min' => 2, 'max' => 6, 'peso' => 3.3, 'talla' => 49.5, 'pc' => 34.5],
+            2 => ['min' => 7, 'max' => 13, 'peso' => 3.4, 'talla' => 50, 'pc' => 35],
+            3 => ['min' => 14, 'max' => 20, 'peso' => 3.5, 'talla' => 50.5, 'pc' => 35.5],
+            4 => ['min' => 21, 'max' => 28, 'peso' => 3.6, 'talla' => 51, 'pc' => 36],
+        ];
+        
+        $seed = $ninoIdReal % 100;
+        
+        foreach ($rangos as $numeroControl => $rango) {
+            if ($edadDias >= $rango['min']) {
+                $diasDesdeNacimiento = $rango['min'] + (($rango['max'] - $rango['min']) / 2);
+                $fechaControl = $fechaNacimiento->copy()->addDays($diasDesdeNacimiento);
+                
+                $variacionPeso = (($seed + $numeroControl) % 20 - 10) / 100;
+                $variacionTalla = (($seed + $numeroControl * 2) % 10 - 5) / 10;
+                $variacionPC = (($seed + $numeroControl * 3) % 6 - 3) / 10;
+                
+                $controlesEjemplo->push([
+                    'id' => null,
+                    'id_niño' => $ninoIdReal,
+                    'numero_control' => $numeroControl,
+                    'fecha' => $fechaControl->format('Y-m-d'),
+                    'edad' => (int)$diasDesdeNacimiento,
+                    'peso' => round($rango['peso'] + $variacionPeso, 2),
+                    'talla' => round($rango['talla'] + $variacionTalla, 1),
+                    'perimetro_cefalico' => round($rango['pc'] + $variacionPC, 1),
+                    'estado' => ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) ? 'cumple' : 'cumple',
+                    'es_ejemplo' => true,
+                ]);
+            }
+        }
+        
+        return $controlesEjemplo;
     }
     
     public function registrarControlRecienNacido(Request $request)
@@ -442,6 +506,11 @@ class ApiController extends Controller
                 }
                 $controles = $query->orderBy('numero_control', 'asc')->get();
                 
+                // Si no hay controles reales, generar datos de ejemplo basados en el ID del niño
+                if ($controles->isEmpty()) {
+                    $controles = $this->generarDatosEjemploCredMensual($nino, $ninoIdReal);
+                }
+                
                 return response()->json([
                     'success' => true, 
                     'data' => [
@@ -465,6 +534,80 @@ class ApiController extends Controller
         }
     }
     
+    /**
+     * Generar datos de ejemplo realistas para controles CRED mensual basados en el ID del niño
+     */
+    private function generarDatosEjemploCredMensual($nino, $ninoIdReal)
+    {
+        $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : Carbon::now()->subMonths(6);
+        $hoy = Carbon::now();
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        
+        // Solo generar controles si el niño está en el rango de edad (29-359 días)
+        if ($edadDias < 29 || $edadDias > 359) {
+            return collect([]);
+        }
+        
+        $controlesEjemplo = collect();
+        $rangos = [
+            1 => ['min' => 29, 'max' => 59, 'peso_base' => 3.5, 'talla_base' => 50, 'pc_base' => 35],
+            2 => ['min' => 60, 'max' => 89, 'peso_base' => 4.2, 'talla_base' => 55, 'pc_base' => 37],
+            3 => ['min' => 90, 'max' => 119, 'peso_base' => 5.0, 'talla_base' => 60, 'pc_base' => 39],
+            4 => ['min' => 120, 'max' => 149, 'peso_base' => 5.8, 'talla_base' => 64, 'pc_base' => 40],
+            5 => ['min' => 150, 'max' => 179, 'peso_base' => 6.5, 'talla_base' => 67, 'pc_base' => 41],
+            6 => ['min' => 180, 'max' => 209, 'peso_base' => 7.2, 'talla_base' => 70, 'pc_base' => 42],
+            7 => ['min' => 210, 'max' => 239, 'peso_base' => 7.8, 'talla_base' => 72, 'pc_base' => 43],
+            8 => ['min' => 240, 'max' => 269, 'peso_base' => 8.3, 'talla_base' => 74, 'pc_base' => 44],
+            9 => ['min' => 270, 'max' => 299, 'peso_base' => 8.8, 'talla_base' => 76, 'pc_base' => 45],
+            10 => ['min' => 300, 'max' => 329, 'peso_base' => 9.2, 'talla_base' => 78, 'pc_base' => 45.5],
+            11 => ['min' => 330, 'max' => 359, 'peso_base' => 9.6, 'talla_base' => 79, 'pc_base' => 46],
+        ];
+        
+        // Usar el ID del niño para generar variaciones consistentes pero diferentes por niño
+        $seed = $ninoIdReal % 100; // Usar módulo para tener valores entre 0-99
+        
+        foreach ($rangos as $numeroControl => $rango) {
+            // Solo generar controles que ya deberían haberse realizado (edad actual >= min del rango)
+            if ($edadDias >= $rango['min']) {
+                // Calcular fecha del control (aproximadamente en el medio del rango)
+                $diasDesdeNacimiento = $rango['min'] + (($rango['max'] - $rango['min']) / 2);
+                $fechaControl = $fechaNacimiento->copy()->addDays($diasDesdeNacimiento);
+                
+                // Generar variaciones basadas en el seed del niño
+                $variacionPeso = (($seed + $numeroControl) % 20 - 10) / 100; // Variación de -0.1 a +0.1 kg
+                $variacionTalla = (($seed + $numeroControl * 2) % 10 - 5) / 10; // Variación de -0.5 a +0.5 cm
+                $variacionPC = (($seed + $numeroControl * 3) % 6 - 3) / 10; // Variación de -0.3 a +0.3 cm
+                
+                $peso = round($rango['peso_base'] + $variacionPeso, 2);
+                $talla = round($rango['talla_base'] + $variacionTalla, 1);
+                $perimetroCefalico = round($rango['pc_base'] + $variacionPC, 1);
+                
+                // Determinar estado: si la edad actual está dentro del rango, es "cumple", si ya pasó es "cumple", si aún no llega es "pendiente"
+                $estado = 'cumple';
+                if ($edadDias < $rango['min']) {
+                    $estado = 'pendiente';
+                } elseif ($edadDias > $rango['max']) {
+                    $estado = 'cumple'; // Ya cumplió
+                }
+                
+                $controlesEjemplo->push([
+                    'id' => null, // No es un registro real
+                    'id_niño' => $ninoIdReal,
+                    'numero_control' => $numeroControl,
+                    'fecha' => $fechaControl->format('Y-m-d'),
+                    'edad' => (int)$diasDesdeNacimiento,
+                    'peso' => $peso,
+                    'talla' => $talla,
+                    'perimetro_cefalico' => $perimetroCefalico,
+                    'estado' => $estado,
+                    'es_ejemplo' => true, // Marcar como dato de ejemplo
+                ]);
+            }
+        }
+        
+        return $controlesEjemplo;
+    }
+    
     public function registrarCredMensual(Request $request, $id = null)
     {
         $validator = Validator::make($request->all(), [
@@ -486,6 +629,7 @@ class ApiController extends Controller
 
         try {
             $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
             $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
             $fechaControl = Carbon::parse($request->fecha_control);
             $edadDias = $fechaNacimiento->diffInDays($fechaControl);
@@ -516,6 +660,9 @@ class ApiController extends Controller
                     'fecha' => $request->fecha_control,
                     'edad' => $edadDias,
                     'estado' => $estado,
+                    'peso' => $request->peso ?? $control->peso,
+                    'talla' => $request->talla ?? $control->talla,
+                    'perimetro_cefalico' => $request->perimetro_cefalico ?? $control->perimetro_cefalico,
                 ]);
             } else {
                 // Crear nuevo control
@@ -525,6 +672,9 @@ class ApiController extends Controller
                     'fecha' => $request->fecha_control,
                     'edad' => $edadDias,
                     'estado' => $estado,
+                    'peso' => $request->peso,
+                    'talla' => $request->talla,
+                    'perimetro_cefalico' => $request->perimetro_cefalico,
                 ]);
             }
 
@@ -546,6 +696,25 @@ class ApiController extends Controller
         $ninoId = $request->query('nino_id');
         if ($ninoId) {
             $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+            
+            // Si no hay tamizaje real, generar datos de ejemplo
+            if (!$tamizaje) {
+                try {
+                    $nino = $this->findNino($ninoId);
+                    $ninoIdReal = $this->getNinoId($nino);
+                    $tamizaje = $this->generarDatosEjemploTamizaje($nino, $ninoIdReal);
+                    return response()->json([
+                        'success' => true, 
+                        'data' => $tamizaje ? [$tamizaje] : []
+                    ]);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => true, 
+                        'data' => []
+                    ]);
+                }
+            }
+            
             // Devolver como array para compatibilidad con el frontend
             return response()->json([
                 'success' => true, 
@@ -555,6 +724,34 @@ class ApiController extends Controller
             $tamizaje = TamizajeNeonatal::all();
             return response()->json(['success' => true, 'data' => $tamizaje]);
         }
+    }
+    
+    /**
+     * Generar datos de ejemplo para tamizaje neonatal
+     */
+    private function generarDatosEjemploTamizaje($nino, $ninoIdReal)
+    {
+        $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : Carbon::now()->subDays(5);
+        $hoy = Carbon::now();
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        
+        // Solo generar si el niño tiene 28 días o menos
+        if ($edadDias > 28) {
+            return null;
+        }
+        
+        $seed = $ninoIdReal % 100;
+        $fechaTamizaje = $fechaNacimiento->copy()->addDays(3 + ($seed % 3)); // Entre 3-5 días
+        
+        return (object)[
+            'id' => null,
+            'id_niño' => $ninoIdReal,
+            'fecha_tamizaje' => $fechaTamizaje->format('Y-m-d'),
+            'tipo_tamizaje' => ($seed % 2 == 0) ? 'Tamizaje Neonatal' : 'Tamizaje Galen',
+            'resultado' => ($seed % 3 == 0) ? 'Normal' : (($seed % 3 == 1) ? 'Pendiente' : 'Anormal'),
+            'estado' => ($seed % 3 == 0) ? 'cumple' : 'seguimiento',
+            'es_ejemplo' => true,
+        ];
     }
     
     public function registrarTamizaje(Request $request)
@@ -607,10 +804,52 @@ class ApiController extends Controller
         $ninoId = $request->query('nino_id');
         if ($ninoId) {
             $cnv = RecienNacido::where('id_niño', $ninoId)->first();
+            
+            // Si no hay CNV real, generar datos de ejemplo
+            if (!$cnv) {
+                try {
+                    $nino = $this->findNino($ninoId);
+                    $ninoIdReal = $this->getNinoId($nino);
+                    $cnv = $this->generarDatosEjemploCNV($nino, $ninoIdReal);
+                } catch (\Exception $e) {
+                    $cnv = null;
+                }
+            }
         } else {
             $cnv = RecienNacido::all();
         }
-        return response()->json(['success' => true, 'data' => $cnv]);
+        return response()->json(['success' => true, 'data' => ['cnv' => $cnv]]);
+    }
+    
+    /**
+     * Generar datos de ejemplo para CNV
+     */
+    private function generarDatosEjemploCNV($nino, $ninoIdReal)
+    {
+        $seed = $ninoIdReal % 100;
+        
+        // Peso al nacer basado en el seed (entre 2.5 y 4.5 kg)
+        $peso = round(2.5 + (($seed % 20) / 10), 2);
+        
+        // Edad gestacional (entre 36 y 40 semanas)
+        $edadGestacional = 36 + ($seed % 5);
+        
+        // Clasificación basada en peso y edad gestacional
+        $clasificacion = 'A TÉRMINO';
+        if ($peso < 2.5) {
+            $clasificacion = ($edadGestacional < 37) ? 'PREMATURO BAJO PESO' : 'BAJO PESO';
+        } elseif ($edadGestacional < 37) {
+            $clasificacion = 'PREMATURO';
+        }
+        
+        return (object)[
+            'id' => null,
+            'id_niño' => $ninoIdReal,
+            'peso' => $peso,
+            'edad_gestacional' => $edadGestacional,
+            'clasificacion' => $clasificacion,
+            'es_ejemplo' => true,
+        ];
     }
     
     public function registrarCNV(Request $request)
@@ -658,10 +897,61 @@ class ApiController extends Controller
         $ninoId = $request->query('nino_id');
         if ($ninoId) {
             $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->orderBy('fecha_visita', 'desc')->get();
+            
+            // Si no hay visitas reales, generar datos de ejemplo
+            if ($visitas->isEmpty()) {
+                try {
+                    $nino = $this->findNino($ninoId);
+                    $ninoIdReal = $this->getNinoId($nino);
+                    $visitas = $this->generarDatosEjemploVisitas($nino, $ninoIdReal);
+                } catch (\Exception $e) {
+                    $visitas = collect([]);
+                }
+            }
         } else {
             $visitas = VisitaDomiciliaria::all();
         }
         return response()->json(['success' => true, 'data' => $visitas]);
+    }
+    
+    /**
+     * Generar datos de ejemplo para visitas domiciliarias
+     */
+    private function generarDatosEjemploVisitas($nino, $ninoIdReal)
+    {
+        $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : Carbon::now()->subDays(60);
+        $hoy = Carbon::now();
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        
+        $visitasEjemplo = collect();
+        $periodos = [
+            '28d' => ['dias' => 28, 'descripcion' => 'Visita domiciliaria a los 28 días de vida'],
+            '60-150d' => ['dias' => 105, 'descripcion' => 'Visita domiciliaria entre 60 a 150 días'],
+            '151-240d' => ['dias' => 195, 'descripcion' => 'Visita domiciliaria entre 151 a 240 días'],
+            '241-330d' => ['dias' => 285, 'descripcion' => 'Visita domiciliaria entre 241 a 330 días'],
+        ];
+        
+        $seed = $ninoIdReal % 100;
+        $numeroVisita = 1;
+        
+        foreach ($periodos as $periodo => $info) {
+            if ($edadDias >= $info['dias'] - 15) { // Generar si ya pasó o está cerca
+                $fechaVisita = $fechaNacimiento->copy()->addDays($info['dias'] + (($seed + $numeroVisita) % 7) - 3);
+                
+                $visitasEjemplo->push([
+                    'id' => null,
+                    'id_niño' => $ninoIdReal,
+                    'grupo_visita' => $periodo,
+                    'fecha_visita' => $fechaVisita->format('Y-m-d'),
+                    'numero_visitas' => $numeroVisita,
+                    'estado' => ($edadDias >= $info['dias']) ? 'cumple' : 'pendiente',
+                    'es_ejemplo' => true,
+                ]);
+                $numeroVisita++;
+            }
+        }
+        
+        return $visitasEjemplo;
     }
     
     public function registrarVisita(Request $request)
@@ -710,6 +1000,18 @@ class ApiController extends Controller
         $ninoId = $request->query('nino_id');
         if ($ninoId) {
             $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
+            
+            // Si no hay vacunas reales, generar datos de ejemplo
+            if (!$vacunas) {
+                try {
+                    $nino = $this->findNino($ninoId);
+                    $ninoIdReal = $this->getNinoId($nino);
+                    $vacunas = $this->generarDatosEjemploVacunas($nino, $ninoIdReal);
+                } catch (\Exception $e) {
+                    $vacunas = null;
+                }
+            }
+            
             // Devolver como array para compatibilidad con el frontend
             return response()->json([
                 'success' => true, 
@@ -719,6 +1021,36 @@ class ApiController extends Controller
             $vacunas = VacunaRn::all();
             return response()->json(['success' => true, 'data' => $vacunas]);
         }
+    }
+    
+    /**
+     * Generar datos de ejemplo para vacunas del recién nacido
+     */
+    private function generarDatosEjemploVacunas($nino, $ninoIdReal)
+    {
+        $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : Carbon::now()->subDays(5);
+        $hoy = Carbon::now();
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        
+        $seed = $ninoIdReal % 100;
+        
+        // BCG: al nacer (0-7 días)
+        $fechaBCG = $fechaNacimiento->copy()->addDays(1 + ($seed % 3)); // Entre 1-3 días
+        $bcgAplicada = $edadDias >= 1;
+        
+        // HVB: al nacer (0-24 horas idealmente, pero hasta 7 días)
+        $fechaHVB = $fechaNacimiento->copy()->addDays(($seed % 2)); // 0-1 días
+        $hvbAplicada = $edadDias >= 0;
+        
+        return (object)[
+            'id' => null,
+            'id_niño' => $ninoIdReal,
+            'bcg_fecha' => $bcgAplicada ? $fechaBCG->format('Y-m-d') : null,
+            'bcg_aplicada' => $bcgAplicada ? 'SI' : 'NO',
+            'hvb_fecha' => $hvbAplicada ? $fechaHVB->format('Y-m-d') : null,
+            'hvb_aplicada' => $hvbAplicada ? 'SI' : 'NO',
+            'es_ejemplo' => true,
+        ];
     }
     
     public function registrarVacuna(Request $request)

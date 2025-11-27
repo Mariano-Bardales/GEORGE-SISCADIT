@@ -44,8 +44,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/controles-cred', [ControlCredController::class, 'index'])->name('controles-cred');
     Route::post('/controles-cred', [ControlCredController::class, 'store'])->name('controles-cred.store');
-    // Página independiente para registrar un control CRED mensual
+    // Páginas independientes para registrar controles
     Route::get('/controles-cred/cred-mensual/registrar', [ControlCredController::class, 'formCredMensual'])->name('controles-cred.cred-mensual.form');
+    Route::get('/controles-cred/recien-nacido/registrar', [ControlCredController::class, 'formRecienNacido'])->name('controles-cred.recien-nacido.form');
+    Route::get('/controles-cred/tamizaje/registrar', [ControlCredController::class, 'formTamizaje'])->name('controles-cred.tamizaje.form');
+    Route::get('/controles-cred/cnv/registrar', [ControlCredController::class, 'formCNV'])->name('controles-cred.cnv.form');
+    Route::get('/controles-cred/visitas/registrar', [ControlCredController::class, 'formVisita'])->name('controles-cred.visitas.form');
+    Route::get('/controles-cred/vacunas/registrar', [ControlCredController::class, 'formVacuna'])->name('controles-cred.vacunas.form');
     Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
     
     // Solicitudes (solo admin) - CRUD completo
@@ -105,6 +110,20 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/vacunas/registrar', [ApiController::class, 'registrarVacuna'])->name('api.vacunas.registrar');
         
         Route::get('/alertas/total', [ApiController::class, 'totalAlertas'])->name('api.alertas.total');
+        
+        // Solicitudes API
+        Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('api.solicitudes');
+        Route::delete('/solicitudes/{id}', [SolicitudController::class, 'destroy'])->name('api.solicitudes.destroy');
+        
+        // Usuarios API
+        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('api.usuarios');
+        
+        // RENIEC API
+        Route::get('/consultar-reniec', [UsuarioController::class, 'consultarReniec'])->name('api.consultar-reniec');
+        Route::post('/consultar-reniec', [UsuarioController::class, 'consultarReniec'])->name('api.consultar-reniec.post');
+        
+        // Crear usuario desde solicitud (API)
+        Route::post('/crear-usuario-solicitud', [SolicitudController::class, 'crearUsuarioDesdeSolicitud'])->name('api.crear-usuario-solicitud');
     });
     
     // Logs Routes (placeholders - pueden ser implementadas después)

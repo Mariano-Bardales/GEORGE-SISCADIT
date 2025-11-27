@@ -17,10 +17,11 @@ class SolicitudController extends Controller
     {
         $query = Solicitud::query();
 
-        // Filtro por estado
-        if ($request->has('estado') && $request->estado !== '') {
-            $query->where('estado', $request->estado);
-        }
+        // Filtro por estado - por defecto solo mostrar pendientes
+        $estadoFiltro = $request->has('estado') && $request->estado !== '' && $request->estado !== 'all' 
+            ? $request->estado 
+            : 'pendiente';
+        $query->where('estado', $estadoFiltro);
 
         // Búsqueda por documento, correo o motivo
         if ($request->has('buscar') && $request->buscar !== '') {
@@ -49,6 +50,74 @@ class SolicitudController extends Controller
             'aprobadas' => Solicitud::where('estado', 'aprobada')->count(),
             'rechazadas' => Solicitud::where('estado', 'rechazada')->count(),
         ];
+
+        // Si es una petición AJAX o API, devolver JSON
+        if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+            // Mapear códigos a nombres
+            $tiposDoc = [
+                1 => 'DNI',
+                2 => 'CE',
+                3 => 'PASS',
+                4 => 'DIE',
+                5 => 'S/ DOCUMENTO',
+                6 => 'CNV'
+            ];
+
+            $redes = [
+                1 => 'AGUAYTIA',
+                2 => 'ATALAYA',
+                3 => 'BAP-CURARAY',
+                4 => 'CORONEL PORTILLO',
+                5 => 'ESSALUD',
+                6 => 'FEDERICO BASADRE - YARINACOCHA',
+                7 => 'HOSPITAL AMAZONICO - YARINACOCHA',
+                8 => 'HOSPITAL REGIONAL DE PUCALLPA',
+                9 => 'NO PERTENECE A NINGUNA RED'
+            ];
+
+            $solicitudesData = $solicitudes->map(function($solicitud) use ($tiposDoc, $redes) {
+                return [
+                    'id' => $solicitud->id,
+                    // Campos originales (necesarios para el JavaScript)
+                    'id_tipo_documento' => $solicitud->id_tipo_documento,
+                    'codigo_red' => $solicitud->codigo_red,
+                    'codigo_microred' => $solicitud->codigo_microred,
+                    'id_establecimiento' => $solicitud->id_establecimiento,
+                    // Campos mapeados (para mostrar nombres)
+                    'tipo_documento' => $tiposDoc[$solicitud->id_tipo_documento] ?? 'Desconocido',
+                    'numero_documento' => $solicitud->numero_documento,
+                    'red' => $redes[$solicitud->codigo_red] ?? 'Desconocida',
+                    'microred' => $solicitud->codigo_microred,
+                    'establecimiento' => $solicitud->id_establecimiento,
+                    // Resto de campos
+                    'motivo' => $solicitud->motivo,
+                    'cargo' => $solicitud->cargo,
+                    'celular' => $solicitud->celular,
+                    'correo' => $solicitud->correo,
+                    'estado' => $solicitud->estado,
+                    'created_at' => $solicitud->created_at->toISOString(),
+                    'fecha_solicitud' => $solicitud->created_at->format('d/m/Y H:i'),
+                    'user_id' => $solicitud->user_id,
+                    'usuario_creado' => $solicitud->usuario ? [
+                        'id' => $solicitud->usuario->id,
+                        'name' => $solicitud->usuario->name,
+                        'email' => $solicitud->usuario->email,
+                    ] : null,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $solicitudesData,
+                'pagination' => [
+                    'current_page' => $solicitudes->currentPage(),
+                    'last_page' => $solicitudes->lastPage(),
+                    'per_page' => $solicitudes->perPage(),
+                    'total' => $solicitudes->total(),
+                ],
+                'estadisticas' => $estadisticas
+            ]);
+        }
 
         return view('dashboard.solicitudes', compact('solicitudes', 'estadisticas'));
     }
@@ -184,7 +253,59 @@ class SolicitudController extends Controller
     }
 
     /**
-     * Crear usuario desde una solicitud
+     * Crear usuario desde una solicitud (API - acepta ID desde body)
+     */
+    public function crearUsuarioDesdeSolicitud(Request $request)
+    {
+        $request->validate([
+            'solicitud_id' => 'required|integer|exists:solicitudes,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8',
+            'role' => 'required|string|in:admin,jefe_red,coordinador_microred,usuario,jefe_microred,coordinador_red'
+        ]);
+
+        $solicitud = Solicitud::findOrFail($request->solicitud_id);
+
+        // Verificar si ya existe un usuario con ese correo
+        $usuarioExistente = User::where('email', $request->email)->first();
+        if ($usuarioExistente) {
+            // Vincular la solicitud con el usuario existente
+            $solicitud->user_id = $usuarioExistente->id;
+            $solicitud->estado = 'aprobada';
+            $solicitud->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'La solicitud ha sido vinculada con un usuario existente',
+                'usuario_id' => $usuarioExistente->id
+            ]);
+        }
+
+        // Crear el usuario con los datos proporcionados
+        $usuario = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+            'email_verified_at' => now(),
+        ]);
+
+        // Vincular la solicitud con el usuario creado y marcar como aprobada
+        $solicitud->user_id = $usuario->id;
+        $solicitud->estado = 'aprobada';
+        $solicitud->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario creado correctamente',
+            'usuario_id' => $usuario->id,
+            'email' => $usuario->email
+        ]);
+    }
+
+    /**
+     * Crear usuario desde una solicitud (ruta con parámetro)
      */
     public function crearUsuario(Request $request, $id)
     {
