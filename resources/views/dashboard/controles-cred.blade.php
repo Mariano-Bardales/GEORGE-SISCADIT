@@ -76,6 +76,14 @@
                         </svg>
                         Agregar Niño
                       </button>
+                      <button class="btn-cred-primary" onclick="openImportarControlesModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" x2="12" y1="3" y2="15"></line>
+                        </svg>
+                        Importar desde Excel
+                      </button>
                       @endif
                     </div>
 
@@ -918,7 +926,189 @@
   </div>
   <!-- Fin del Contenedor de Modales de Registro -->
 
-  <script src="/JS/dashbord.js"></script>
+  <!-- Modal para Importar Controles desde Excel -->
+  <div id="importarControlesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 overflow-y-auto" onclick="closeImportarControlesModal(event)">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full mx-4 my-8 transform transition-all animate-fade-in" onclick="event.stopPropagation()" style="animation: slideIn 0.3s ease-out;">
+      <!-- Header con gradiente -->
+      <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 rounded-t-3xl p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" x2="12" y1="3" y2="15"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-2xl font-bold">Importar Controles</h3>
+              <p class="text-purple-100 text-sm mt-1">Sube un archivo Excel o CSV con los datos</p>
+            </div>
+          </div>
+          <button onclick="closeImportarControlesModal()" class="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-8">
+        <!-- Mensajes de éxito/error -->
+        @if(session('import_success'))
+          <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-xl mb-6 shadow-sm">
+            <div class="flex items-start gap-3">
+              <div class="bg-green-500 p-2 rounded-lg">
+                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-semibold text-green-900 mb-2">✅ Importación exitosa</h4>
+                <pre class="text-sm text-green-800 whitespace-pre-wrap font-mono">{{ session('import_success') }}</pre>
+              </div>
+            </div>
+          </div>
+        @endif
+
+        @if(session('import_error'))
+          <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-5 rounded-xl mb-6 shadow-sm">
+            <div class="flex items-start gap-3">
+              <div class="bg-red-500 p-2 rounded-lg">
+                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-semibold text-red-900 mb-1">❌ Error en la importación</h4>
+                <p class="text-sm text-red-800">{{ session('import_error') }}</p>
+              </div>
+            </div>
+          </div>
+        @endif
+
+        <form action="{{ route('importar-controles.import') }}" method="POST" enctype="multipart/form-data" class="space-y-6" id="formImportarControles">
+          @csrf
+          
+          <!-- Área de carga de archivo -->
+          <div class="border-2 border-dashed border-slate-300 rounded-2xl p-8 bg-gradient-to-br from-slate-50 to-purple-50/30 hover:border-purple-400 transition-all">
+            <div class="text-center">
+              <div class="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+              </div>
+              <label for="archivo_excel_modal" class="block text-lg font-semibold text-slate-700 mb-2 cursor-pointer">
+                Selecciona tu archivo
+              </label>
+              <input 
+                type="file" 
+                id="archivo_excel_modal" 
+                name="archivo_excel" 
+                accept=".xlsx,.xls,.csv"
+                class="block w-full text-sm text-slate-600 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-gradient-to-r file:from-purple-600 file:to-indigo-600 file:text-white hover:file:from-purple-700 hover:file:to-indigo-700 file:transition-all file:shadow-lg file:cursor-pointer border-0"
+                required
+                onchange="document.getElementById('fileName').textContent = this.files[0]?.name || 'Ningún archivo seleccionado'"
+              >
+              <p id="fileName" class="mt-3 text-sm text-slate-500 font-medium">Ningún archivo seleccionado</p>
+              <p class="mt-2 text-xs text-slate-400">
+                📎 Formatos permitidos: .xlsx, .xls, .csv | Tamaño máximo: 10MB
+              </p>
+            </div>
+          </div>
+
+          <!-- Botones de acción -->
+          <div class="flex gap-4">
+            <button 
+              type="submit" 
+              class="flex-1 px-8 py-4 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:via-indigo-700 hover:to-purple-800 transition-all font-bold flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" x2="12" y1="3" y2="15"></line>
+              </svg>
+              Importar Controles
+            </button>
+
+            <a 
+              href="{{ route('importar-controles.ejemplo') }}" 
+              class="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all font-bold flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" x2="12" y1="15" y2="3"></line>
+              </svg>
+              Descargar Ejemplo
+            </a>
+          </div>
+        </form>
+
+        <!-- Información del formato -->
+        <div class="mt-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
+          <div class="flex items-start gap-4">
+            <div class="bg-blue-500 p-3 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-lg font-bold text-slate-800 mb-3">📋 Formato requerido del archivo</h4>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div class="bg-white/60 backdrop-blur-sm p-3 rounded-lg">
+                  <p class="font-semibold text-slate-700 mb-1">Columnas obligatorias:</p>
+                  <ul class="text-slate-600 space-y-1 text-xs">
+                    <li>• <strong>ID_NINO</strong> - ID del niño</li>
+                    <li>• <strong>TIPO_CONTROL</strong> - Tipo de control</li>
+                    <li>• <strong>NUMERO_CONTROL</strong> - Número (1-11)</li>
+                    <li>• <strong>FECHA</strong> - YYYY-MM-DD</li>
+                  </ul>
+                </div>
+                <div class="bg-white/60 backdrop-blur-sm p-3 rounded-lg">
+                  <p class="font-semibold text-slate-700 mb-1">Tipos de control:</p>
+                  <ul class="text-slate-600 space-y-1 text-xs">
+                    <li>• <strong>CRED</strong> - Controles mensuales</li>
+                    <li>• <strong>CRN</strong> - Recién nacido</li>
+                    <li>• <strong>VACUNA</strong> - Vacunación</li>
+                    <li>• <strong>TAMIZAJE</strong> - Tamizaje neonatal</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-xs text-amber-800">
+                  <strong>💡 Tip:</strong> Descarga el archivo de ejemplo para ver el formato completo con datos reales de tu sistema.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    .animate-fade-in {
+      animation: slideIn 0.3s ease-out;
+    }
+  </style>
+
+  <script src="{{ asset('JS/dashbord.js') }}"></script>
   <script src="{{ asset('JS/formulario-selec-de-EESS.js') }}"></script>
   <script>
     // ========== SISTEMA DE GESTIÓN DE MODALES ==========
@@ -1040,7 +1230,9 @@
     let paginacionInfo = null; // Información de paginación
 
     // ========== CARGAR DATOS DESDE LA BASE DE DATOS ==========
-    function cargarNinos(page = 1) {
+    // Hacer la función disponible globalmente inmediatamente
+    window.cargarNinos = function cargarNinos(page = 1) {
+      console.log('🔄 cargarNinos llamada con página:', page);
       const params = new URLSearchParams();
       if (filtroGeneroActual) params.append('genero', filtroGeneroActual);
       
@@ -1057,11 +1249,16 @@
 
       // Mostrar indicador de carga
       const tbody = document.getElementById('tablaNinosBody');
-      if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-slate-500">Cargando...</td></tr>';
+      if (!tbody) {
+        console.error('❌ No se encontró el elemento tablaNinosBody');
+        return;
       }
+      tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-slate-500">Cargando...</td></tr>';
 
-      fetch('{{ route("api.ninos") }}?' + params.toString(), {
+      const apiUrl = '{{ route("api.ninos") }}?' + params.toString();
+      console.log('🌐 Llamando a API:', apiUrl);
+      
+      fetch(apiUrl, {
         method: 'GET',
         headers: {
           'X-Requested-With': 'XMLHttpRequest',
@@ -1069,23 +1266,28 @@
         }
       })
       .then(response => {
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
         if (!response.ok) {
           throw new Error('Error en la respuesta del servidor: ' + response.status);
         }
         return response.json();
       })
       .then(data => {
-        console.log('Datos recibidos:', data); // Debug
+        console.log('✅ Datos recibidos del API:', data); // Debug
         if (data.success) {
           todosLosNinos = data.data || [];
           paginacionInfo = data.pagination || null;
           paginaActual = page;
-          console.log('Total de niños a renderizar:', todosLosNinos.length);
-          console.log('Primer niño:', todosLosNinos[0]);
+          console.log('📊 Total de niños a renderizar:', todosLosNinos.length);
+          if (todosLosNinos.length > 0) {
+            console.log('👶 Primer niño:', todosLosNinos[0]);
+          } else {
+            console.warn('⚠️ No hay niños en la respuesta');
+          }
           renderizarTabla(todosLosNinos);
           actualizarControlesPaginacion();
         } else {
-          console.error('Error al cargar los niños:', data.message);
+          console.error('❌ Error al cargar los niños:', data.message);
           if (tbody) {
             tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-slate-500">No se pudieron cargar los datos: ' + (data.message || 'Error desconocido') + '</td></tr>';
           }
@@ -1154,13 +1356,14 @@
     }
 
     function renderizarTabla(ninos) {
+      console.log('🎨 renderizarTabla llamada con', ninos.length, 'niños');
       const tbody = document.getElementById('tablaNinosBody');
       if (!tbody) {
-        console.error('No se encontró el elemento tablaNinosBody');
+        console.error('❌ No se encontró el elemento tablaNinosBody');
         return;
       }
 
-      console.log('Renderizando tabla con', ninos.length, 'niños');
+      console.log('🎨 Renderizando tabla con', ninos.length, 'niños');
 
       if (ninos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-slate-500">No hay registros disponibles</td></tr>';
@@ -1267,7 +1470,8 @@
     }
 
     // ========== INICIALIZAR AL CARGAR ==========
-    document.addEventListener('DOMContentLoaded', function() {
+    // ========== INICIALIZAR AL CARGAR ==========
+    function configurarEventos() {
       // Configurar búsqueda
       const searchInput = document.querySelector('.search-input-cred');
       if (searchInput) {
@@ -1279,10 +1483,38 @@
       if (selectRegistros) {
         selectRegistros.addEventListener('change', cambiarRegistrosPorPagina);
       }
-
-      // Cargar datos iniciales
-      cargarNinos(1);
-    });
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    (function() {
+      let cargaIniciada = false;
+      
+      function iniciarCarga() {
+        // Evitar múltiples cargas
+        if (cargaIniciada) {
+          console.log('⚠️ La carga ya fue iniciada, omitiendo...');
+          return;
+        }
+        
+        if (typeof window.cargarNinos === 'function') {
+          console.log('✅ Iniciando carga de datos...');
+          cargaIniciada = true;
+          configurarEventos();
+          window.cargarNinos(1);
+        } else {
+          console.log('⏳ Esperando que cargarNinos esté disponible...');
+          setTimeout(iniciarCarga, 100);
+        }
+      }
+      
+      // Ejecutar cuando el DOM esté listo
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciarCarga);
+      } else {
+        // El DOM ya está listo, ejecutar inmediatamente
+        setTimeout(iniciarCarga, 100);
+      }
+    })();
     // ========== FUNCIONES PARA MODAL DE AGREGAR NIÑO ==========
     function openAgregarNinoModal() {
       const modal = document.getElementById('agregarNinoModal');
@@ -1301,6 +1533,41 @@
         console.warn('initModalSelects no está disponible');
       }
     }
+
+    // Funciones para modal de importar controles
+    function openImportarControlesModal() {
+      const modal = document.getElementById('importarControlesModal');
+      if (!modal) {
+        console.error('Modal importarControlesModal no encontrado');
+        return;
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeImportarControlesModal(event) {
+      if (event && event.target !== event.currentTarget && event.currentTarget) return;
+      const modal = document.getElementById('importarControlesModal');
+      if (!modal) return;
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      // Limpiar el formulario
+      const form = document.getElementById('formImportarControles');
+      if (form) form.reset();
+    }
+
+    // Cerrar modal automáticamente después de importar exitosamente
+    document.addEventListener('DOMContentLoaded', function() {
+      @if(session('import_success'))
+        // Recargar la tabla después de importar
+        if (typeof cargarNinos === 'function') {
+          setTimeout(() => {
+            cargarNinos(1);
+            closeImportarControlesModal();
+          }, 2000);
+        }
+      @endif
+    });
 
     function closeAgregarNinoModal(event) {
       if (event && event.target !== event.currentTarget && event.currentTarget) return;
@@ -7268,10 +7535,12 @@
     window.validarRangosYHabilitarBotones = validarRangosYHabilitarBotones;
     window.openAgregarNinoModal = openAgregarNinoModal;
     window.closeAgregarNinoModal = closeAgregarNinoModal;
+    window.openImportarControlesModal = openImportarControlesModal;
+    window.closeImportarControlesModal = closeImportarControlesModal;
     window.filtrarTabla = filtrarTabla;
     window.filtrarPorGenero = filtrarPorGenero;
     window.cambiarRegistrosPorPagina = cambiarRegistrosPorPagina;
-    window.cargarNinos = cargarNinos;
+    // cargarNinos ya está disponible globalmente desde su definición
     window.obtenerTipoDocumento = obtenerTipoDocumento;
     window.openVerControlesModal = openVerControlesModal;
     window.openDatosExtrasModal = openDatosExtrasModal;

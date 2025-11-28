@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'reniec' => [
+        'api_url' => env('RENIEC_API_URL', 'https://apiperu.dev/api/dni'),
+        'api_token' => env('RENIEC_API_TOKEN', ''),
+    ],
+
 ];

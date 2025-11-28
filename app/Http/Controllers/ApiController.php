@@ -28,13 +28,11 @@ class ApiController extends Controller
     }
     
     /**
-     * Helper para buscar un niño por ID (puede ser id_niño o id)
+     * Helper para buscar un niño por ID (solo id_niño)
      */
     private function findNino($id)
     {
-        return Nino::where('id_niño', $id)
-                   ->orWhere('id', $id)
-                   ->firstOrFail();
+        return Nino::where('id_niño', $id)->firstOrFail();
     }
     
     public function dashboardStats()
@@ -198,73 +196,84 @@ class ApiController extends Controller
 
     public function ninos(Request $request)
     {
-        $query = Nino::with(['datosExtra', 'madre']);
-        
-        // Filtro por género
-        if ($request->has('genero') && $request->genero !== '') {
-            $query->where('genero', $request->genero);
-        }
-        
-        // Búsqueda por nombre o documento
-        if ($request->has('buscar') && $request->buscar !== '') {
-            $buscar = $request->buscar;
-            $query->where(function($q) use ($buscar) {
-                $q->where('apellidos_nombres', 'like', "%{$buscar}%")
-                  ->orWhere('numero_doc', 'like', "%{$buscar}%");
-            });
-        }
-        
-        // Ordenar por id_niño (más recientes primero, ya que no hay created_at)
-        $query->orderBy('id_niño', 'desc');
-        
-        // Paginación
-        $perPage = $request->get('per_page', 25);
-        $ninos = $query->paginate($perPage);
-        
-        // Formatear datos para el frontend
-        $ninosFormateados = $ninos->map(function($nino) {
-            // Mapear tipo_doc a id_tipo_documento para compatibilidad
-            $tiposDoc = [
-                'DNI' => 1,
-                'CE' => 2,
-                'PASS' => 3,
-                'DIE' => 4,
-                'S/ DOCUMENTO' => 5,
-                'CNV' => 6
-            ];
-            $idTipoDoc = $tiposDoc[$nino->tipo_doc] ?? null;
+        try {
+            $query = Nino::with(['datosExtra', 'madre']);
             
-            return [
-                'id' => $this->getNinoId($nino),
-                'id_niño' => $this->getNinoId($nino), // Para compatibilidad con el frontend
-                'establecimiento' => $nino->establecimiento,
-                'tipo_doc' => $nino->tipo_doc,
-                'id_tipo_documento' => $idTipoDoc, // Para compatibilidad
-                'numero_doc' => $nino->numero_doc,
-                'numero_documento' => $nino->numero_doc, // Para compatibilidad
-                'apellidos_nombres' => $nino->apellidos_nombres,
-                'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null,
-                'genero' => $nino->genero,
-                'edad_meses' => $nino->edad_meses,
-                'edad_dias' => $nino->edad_dias,
-                'datos_extras' => $nino->datos_extras,
-                'created_at' => null, // No hay timestamps en la tabla
-                'updated_at' => null, // No hay timestamps en la tabla
-            ];
-        });
-        
-        return response()->json([
-            'success' => true, 
-            'data' => $ninosFormateados,
-            'pagination' => [
-                'current_page' => $ninos->currentPage(),
-                'last_page' => $ninos->lastPage(),
-                'per_page' => $ninos->perPage(),
-                'total' => $ninos->total(),
-                'from' => $ninos->firstItem(),
-                'to' => $ninos->lastItem(),
-            ]
-        ]);
+            // Filtro por género
+            if ($request->has('genero') && $request->genero !== '') {
+                $query->where('genero', $request->genero);
+            }
+            
+            // Búsqueda por nombre o documento
+            if ($request->has('buscar') && $request->buscar !== '') {
+                $buscar = $request->buscar;
+                $query->where(function($q) use ($buscar) {
+                    $q->where('apellidos_nombres', 'like', "%{$buscar}%")
+                      ->orWhere('numero_doc', 'like', "%{$buscar}%");
+                });
+            }
+            
+            // Ordenar por id_niño (más recientes primero, ya que no hay created_at)
+            $query->orderBy('id_niño', 'desc');
+            
+            // Paginación
+            $perPage = $request->get('per_page', 25);
+            $ninos = $query->paginate($perPage);
+            
+            // Log para debugging
+            \Log::info('API ninos - Total encontrados: ' . $ninos->total());
+            
+            // Formatear datos para el frontend
+            $ninosFormateados = $ninos->map(function($nino) {
+                // Mapear tipo_doc a id_tipo_documento para compatibilidad
+                $tiposDoc = [
+                    'DNI' => 1,
+                    'CE' => 2,
+                    'PASS' => 3,
+                    'DIE' => 4,
+                    'S/ DOCUMENTO' => 5,
+                    'CNV' => 6
+                ];
+                $idTipoDoc = $tiposDoc[$nino->tipo_doc] ?? null;
+                
+                return [
+                    'id' => $this->getNinoId($nino),
+                    'id_niño' => $this->getNinoId($nino), // Para compatibilidad con el frontend
+                    'establecimiento' => $nino->establecimiento ?? '-',
+                    'tipo_doc' => $nino->tipo_doc ?? '-',
+                    'id_tipo_documento' => $idTipoDoc, // Para compatibilidad
+                    'numero_doc' => $nino->numero_doc ?? '-',
+                    'numero_documento' => $nino->numero_doc ?? '-', // Para compatibilidad
+                    'apellidos_nombres' => $nino->apellidos_nombres ?? '-',
+                    'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null,
+                    'genero' => $nino->genero ?? 'M',
+                    'edad_meses' => $nino->edad_meses ?? null,
+                    'edad_dias' => $nino->edad_dias ?? null,
+                    'datos_extras' => $nino->datos_extras ?? null,
+                    'created_at' => null, // No hay timestamps en la tabla
+                    'updated_at' => null, // No hay timestamps en la tabla
+                ];
+            });
+            
+            return response()->json([
+                'success' => true, 
+                'data' => $ninosFormateados,
+                'pagination' => [
+                    'current_page' => $ninos->currentPage(),
+                    'last_page' => $ninos->lastPage(),
+                    'per_page' => $ninos->perPage(),
+                    'total' => $ninos->total(),
+                    'from' => $ninos->firstItem(),
+                    'to' => $ninos->lastItem(),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en API ninos: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar los datos: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function controlesRecienNacido(Request $request)
@@ -282,19 +291,38 @@ class ApiController extends Controller
         }
         
         if ($ninoId) {
-            // Buscar por id_niño (puede ser id_niño o id dependiendo del modelo)
-            $controles = ControlRn::where('id_niño', $ninoId)->orderBy('numero_control', 'asc')->get();
-            
-            // Si no hay controles reales, generar datos de ejemplo
-            if ($controles->isEmpty()) {
-                try {
-                    $nino = $this->findNino($ninoId);
-                    $ninoIdReal = $this->getNinoId($nino);
+            try {
+                // Buscar el niño primero para obtener el id_niño correcto
+                $nino = $this->findNino($ninoId);
+                $ninoIdReal = $this->getNinoId($nino);
+                
+                // Buscar controles usando el id_niño real
+                $controles = ControlRn::where('id_niño', $ninoIdReal)->orderBy('numero_control', 'asc')->get();
+                
+                // Solo generar datos de ejemplo si NO hay controles reales
+                // Los controles reales siempre tienen prioridad
+                if ($controles->isEmpty()) {
                     $controles = $this->generarDatosEjemploRecienNacido($nino, $ninoIdReal);
-                } catch (\Exception $e) {
-                    // Si no se encuentra el niño, devolver vacío
-                    $controles = collect([]);
+                } else {
+                    // Asegurar que los controles reales tengan el formato correcto
+                    $controles = $controles->map(function($control) {
+                        return [
+                            'id' => $control->id,
+                            'id_niño' => $control->id_niño,
+                            'numero_control' => $control->numero_control,
+                            'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                            'edad' => $control->edad,
+                            'estado' => $control->estado,
+                            'peso' => $control->peso,
+                            'talla' => $control->talla,
+                            'perimetro_cefalico' => $control->perimetro_cefalico,
+                            'es_ejemplo' => false, // Marcar como control real
+                        ];
+                    });
                 }
+            } catch (\Exception $e) {
+                // Si no se encuentra el niño, devolver vacío
+                $controles = collect([]);
             }
         } else {
             $controles = ControlRn::all();
@@ -319,7 +347,6 @@ class ApiController extends Controller
         
         $controlesEjemplo = collect();
         $rangos = [
-            0 => ['min' => 0, 'max' => 1, 'peso' => 3.2, 'talla' => 49, 'pc' => 34],
             1 => ['min' => 2, 'max' => 6, 'peso' => 3.3, 'talla' => 49.5, 'pc' => 34.5],
             2 => ['min' => 7, 'max' => 13, 'peso' => 3.4, 'talla' => 50, 'pc' => 35],
             3 => ['min' => 14, 'max' => 20, 'peso' => 3.5, 'talla' => 50.5, 'pc' => 35.5],
@@ -360,7 +387,7 @@ class ApiController extends Controller
         $validator = Validator::make($request->all(), [
             // Validamos que venga un ID y dejamos que findNino resuelva si es id_niño o id
             'nino_id' => 'required|integer',
-            'numero_control' => 'required|integer|between:0,4',
+            'numero_control' => 'required|integer|between:1,4',
             'fecha_control' => 'required|date',
             'peso' => 'nullable|numeric|min:0',
             'talla' => 'nullable|numeric|min:0',
@@ -385,14 +412,13 @@ class ApiController extends Controller
 
             // Determinar estado basado en rangos
             $rangos = [
-                0 => ['min' => 0, 'max' => 1],
                 1 => ['min' => 2, 'max' => 6],
                 2 => ['min' => 7, 'max' => 13],
                 3 => ['min' => 14, 'max' => 20],
                 4 => ['min' => 21, 'max' => 28],
             ];
             
-            $rango = $rangos[$request->numero_control] ?? ['min' => 0, 'max' => 28];
+            $rango = $rangos[$request->numero_control] ?? ['min' => 2, 'max' => 28];
             $estado = ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) ? 'cumple' : 'no_cumple';
             
             $ninoId = $this->getNinoId($nino);
@@ -443,14 +469,13 @@ class ApiController extends Controller
             $edadDias = $fechaNacimiento->diffInDays($fechaControl);
 
             $rangos = [
-                0 => ['min' => 0, 'max' => 1],
                 1 => ['min' => 2, 'max' => 6],
                 2 => ['min' => 7, 'max' => 13],
                 3 => ['min' => 14, 'max' => 20],
                 4 => ['min' => 21, 'max' => 28],
             ];
             
-            $rango = $rangos[$control->numero_control] ?? ['min' => 0, 'max' => 28];
+            $rango = $rangos[$control->numero_control] ?? ['min' => 2, 'max' => 28];
             $estado = ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) ? 'cumple' : 'no_cumple';
 
             $control->update([
@@ -506,9 +531,14 @@ class ApiController extends Controller
                 }
                 $controles = $query->orderBy('numero_control', 'asc')->get();
                 
-                // Si no hay controles reales, generar datos de ejemplo basados en el ID del niño
+                // Solo generar datos de ejemplo si NO hay controles reales
+                // Los controles reales siempre tienen prioridad
                 if ($controles->isEmpty()) {
                     $controles = $this->generarDatosEjemploCredMensual($nino, $ninoIdReal);
+                } else {
+                    // Los controles reales ya tienen el formato correcto del modelo
+                    // No necesitamos mapearlos, solo asegurarnos de que se devuelvan correctamente
+                    // El modelo Eloquent ya devuelve objetos con todas las propiedades
                 }
                 
                 return response()->json([
@@ -611,7 +641,7 @@ class ApiController extends Controller
     public function registrarCredMensual(Request $request, $id = null)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
+            'nino_id' => 'required|integer',
             'mes' => 'required|integer|between:1,11',
             'fecha_control' => 'required|date',
             'peso' => 'nullable|numeric|min:0',
@@ -757,7 +787,7 @@ class ApiController extends Controller
     public function registrarTamizaje(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
+            'nino_id' => 'required|integer',
             'fecha_tam_neo' => 'required|date',
         ]);
 
@@ -771,6 +801,7 @@ class ApiController extends Controller
 
         try {
             $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
             $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
             $fechaTamizaje = Carbon::parse($request->fecha_tam_neo);
             $edadDias = $fechaNacimiento->diffInDays($fechaTamizaje);
@@ -778,7 +809,7 @@ class ApiController extends Controller
             $cumple = ($edadDias >= 1 && $edadDias <= 30) ? 'SI' : 'NO';
 
             $tamizaje = TamizajeNeonatal::updateOrCreate(
-                ['id_niño' => $request->nino_id],
+                ['id_niño' => $ninoIdReal],
                 [
                     'fecha_tam_neo' => $request->fecha_tam_neo,
                     'edad_tam_neo' => $edadDias,
@@ -855,10 +886,10 @@ class ApiController extends Controller
     public function registrarCNV(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
-            'peso_nacer' => 'required|numeric|min:0',
-            'edad_gestacional' => 'required|numeric|min:20|max:45',
-            'clasificacion' => 'required|string|in:A TÉRMINO,PREMATURO,BAJO PESO,PREMATURO BAJO PESO',
+            'nino_id' => 'required|integer',
+            'peso_nacer' => 'nullable|numeric|min:0',
+            'edad_gestacional' => 'nullable|numeric|min:20|max:45',
+            'clasificacion' => 'nullable|string|in:A TÉRMINO,PREMATURO,BAJO PESO,PREMATURO BAJO PESO',
         ]);
 
         if ($validator->fails()) {
@@ -870,13 +901,23 @@ class ApiController extends Controller
         }
 
         try {
+            $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
+            
+            $dataToUpdate = [];
+            if ($request->has('peso_nacer') && $request->peso_nacer !== null && $request->peso_nacer !== '') {
+                $dataToUpdate['peso'] = $request->peso_nacer;
+            }
+            if ($request->has('edad_gestacional') && $request->edad_gestacional !== null && $request->edad_gestacional !== '') {
+                $dataToUpdate['edad_gestacional'] = $request->edad_gestacional;
+            }
+            if ($request->has('clasificacion') && $request->clasificacion !== null && $request->clasificacion !== '') {
+                $dataToUpdate['clasificacion'] = $request->clasificacion;
+            }
+            
             $cnv = RecienNacido::updateOrCreate(
-                ['id_niño' => $request->nino_id],
-                [
-                    'peso' => $request->peso_nacer,
-                    'edad_gestacional' => $request->edad_gestacional,
-                    'clasificacion' => $request->clasificacion,
-                ]
+                ['id_niño' => $ninoIdReal],
+                $dataToUpdate
             );
 
             return response()->json([
@@ -957,7 +998,7 @@ class ApiController extends Controller
     public function registrarVisita(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
+            'nino_id' => 'required|integer',
             'fecha_visita' => 'required|date',
             'periodo' => 'required|string',
             'tipo_visita' => 'nullable|string',
@@ -972,11 +1013,14 @@ class ApiController extends Controller
         }
 
         try {
+            $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
+            
             // Contar visitas existentes para este niño
-            $numeroVisitas = VisitaDomiciliaria::where('id_niño', $request->nino_id)->count() + 1;
+            $numeroVisitas = VisitaDomiciliaria::where('id_niño', $ninoIdReal)->count() + 1;
 
             $visita = VisitaDomiciliaria::create([
-                'id_niño' => $request->nino_id,
+                'id_niño' => $ninoIdReal,
                 'grupo_visita' => $request->periodo,
                 'fecha_visita' => $request->fecha_visita,
                 'numero_visitas' => $numeroVisitas,
@@ -1056,7 +1100,7 @@ class ApiController extends Controller
     public function registrarVacuna(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nino_id' => 'required|exists:ninos,id',
+            'nino_id' => 'required|integer',
             'tipo_vacuna' => 'required|string|in:BCG,HVB',
             'fecha_aplicacion' => 'required|date',
         ]);
@@ -1071,19 +1115,27 @@ class ApiController extends Controller
 
         try {
             $nino = $this->findNino($request->nino_id);
+            $ninoIdReal = $this->getNinoId($nino);
             $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
             $fechaAplicacion = Carbon::parse($request->fecha_aplicacion);
             $edadDias = $fechaNacimiento->diffInDays($fechaAplicacion);
             
             $estado = ($edadDias >= 0 && $edadDias <= 1) ? 'SI' : 'NO';
             
+            $vacunaData = [];
+            if ($request->tipo_vacuna === 'BCG') {
+                $vacunaData['fecha_bcg'] = $request->fecha_aplicacion;
+                $vacunaData['edad_bcg'] = $edadDias;
+                $vacunaData['estado_bcg'] = $estado;
+            } else {
+                $vacunaData['fecha_hvb'] = $request->fecha_aplicacion;
+                $vacunaData['edad_hvb'] = $edadDias;
+                $vacunaData['estado_hvb'] = $estado;
+            }
+            
             $vacuna = VacunaRn::updateOrCreate(
-                ['id_niño' => $request->nino_id],
-                [
-                    $request->tipo_vacuna === 'BCG' ? 'fecha_bcg' : 'fecha_hvb' => $request->fecha_aplicacion,
-                    $request->tipo_vacuna === 'BCG' ? 'edad_bcg' : 'edad_hvb' => $edadDias,
-                    $request->tipo_vacuna === 'BCG' ? 'estado_bcg' : 'estado_hvb' => $estado,
-                ]
+                ['id_niño' => $ninoIdReal],
+                $vacunaData
             );
             
             // Actualizar cumple_BCG_HVB si ambas vacunas están aplicadas
@@ -1291,6 +1343,219 @@ class ApiController extends Controller
         return response()->json([
             'success' => true,
             'total' => $total
+        ]);
+    }
+
+    /**
+     * Obtener todas las alertas detalladas del sistema
+     */
+    public function obtenerAlertas(Request $request)
+    {
+        $hoy = Carbon::now();
+        $alertas = [];
+        
+        // Obtener todos los niños
+        $ninos = Nino::all();
+        
+        foreach ($ninos as $nino) {
+            if (!$nino->fecha_nacimiento) continue;
+            
+            $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+            $edadDias = $fechaNacimiento->diffInDays($hoy);
+            $ninoId = $this->getNinoId($nino);
+            
+            // Alertas de controles recién nacido (0-28 días)
+            if ($edadDias <= 28) {
+                $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
+                $controlesRegistrados = $controlesRn->pluck('numero_control')->toArray();
+                
+                $rangosRN = [
+                    1 => ['min' => 2, 'max' => 6, 'nombre' => 'CRN1'],
+                    2 => ['min' => 7, 'max' => 13, 'nombre' => 'CRN2'],
+                    3 => ['min' => 14, 'max' => 20, 'nombre' => 'CRN3'],
+                    4 => ['min' => 21, 'max' => 28, 'nombre' => 'CRN4']
+                ];
+                
+                foreach ($rangosRN as $num => $rango) {
+                    $debeTener = false;
+                    if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
+                        $debeTener = true;
+                    } else if ($edadDias > $rango['max']) {
+                        $debeTener = true;
+                    }
+                    
+                    if ($debeTener && !in_array($num, $controlesRegistrados)) {
+                        $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
+                        $mensaje = $edadDias > $rango['max'] 
+                            ? "El niño tiene {$edadDias} días y el control {$rango['nombre']} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                            : "El niño tiene {$edadDias} días y debe realizarse el control {$rango['nombre']} entre los {$rango['min']} y {$rango['max']} días.";
+                        
+                        $alertas[] = [
+                            'tipo' => 'control_recien_nacido',
+                            'nino_id' => $ninoId,
+                            'nino_nombre' => $nino->apellidos_nombres,
+                            'nino_dni' => $nino->numero_doc,
+                            'establecimiento' => $nino->establecimiento,
+                            'control' => $rango['nombre'],
+                            'edad_dias' => $edadDias,
+                            'rango_min' => $rango['min'],
+                            'rango_max' => $rango['max'],
+                            'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                            'prioridad' => $edadDias > $rango['max'] ? 'alta' : 'media',
+                            'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                            'mensaje' => $mensaje,
+                            'dias_fuera' => $diasFuera,
+                        ];
+                    }
+                }
+            }
+            
+            // Alertas de CRED mensual (29-359 días)
+            if ($edadDias >= 29 && $edadDias <= 359) {
+                $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
+                $controlesRegistrados = $controlesCred->pluck('numero_control')->toArray();
+                
+                $rangosCred = [
+                    1 => ['min' => 29, 'max' => 59, 'nombre' => 'Mes 1'],
+                    2 => ['min' => 60, 'max' => 89, 'nombre' => 'Mes 2'],
+                    3 => ['min' => 90, 'max' => 119, 'nombre' => 'Mes 3'],
+                    4 => ['min' => 120, 'max' => 149, 'nombre' => 'Mes 4'],
+                    5 => ['min' => 150, 'max' => 179, 'nombre' => 'Mes 5'],
+                    6 => ['min' => 180, 'max' => 209, 'nombre' => 'Mes 6'],
+                    7 => ['min' => 210, 'max' => 239, 'nombre' => 'Mes 7'],
+                    8 => ['min' => 240, 'max' => 269, 'nombre' => 'Mes 8'],
+                    9 => ['min' => 270, 'max' => 299, 'nombre' => 'Mes 9'],
+                    10 => ['min' => 300, 'max' => 329, 'nombre' => 'Mes 10'],
+                    11 => ['min' => 330, 'max' => 359, 'nombre' => 'Mes 11']
+                ];
+                
+                foreach ($rangosCred as $mes => $rango) {
+                    $debeTener = false;
+                    if ($edadDias > $rango['max']) {
+                        $debeTener = true;
+                    } else if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
+                        $debeTener = true;
+                    }
+                    
+                    if ($debeTener && !in_array($mes, $controlesRegistrados)) {
+                        $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
+                        $mensaje = $edadDias > $rango['max'] 
+                            ? "El niño tiene {$edadDias} días y el control {$rango['nombre']} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                            : "El niño tiene {$edadDias} días y debe realizarse el control {$rango['nombre']} entre los {$rango['min']} y {$rango['max']} días.";
+                        
+                        $alertas[] = [
+                            'tipo' => 'control_cred_mensual',
+                            'nino_id' => $ninoId,
+                            'nino_nombre' => $nino->apellidos_nombres,
+                            'nino_dni' => $nino->numero_doc,
+                            'establecimiento' => $nino->establecimiento,
+                            'control' => $rango['nombre'],
+                            'mes' => $mes,
+                            'edad_dias' => $edadDias,
+                            'rango_min' => $rango['min'],
+                            'rango_max' => $rango['max'],
+                            'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                            'prioridad' => $edadDias > $rango['max'] ? 'alta' : 'media',
+                            'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                            'mensaje' => $mensaje,
+                            'dias_fuera' => $diasFuera,
+                        ];
+                    }
+                }
+            }
+            
+            // Alertas de tamizaje (1-29 días)
+            if ($edadDias >= 1 && $edadDias <= 29) {
+                $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+                if (!$tamizaje) {
+                    $diasFuera = $edadDias > 29 ? ($edadDias - 29) : 0;
+                    $mensaje = $edadDias > 29 
+                        ? "El niño tiene {$edadDias} días y el tamizaje neonatal debió realizarse entre los 1 y 29 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe realizarse el tamizaje neonatal entre los 1 y 29 días de vida.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'tamizaje',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Tamizaje Neonatal',
+                        'edad_dias' => $edadDias,
+                        'rango_min' => 1,
+                        'rango_max' => 29,
+                        'rango_dias' => '1-29',
+                        'prioridad' => $edadDias > 29 ? 'alta' : 'media',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'dias_fuera' => $diasFuera,
+                    ];
+                }
+            }
+            
+            // Alertas de vacunas (0-30 días)
+            if ($edadDias <= 30) {
+                $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
+                if (!$vacunas || !$vacunas->fecha_bcg) {
+                    $diasFuera = $edadDias > 7 ? ($edadDias - 7) : 0;
+                    $mensaje = $edadDias > 7 
+                        ? "El niño tiene {$edadDias} días y la vacuna BCG debió aplicarse entre los 0 y 7 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna BCG entre los 0 y 7 días de vida.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'vacuna',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Vacuna BCG',
+                        'edad_dias' => $edadDias,
+                        'rango_min' => 0,
+                        'rango_max' => 7,
+                        'rango_dias' => '0-7',
+                        'prioridad' => $edadDias > 7 ? 'alta' : 'media',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'dias_fuera' => $diasFuera,
+                    ];
+                }
+                if (!$vacunas || !$vacunas->fecha_hvb) {
+                    $diasFuera = $edadDias > 1 ? ($edadDias - 1) : 0;
+                    $mensaje = $edadDias > 1 
+                        ? "El niño tiene {$edadDias} días y la vacuna HVB debió aplicarse entre los 0 y 1 día. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna HVB entre los 0 y 1 día de vida.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'vacuna',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Vacuna HVB',
+                        'edad_dias' => $edadDias,
+                        'rango_min' => 0,
+                        'rango_max' => 1,
+                        'rango_dias' => '0-1',
+                        'prioridad' => $edadDias > 1 ? 'alta' : 'media',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'dias_fuera' => $diasFuera,
+                    ];
+                }
+            }
+        }
+        
+        // Ordenar por prioridad (alta primero) y luego por edad
+        usort($alertas, function($a, $b) {
+            if ($a['prioridad'] === $b['prioridad']) {
+                return $b['edad_dias'] - $a['edad_dias'];
+            }
+            return $a['prioridad'] === 'alta' ? -1 : 1;
+        });
+        
+        return response()->json([
+            'success' => true,
+            'data' => $alertas,
+            'total' => count($alertas)
         ]);
     }
 

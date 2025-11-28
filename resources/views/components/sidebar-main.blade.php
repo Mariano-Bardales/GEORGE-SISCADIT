@@ -1,7 +1,7 @@
 @props(['activeRoute' => ''])
 
 <aside id="sidebar" class="relative text-white transition-all duration-300 flex flex-col w-72" data-testid="sidebar"
-  style="background: linear-gradient(rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%); box-shadow: rgba(102, 126, 234, 0.15) 4px 0px 24px;">
+  style="background: linear-gradient(rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%); box-shadow: rgba(102, 126, 234, 0.15) 4px 0px 24px; height: 100vh; overflow: hidden; flex-shrink: 0;">
   <button id="toggleSidebarBtn"
     class="absolute -right-3 top-6 bg-white text-purple-600 rounded-full p-1.5 shadow-lg hover:shadow-xl transition-all z-50 hover:bg-purple-50"
     data-testid="toggle-sidebar-button">
@@ -53,7 +53,7 @@
       </div>
     </div>
   </div>
-  <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+  <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto" style="min-height: 0;">
     <a data-testid="menu-dashboard"
       class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all group relative {{ $activeRoute === 'dashboard' ? 'bg-white/25 backdrop-blur-sm text-white shadow-lg' : 'text-white/80 hover:bg-white/15 hover:text-white' }}"
       href="{{ route('dashboard') }}" data-discover="true" style="{{ $activeRoute === 'dashboard' ? 'box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;' : '' }}">
@@ -125,24 +125,6 @@
       @endif
     </a>
     @endif
-    <a data-testid="menu-logs"
-      class="flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all group relative {{ $activeRoute === 'logs' ? 'bg-white/25 backdrop-blur-sm text-white shadow-lg' : 'text-white/80 hover:bg-white/15 hover:text-white' }}"
-      href="{{ route('logs') }}" data-discover="true" style="{{ $activeRoute === 'logs' ? 'box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;' : '' }}">
-      <div class="relative flex-shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text w-5 h-5" aria-hidden="true">
-          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-          <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-          <path d="M10 9H8"></path>
-          <path d="M16 13H8"></path>
-          <path d="M16 17H8"></path>
-        </svg>
-      </div>
-      <span class="font-medium text-[15px]">Logs</span>
-      @if($activeRoute === 'logs')
-        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
-      @endif
-    </a>
   </nav>
   <div class="p-4 border-t border-white/10">
     <form action="{{ route('logout') }}" method="POST">

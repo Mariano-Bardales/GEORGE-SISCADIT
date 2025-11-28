@@ -34,7 +34,6 @@
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -45,15 +44,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_1">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_1">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_1">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(1)" data-control-id="" id="btn-cred-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 2 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -62,15 +52,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_2">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_2">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_2">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(2)" data-control-id="" id="btn-cred-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 3 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -79,15 +60,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_3">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_3">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_3">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(3)" data-control-id="" id="btn-cred-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 4 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -96,15 +68,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_4">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_4">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_4">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(4)" data-control-id="" id="btn-cred-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 5 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -113,15 +76,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_5">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_5">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_5">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(5)" data-control-id="" id="btn-cred-5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 6 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -130,15 +84,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_6">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_6">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_6">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(6)" data-control-id="" id="btn-cred-6">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 7 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -147,15 +92,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_7">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_7">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_7">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(7)" data-control-id="" id="btn-cred-7">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 8 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -164,15 +100,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_8">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_8">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_8">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(8)" data-control-id="" id="btn-cred-8">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 9 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -181,15 +108,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_9">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_9">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_9">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(9)" data-control-id="" id="btn-cred-9">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 10 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -198,15 +116,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_10">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_10">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_10">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(10)" data-control-id="" id="btn-cred-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Mes 11 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -215,15 +124,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_11">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_11">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_11">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;">
-              <button class="btn-registrar" onclick="abrirModalCredMensual(11)" data-control-id="" id="btn-cred-11">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
         </tbody>
       </table>

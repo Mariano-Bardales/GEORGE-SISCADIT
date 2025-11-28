@@ -34,7 +34,6 @@
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango de Edad</th>
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Visita</th>
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-              <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
             </tr>
           </thead>
           <tbody>
@@ -45,15 +44,6 @@
               <td style="padding: 12px; color: #64748b;">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-28d">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-28d">SEGUIMIENTO</span></td>
-              <td style="padding: 12px; text-align: center;">
-                <button class="btn-registrar" onclick="abrirModalVisita('28d')" data-control-id="" id="btn-visita-28d">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5v14"></path>
-                  </svg>
-                  <span class="btn-text">Registrar</span>
-                </button>
-              </td>
             </tr>
             <!-- Visita 2-5 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -62,15 +52,6 @@
               <td style="padding: 12px; color: #64748b;">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-2-5m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-2-5m">SEGUIMIENTO</span></td>
-              <td style="padding: 12px; text-align: center;">
-                <button class="btn-registrar" onclick="abrirModalVisita('2-5m')" data-control-id="" id="btn-visita-2-5m">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5v14"></path>
-                  </svg>
-                  <span class="btn-text">Registrar</span>
-                </button>
-              </td>
             </tr>
             <!-- Visita 6-8 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -79,15 +60,6 @@
               <td style="padding: 12px; color: #64748b;">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-6-8m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-6-8m">SEGUIMIENTO</span></td>
-              <td style="padding: 12px; text-align: center;">
-                <button class="btn-registrar" onclick="abrirModalVisita('6-8m')" data-control-id="" id="btn-visita-6-8m">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5v14"></path>
-                  </svg>
-                  <span class="btn-text">Registrar</span>
-                </button>
-              </td>
             </tr>
             <!-- Visita 9-11 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -96,15 +68,6 @@
               <td style="padding: 12px; color: #64748b;">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-9-11m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-9-11m">SEGUIMIENTO</span></td>
-              <td style="padding: 12px; text-align: center;">
-                <button class="btn-registrar" onclick="abrirModalVisita('9-11m')" data-control-id="" id="btn-visita-9-11m">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5v14"></path>
-                  </svg>
-                  <span class="btn-text">Registrar</span>
-                </button>
-              </td>
             </tr>
           </tbody>
         </table>

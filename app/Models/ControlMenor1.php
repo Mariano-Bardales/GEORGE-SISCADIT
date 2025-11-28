@@ -26,6 +26,9 @@ class ControlMenor1 extends Model
         'estado',
         'estado_cred_once',
         'estado_cred_final',
+        'peso',
+        'talla',
+        'perimetro_cefalico',
     ];
 
     protected $casts = [

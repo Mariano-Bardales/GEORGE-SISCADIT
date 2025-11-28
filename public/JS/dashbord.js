@@ -20,6 +20,42 @@ document.addEventListener('DOMContentLoaded', function() {
   cargarTablaControles();
   cargarResumenAlertas();
   cargarTopEstablecimientos();
+  
+  // Escuchar eventos de control registrado para actualizar el dashboard
+  window.addEventListener('controlRegistrado', function(event) {
+    console.log('🔄 Control registrado detectado, actualizando dashboard...');
+    // Recargar estadísticas y alertas después de un breve delay
+    setTimeout(() => {
+      cargarDashboardStats();
+      cargarResumenAlertas();
+      cargarTablaControles();
+    }, 1000);
+  });
+  
+  // Usar localStorage para sincronizar entre pestañas
+  window.addEventListener('storage', function(event) {
+    if (event.key === 'controlRegistrado') {
+      try {
+        const data = JSON.parse(event.newValue);
+        if (data && data.ninoId) {
+          console.log('🔄 Control registrado en otra pestaña, actualizando dashboard...');
+          setTimeout(() => {
+            cargarDashboardStats();
+            cargarResumenAlertas();
+            cargarTablaControles();
+          }, 500);
+        }
+      } catch (e) {
+        console.error('Error al procesar evento de storage:', e);
+      }
+    }
+  });
+  
+  // Actualizar dashboard periódicamente cada 30 segundos
+  setInterval(() => {
+    cargarDashboardStats();
+    cargarResumenAlertas();
+  }, 30000);
 });
 
 // Cargar estadísticas del dashboard

@@ -7,8 +7,217 @@
   <meta name="description" content="Sistema de Control y Alerta de Etapas de Vida del Niño - SISCADIT">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>SISCADIT - Alertas CRED</title>
-  <link rel="stylesheet" href="{{ asset('Css/Dashboard.css') }}">
-  @stack('styles')
+  <link rel="stylesheet" href="{{ asset('Css/dashbord.css') }}">
+  <link rel="stylesheet" href="{{ asset('Css/sidebar.css') }}">
+  <link rel="stylesheet" href="{{ asset('Css/dashboard-main.css') }}">
+  <style>
+    .alertas-container {
+      padding: 1.5rem 2rem;
+    }
+    .alertas-header {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+      color: white;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+    }
+    .alertas-header h1 {
+      font-size: 1.875rem;
+      font-weight: 800;
+      margin: 0 0 0.5rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .alertas-header p {
+      font-size: 0.9375rem;
+      margin: 0;
+      opacity: 0.95;
+    }
+    .filtros-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      align-items: end;
+    }
+    .filtro-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .filtro-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filtro-input {
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+    .filtro-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .filtro-select {
+      padding: 0.75rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filtro-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .alertas-table-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .alertas-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .alertas-table thead {
+      background: linear-gradient(to right, #ef4444, #dc2626);
+      color: white;
+    }
+    .alertas-table th {
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .alertas-table td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.875rem;
+      color: #1e293b;
+      vertical-align: top;
+    }
+    .alertas-table tbody tr:hover {
+      background: #f8fafc;
+    }
+    .badge-prioridad {
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-block;
+    }
+    .badge-prioridad.alta {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .badge-prioridad.media {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-tipo {
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .badge-tipo.control_recien_nacido {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .badge-tipo.control_cred_mensual {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+    .badge-tipo.tamizaje {
+      background: #fce7f3;
+      color: #9f1239;
+    }
+    .badge-tipo.vacuna {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .badge-tipo.cnv {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .badge-tipo.visita {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+    .mensaje-alerta {
+      background: #fef2f2;
+      border-left: 4px solid #ef4444;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: #991b1b;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+    .rango-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+    }
+    .rango-info .edad-actual {
+      font-weight: 700;
+      color: #ef4444;
+    }
+    .rango-info .rango-esperado {
+      color: #64748b;
+    }
+    .btn-ver-controles {
+      background: linear-gradient(to right, #9333ea, #7c3aed);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-ver-controles:hover {
+      background: linear-gradient(to right, #7c3aed, #6d28d9);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(147, 51, 234, 0.3);
+    }
+    @media (max-width: 1200px) {
+      .filtros-grid {
+        grid-template-columns: 1fr 1fr !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .filtros-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 </head>
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -16,23 +225,251 @@
     <div class="flex h-screen bg-slate-50 relative">
       <x-sidebar-main activeRoute="alertas-cred" />
       <main class="flex-1 overflow-auto">
-        <div class="p-8">
-          <div class="space-y-8">
-            <div>
-              <h1 class="text-4xl font-bold text-slate-800">Alertas CRED</h1>
-              <p class="text-slate-600 mt-2">Gestión de alertas del sistema</p>
+        <div class="alertas-container">
+          <div class="alertas-header">
+            <h1>
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Alertas CRED
+            </h1>
+            <p>Niños con controles pendientes o fuera del rango establecido</p>
+          </div>
+
+          <!-- Filtros -->
+          <div class="filtros-container">
+            <div class="filtros-grid" style="grid-template-columns: 2fr 1fr; gap: 1rem;">
+              <div class="filtro-group">
+                <label class="filtro-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                  Buscar por DNI o Nombre
+                </label>
+                <input type="text" id="filtroBuscar" class="filtro-input" placeholder="Ingrese DNI o nombre del niño..." onkeyup="filtrarAlertas()">
+              </div>
+              <div class="filtro-group">
+                <label class="filtro-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+                    <path d="M3 3h18v18H3zM3 9h18M9 3v18"></path>
+                  </svg>
+                  Tipo de Control
+                </label>
+                <select id="filtroTipo" class="filtro-select" onchange="filtrarAlertas()">
+                  <option value="">Todos los tipos</option>
+                  <option value="control_recien_nacido">Control Recién Nacido</option>
+                  <option value="control_cred_mensual">CRED Mensual</option>
+                  <option value="tamizaje">Tamizaje</option>
+                  <option value="cnv">CNV (Carné de Nacido Vivo)</option>
+                  <option value="visita">Visitas Domiciliarias</option>
+                  <option value="vacuna">Vacuna</option>
+                </select>
+              </div>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-              <p class="text-slate-600">Contenido de alertas CRED en desarrollo...</p>
-            </div>
+          </div>
+
+          <!-- Tabla de Alertas -->
+          <div class="alertas-table-container">
+            <table class="alertas-table">
+              <thead>
+                <tr>
+                  <th>Niño</th>
+                  <th>DNI</th>
+                  <th>Tipo de Control</th>
+                  <th>Control</th>
+                  <th>Edad Actual</th>
+                  <th>Rango Esperado</th>
+                  <th>Problema Detectado</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tablaAlertas">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; display: block; opacity: 0.5;">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    Cargando alertas...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </main>
     </div>
   </div>
+
+  <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    let todasLasAlertas = [];
+
+    async function cargarAlertas() {
+      try {
+        const response = await fetch('/api/alertas', {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          todasLasAlertas = data.data;
+          filtrarAlertas();
+        } else {
+          document.getElementById('tablaAlertas').innerHTML = `
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+                No se pudieron cargar las alertas
+              </td>
+            </tr>
+          `;
+        }
+      } catch (error) {
+        console.error('Error al cargar alertas:', error);
+        document.getElementById('tablaAlertas').innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">
+              Error al cargar las alertas. Por favor, recarga la página.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function filtrarAlertas() {
+      const filtroBuscar = document.getElementById('filtroBuscar').value.toLowerCase();
+      const filtroTipo = document.getElementById('filtroTipo').value;
+      
+      let alertasFiltradas = todasLasAlertas.filter(alerta => {
+        // Filtro por búsqueda (DNI o nombre)
+        const coincideBuscar = !filtroBuscar || 
+          (alerta.nino_nombre && alerta.nino_nombre.toLowerCase().includes(filtroBuscar)) ||
+          (alerta.nino_dni && alerta.nino_dni.toString().includes(filtroBuscar));
+        
+        // Filtro por tipo de control
+        const coincideTipo = !filtroTipo || alerta.tipo === filtroTipo;
+        
+        return coincideBuscar && coincideTipo;
+      });
+      
+      renderizarAlertas(alertasFiltradas);
+    }
+
+    function renderizarAlertas(alertas) {
+      const tbody = document.getElementById('tablaAlertas');
+      
+      if (alertas.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem; color: #10b981;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; display: block;">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <p style="font-weight: 600; font-size: 1.125rem; margin: 0.5rem 0;">¡Excelente!</p>
+              <p style="margin: 0;">No hay alertas que coincidan con los filtros seleccionados.</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = alertas.map(alerta => {
+        const tipoClass = alerta.tipo.replace(/_/g, '-');
+        const prioridadClass = alerta.prioridad;
+        const edadActual = alerta.edad_dias || 0;
+        const rangoMin = alerta.rango_min || 0;
+        const rangoMax = alerta.rango_max || 0;
+        const diasFuera = alerta.dias_fuera || 0;
+        
+        return `
+          <tr>
+            <td style="font-weight: 600;">${alerta.nino_nombre || '-'}</td>
+            <td>${alerta.nino_dni || '-'}</td>
+            <td>
+              <span class="badge-tipo ${tipoClass}">
+                ${alerta.tipo === 'control_recien_nacido' ? 'Control RN' : 
+                  alerta.tipo === 'control_cred_mensual' ? 'CRED Mensual' : 
+                  alerta.tipo === 'tamizaje' ? 'Tamizaje' : 
+                  alerta.tipo === 'cnv' ? 'CNV' :
+                  alerta.tipo === 'visita' ? 'Visitas' : 'Vacuna'}
+              </span>
+            </td>
+            <td style="font-weight: 600;">${alerta.control || '-'}</td>
+            <td>
+              <div class="rango-info">
+                <span class="edad-actual">${edadActual} días</span>
+              </div>
+            </td>
+            <td>
+              <div class="rango-info">
+                <span class="rango-esperado">${rangoMin}-${rangoMax} días</span>
+              </div>
+            </td>
+            <td style="max-width: 400px;">
+              <div class="mensaje-alerta">
+                ${alerta.mensaje || 'Control pendiente de realizar'}
+              </div>
+              ${diasFuera > 0 ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #dc2626; font-weight: 600;">
+                ⚠️ Fuera del rango por ${diasFuera} día(s)
+              </div>` : ''}
+            </td>
+            <td>
+              <button class="btn-ver-controles" onclick="window.location.href='/controles-cred'">
+                Ver Controles
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Escuchar eventos de control registrado para actualizar alertas
+    window.addEventListener('controlRegistrado', function(event) {
+      console.log('🔄 Control registrado detectado, actualizando alertas...');
+      // Recargar alertas después de un breve delay
+      setTimeout(() => {
+        cargarAlertas();
+      }, 1000);
+    });
+    
+    // Usar localStorage para sincronizar entre pestañas
+    window.addEventListener('storage', function(event) {
+      if (event.key === 'controlRegistrado') {
+        try {
+          const data = JSON.parse(event.newValue);
+          if (data && data.ninoId) {
+            console.log('🔄 Control registrado en otra pestaña, actualizando alertas...');
+            setTimeout(() => {
+              cargarAlertas();
+            }, 500);
+          }
+        } catch (e) {
+          console.error('Error al procesar evento de storage:', e);
+        }
+      }
+    });
+    
+    // Actualizar alertas periódicamente cada 30 segundos
+    setInterval(() => {
+      cargarAlertas();
+    }, 30000);
+
+    // Cargar alertas al iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarAlertas();
+      
+      // Recargar cada 5 minutos
+      setInterval(cargarAlertas, 300000);
+    });
+  </script>
 </body>
 </html>
-
-
-
-

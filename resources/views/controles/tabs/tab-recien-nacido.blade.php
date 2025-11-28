@@ -20,7 +20,7 @@
       </div>
       <div>
         <div style="font-size: 12px; font-weight: 600; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em;">Fecha de nacimiento</div>
-        <div style="font-size: 13px; font-weight: 600; color: #0f172a;" id="fecha-nacimiento-recien-nacido">-</div>
+        <div style="font-size: 13px; font-weight: 600; color: #0f172a;" id="fecha-nacimiento-control-recien-nacido">-</div>
       </div>
     </div>
 
@@ -34,7 +34,6 @@
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -45,15 +44,6 @@
             <td style="padding: 12px; color: #64748b;" id="control-1-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-1-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-1-estado">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="control-1-accion">
-              <button class="btn-registrar" onclick="abrirModalRegistro(1, 2, 6)" data-control-id="" id="btn-control-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Control 2 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -62,15 +52,6 @@
             <td style="padding: 12px; color: #64748b;" id="control-2-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-2-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-2-estado">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="control-2-accion">
-              <button class="btn-registrar" onclick="abrirModalRegistro(2, 7, 13)" data-control-id="" id="btn-control-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Control 3 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -79,15 +60,6 @@
             <td style="padding: 12px; color: #64748b;" id="control-3-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-3-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-3-estado">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="control-3-accion">
-              <button class="btn-registrar" onclick="abrirModalRegistro(3, 14, 20)" data-control-id="" id="btn-control-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
           <!-- Control 4 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -96,15 +68,6 @@
             <td style="padding: 12px; color: #64748b;" id="control-4-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-4-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-4-estado">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="control-4-accion">
-              <button class="btn-registrar" onclick="abrirModalRegistro(4, 21, 28)" data-control-id="" id="btn-control-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                <span class="btn-text">Registrar</span>
-              </button>
-            </td>
           </tr>
         </tbody>
       </table>

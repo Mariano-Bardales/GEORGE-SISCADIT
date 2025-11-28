@@ -9,6 +9,8 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ControlCredController;
 use App\Http\Controllers\SolicitudController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\RegistroControlesController;
+use App\Http\Controllers\ImportControlesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +45,7 @@ Route::get('/consultar-solicitud', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/controles-cred', [ControlCredController::class, 'index'])->name('controles-cred');
+    Route::get('/registro-controles', [RegistroControlesController::class, 'index'])->name('registro-controles');
     Route::post('/controles-cred', [ControlCredController::class, 'store'])->name('controles-cred.store');
     // Páginas independientes para registrar controles
     Route::get('/controles-cred/cred-mensual/registrar', [ControlCredController::class, 'formCredMensual'])->name('controles-cred.cred-mensual.form');
@@ -52,6 +55,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/controles-cred/visitas/registrar', [ControlCredController::class, 'formVisita'])->name('controles-cred.visitas.form');
     Route::get('/controles-cred/vacunas/registrar', [ControlCredController::class, 'formVacuna'])->name('controles-cred.vacunas.form');
     Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
+    
+    // Importar controles desde Excel (solo admin)
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/importar-controles', [ImportControlesController::class, 'import'])->name('importar-controles.import');
+        Route::get('/importar-controles/ejemplo', [ImportControlesController::class, 'downloadEjemplo'])->name('importar-controles.ejemplo');
+    });
     
     // Solicitudes (solo admin) - CRUD completo
     Route::middleware(['auth'])->group(function () {
@@ -71,8 +80,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('usuarios.update');
         Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
     });
-    
-    Route::get('/logs', function () { return view('dashboard.logs'); })->name('logs');
     
     // API Routes
     Route::prefix('api')->group(function () {
@@ -110,6 +117,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/vacunas/registrar', [ApiController::class, 'registrarVacuna'])->name('api.vacunas.registrar');
         
         Route::get('/alertas/total', [ApiController::class, 'totalAlertas'])->name('api.alertas.total');
+        Route::get('/alertas', [ApiController::class, 'obtenerAlertas'])->name('api.alertas');
         
         // Solicitudes API
         Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('api.solicitudes');
@@ -126,15 +134,5 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/crear-usuario-solicitud', [SolicitudController::class, 'crearUsuarioDesdeSolicitud'])->name('api.crear-usuario-solicitud');
     });
     
-    // Logs Routes (placeholders - pueden ser implementadas después)
-    Route::post('/logs/view-extras', function (Request $request) {
-        // Placeholder para registrar visualización de datos extras
-        return response()->json(['success' => true]);
-    })->name('logs.view-extras');
-    
-    Route::post('/logs/view-controls', function (Request $request) {
-        // Placeholder para registrar visualización de controles
-        return response()->json(['success' => true]);
-    })->name('logs.view-controls');
 });
 
