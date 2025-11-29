@@ -95,36 +95,5 @@
         </div>
       </div>
     </div>
-
-    <!-- Evaluación del Cumplimiento -->
-    <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
-      <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0c4a6e; display: flex; align-items: center; gap: 8px;">
-        <span>✅</span>
-        Estado del Registro
-      </h4>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #10b981;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">CNV Registrado</div>
-          <div style="font-size: 18px; font-weight: 700; color: #10b981;" id="cnv-registrado">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Datos del recién nacido completos</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Pendiente</div>
-          <div style="font-size: 18px; font-weight: 700; color: #f59e0b;" id="cnv-pendiente">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Faltan datos por registrar</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #ef4444;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Incompleto</div>
-          <div style="font-size: 18px; font-weight: 700; color: #ef4444;" id="cnv-incompleto">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Información insuficiente</div>
-        </div>
-      </div>
-      <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px;">
-        <div style="font-size: 13px; color: #1e293b; font-weight: 600; margin-bottom: 8px;">Estado General:</div>
-        <div style="font-size: 18px; font-weight: 700;">
-          <span class="estado-badge estado-seguimiento" id="estado-general-cnv">SEGUIMIENTO</span>
-        </div>
-      </div>
-    </div>
   </div>
 </div>

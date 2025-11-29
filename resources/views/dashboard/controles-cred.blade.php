@@ -656,10 +656,8 @@
                 </label>
                 <select id="cnvClasificacion" name="clasificacion" required class="modal-registro-select">
                   <option value="">Seleccionar...</option>
-                  <option value="A TÉRMINO">A TÉRMINO</option>
-                  <option value="PREMATURO">PREMATURO</option>
-                  <option value="BAJO PESO">BAJO PESO</option>
-                  <option value="PREMATURO BAJO PESO">PREMATURO BAJO PESO</option>
+                  <option value="Normal">Normal</option>
+                  <option value="Bajo Peso al Nacer y/o Prematuro">Bajo Peso al Nacer y/o Prematuro</option>
                 </select>
               </div>
             </div>
@@ -4611,16 +4609,37 @@
       }
 
       function actualizarControlRecienNacido(control) {
+        if (!control) {
+          console.error('❌ actualizarControlRecienNacido: control es null o undefined');
+          return;
+        }
+
         const numeroControl = control.numero_control;
+        if (!numeroControl || numeroControl < 1 || numeroControl > 4) {
+          console.error(`❌ actualizarControlRecienNacido: numero_control inválido: ${numeroControl}`);
+          return;
+        }
+
+        console.log(`🔧 Actualizando control recién nacido ${numeroControl}:`, control);
         const fechaElement = document.getElementById(`control-${numeroControl}-fecha`);
         const edadElement = document.getElementById(`control-${numeroControl}-edad`);
         const estadoElement = document.getElementById(`control-${numeroControl}-estado`);
         const accionElement = document.getElementById(`control-${numeroControl}-accion`);
 
+        if (!fechaElement || !edadElement || !estadoElement) {
+          console.error(`❌ No se encontraron los elementos del control ${numeroControl}:`, {
+            fechaElement: !!fechaElement,
+            edadElement: !!edadElement,
+            estadoElement: !!estadoElement
+          });
+          return;
+        }
+
         // Formatear fecha
-        if (fechaElement && control.fecha_control) {
+        if (fechaElement && (control.fecha_control || control.fecha)) {
           try {
-            const fecha = crearFechaLocal(control.fecha_control);
+            const fechaStr = control.fecha_control || control.fecha;
+            const fecha = crearFechaLocal(fechaStr);
             const fechaFormateada = fecha.toLocaleDateString('es-PE', {
               year: 'numeric',
               month: '2-digit',
@@ -4630,15 +4649,15 @@
             fechaElement.style.color = '#1e293b';
             fechaElement.style.fontWeight = '500';
           } catch (e) {
-            fechaElement.textContent = control.fecha_control || '-';
+            fechaElement.textContent = control.fecha_control || control.fecha || '-';
           }
         } else if (fechaElement) {
           fechaElement.textContent = '-';
         }
 
         if (edadElement) {
-          edadElement.textContent = control.edad_dias || '-';
-          if (control.edad_dias) {
+          edadElement.textContent = control.edad_dias || control.edad || '-';
+          if (control.edad_dias || control.edad) {
             edadElement.style.color = '#1e293b';
             edadElement.style.fontWeight = '500';
           }
@@ -4658,7 +4677,9 @@
           }
         }
 
-        // Actualizar botones de acción
+        console.log(`✅ Control ${numeroControl} actualizado en tabla`);
+
+        // Actualizar botones de acción (si existe el elemento)
         if (accionElement && control.id) {
           // Si hay control registrado, mostrar botones de editar y eliminar
           const rangoMin = numeroControl === 1 ? 2 : numeroControl === 2 ? 7 : numeroControl === 3 ? 14 : 21;
@@ -5798,28 +5819,6 @@
               actualizarControlRecienNacido(control);
             });
 
-            // Actualizar resumen
-            if (data.data.cumplimiento) {
-              const cumplimiento = data.data.cumplimiento;
-              const controlesRegistradosEl = document.getElementById('controles-registrados');
-              if (controlesRegistradosEl) {
-                controlesRegistradosEl.textContent = cumplimiento.controles_registrados || 0;
-              }
-
-              const estadoGeneral = document.getElementById('estado-general-control');
-              if (estadoGeneral) {
-                if (cumplimiento.cumple) {
-                  estadoGeneral.className = 'estado-badge cumple';
-                  estadoGeneral.textContent = 'CUMPLE';
-                } else if (cumplimiento.no_cumple) {
-                  estadoGeneral.className = 'estado-badge no-cumple';
-                  estadoGeneral.textContent = 'NO CUMPLE';
-                } else {
-                  estadoGeneral.className = 'estado-badge estado-seguimiento';
-                  estadoGeneral.textContent = 'SEGUIMIENTO';
-                }
-              }
-            }
 
             console.log('✅ Controles recién nacido cargados correctamente');
           } else {
@@ -5942,52 +5941,109 @@
               fechaNacDisplay.textContent = fechaNacimientoISO;
             }
           }
-          // Actualizar tabla estática de 11 controles y calcular resumen
+
+          // ========== NUEVA LÓGICA DE EVALUACIÓN CRED MENSUAL ==========
+          // Definir rangos de los 11 controles CRED mensuales
+          const rangosCredMensual = {
+            1: { min: 29, max: 59 },   // Control 1: 29-59 días
+            2: { min: 60, max: 89 },   // Control 2: 60-89 días
+            3: { min: 90, max: 119 },  // Control 3: 90-119 días
+            4: { min: 120, max: 149 }, // Control 4: 120-149 días
+            5: { min: 150, max: 179 }, // Control 5: 150-179 días
+            6: { min: 180, max: 209 }, // Control 6: 180-209 días
+            7: { min: 210, max: 239 }, // Control 7: 210-239 días
+            8: { min: 240, max: 269 }, // Control 8: 240-269 días
+            9: { min: 270, max: 299 }, // Control 9: 270-299 días
+            10: { min: 300, max: 329 }, // Control 10: 300-329 días
+            11: { min: 330, max: 359 }  // Control 11: 330-359 días
+          };
+
+          // Calcular edad actual del niño en días
+          let edadActualDias = 0;
+          if (fechaNacimientoISO) {
+            try {
+              const fechaNac = crearFechaLocal(fechaNacimientoISO);
+              const hoy = new Date();
+              const diffTime = hoy - fechaNac;
+              edadActualDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+              console.log(`📅 Edad actual del niño: ${edadActualDias} días`);
+            } catch (e) {
+              console.error('❌ Error al calcular edad actual:', e);
+            }
+          }
+
+          // Obtener controles registrados del API
+          const controlesRegistrados = data.success && data.data && Array.isArray(data.data.controles) 
+            ? data.data.controles 
+            : [];
+          
+          console.log(`📋 Controles registrados encontrados: ${controlesRegistrados.length}`);
+
+          // Crear un mapa de controles por número para fácil acceso
+          const controlesMap = {};
+          controlesRegistrados.forEach(control => {
+            const mes = control.numero_control || control.mes;
+            if (mes >= 1 && mes <= 11) {
+              controlesMap[mes] = control;
+            }
+          });
+
+          // Variables para contar estados
           let totalCumple = 0;
           let totalNoCumple = 0;
           let totalSeguimiento = 0;
 
-          // Inicializar todos los controles como SEGUIMIENTO
+          // Evaluar cada control (1-11) según las 3 reglas
           for (let mes = 1; mes <= 11; mes++) {
+            const rango = rangosCredMensual[mes];
+            const control = controlesMap[mes];
+            
             const fechaElement = document.getElementById(`fo_cred_${mes}`);
             const edadElement = document.getElementById(`edad_cred_${mes}`);
             const estadoElement = document.getElementById(`estado_cred_${mes}`);
+            const btnElement = document.getElementById(`btn-cred-${mes}`);
 
-            if (fechaElement) fechaElement.textContent = '-';
-            if (edadElement) edadElement.textContent = '-';
-            if (estadoElement) {
-              estadoElement.className = 'estado-badge estado-seguimiento';
-              estadoElement.textContent = 'SEGUIMIENTO';
-            }
-            totalSeguimiento++;
-          }
+            let estadoFinal = 'SEGUIMIENTO'; // Por defecto
+            let fechaControlStr = '-';
+            let edadDiasStr = '-';
+            let edadDiasControl = null;
 
-          // Si hay controles registrados, actualizarlos en la tabla
-          if (data.success && data.data && Array.isArray(data.data.controles)) {
-            console.log(`✅ Controles encontrados: ${data.data.controles.length}`);
-
-            data.data.controles.forEach(control => {
-              const mes = control.numero_control || control.mes;
-              if (mes < 1 || mes > 11) {
-                console.warn(`⚠️ Mes inválido: ${mes}`);
-                return;
+            // Si HAY control registrado (REGLA 2)
+            if (control) {
+              // Obtener fecha del control
+              if (control.fecha) {
+                const fechaControl = crearFechaLocal(control.fecha);
+                fechaControlStr = fechaControl.toLocaleDateString('es-PE', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                });
+                
+                // Calcular edad en días al momento del control
+                const diffTime = fechaControl - crearFechaLocal(fechaNacimientoISO);
+                edadDiasControl = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                edadDiasStr = edadDiasControl.toString();
+              } else if (control.edad) {
+                edadDiasControl = parseInt(control.edad) || null;
+                edadDiasStr = control.edad.toString();
               }
 
-              const fechaControl = control.fecha ? crearFechaLocal(control.fecha).toLocaleDateString('es-PE', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-              }) : '-';
-              const edadDias = control.edad || '-';
-              const estado = control.estado || 'seguimiento';
-
-              const fechaElement = document.getElementById(`fo_cred_${mes}`);
-              const edadElement = document.getElementById(`edad_cred_${mes}`);
-              const estadoElement = document.getElementById(`estado_cred_${mes}`);
-              const btnElement = document.getElementById(`btn-cred-${mes}`);
-
-              if (fechaElement) fechaElement.textContent = fechaControl;
-              if (edadElement) edadElement.textContent = edadDias;
+              // Verificar si la edad del control está dentro del rango
+              if (edadDiasControl !== null) {
+                if (edadDiasControl >= rango.min && edadDiasControl <= rango.max) {
+                  estadoFinal = 'CUMPLE';
+                  totalCumple++;
+                } else {
+                  // Control registrado pero fuera del rango
+                  estadoFinal = 'NO CUMPLE';
+                  totalNoCumple++;
+                  console.warn(`⚠️ Control ${mes} fuera de rango: ${edadDiasControl} días (rango: ${rango.min}-${rango.max})`);
+                }
+              } else {
+                // Control registrado pero sin edad, marcar como SEGUIMIENTO (datos incompletos)
+                estadoFinal = 'SEGUIMIENTO';
+                totalSeguimiento++;
+              }
 
               // Actualizar botón a "Editar" si hay registro
               if (btnElement && control.id) {
@@ -5997,60 +6053,52 @@
                 if (btnText) {
                   btnText.textContent = 'Editar';
                 }
-                // Cambiar icono a editar
                 const btnIcon = btnElement.querySelector('.btn-icon');
                 if (btnIcon) {
                   btnIcon.innerHTML = '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>';
                 }
               }
-
-              // Ajustar contadores y estilos según estado
-              if (estadoElement) {
-                // Restar previamente contado como seguimiento
-                if (estadoElement.textContent === 'SEGUIMIENTO') {
-                  totalSeguimiento = Math.max(0, totalSeguimiento - 1);
-                }
-
-                if (estado === 'cumple') {
-                  estadoElement.className = 'estado-badge cumple';
-                  estadoElement.textContent = 'CUMPLE';
-                  totalCumple++;
-                } else if (estado === 'no_cumple' || estado === 'no cumple') {
-                  estadoElement.className = 'estado-badge no-cumple';
-                  estadoElement.textContent = 'NO CUMPLE';
-                  totalNoCumple++;
-                } else {
-                  estadoElement.className = 'estado-badge estado-seguimiento';
-                  estadoElement.textContent = 'SEGUIMIENTO';
-                  totalSeguimiento++;
-                }
-              }
-            });
-          }
-
-          // Actualizar tarjetas de resumen
-          const cumpleCredEl = document.getElementById('cumple-cred');
-          const seguimientoCredEl = document.getElementById('seguimiento-cred');
-          const noCumpleCredEl = document.getElementById('no-cumple-cred');
-          const estadoGeneralEl = document.getElementById('estado-general-cred');
-
-          if (cumpleCredEl) cumpleCredEl.textContent = totalCumple;
-          if (seguimientoCredEl) seguimientoCredEl.textContent = totalSeguimiento;
-          if (noCumpleCredEl) noCumpleCredEl.textContent = totalNoCumple;
-
-          if (estadoGeneralEl) {
-            if (totalCumple === 11) {
-              estadoGeneralEl.className = 'estado-badge cumple';
-              estadoGeneralEl.textContent = 'CUMPLE 100%';
-            } else if (totalNoCumple > 0) {
-              estadoGeneralEl.className = 'estado-badge no-cumple';
-              estadoGeneralEl.textContent = 'NO CUMPLE';
             } else {
-              estadoGeneralEl.className = 'estado-badge estado-seguimiento';
-              estadoGeneralEl.textContent = 'SEGUIMIENTO';
+              // Si NO HAY control registrado (REGLA 3)
+              // Verificar si ya pasó el límite máximo del rango
+              if (edadActualDias > rango.max) {
+                // Ya pasó el límite, NO CUMPLE (falta el control y ya venció)
+                estadoFinal = 'NO CUMPLE';
+                totalNoCumple++;
+                console.warn(`⚠️ Control ${mes} no registrado y ya pasó el límite (máx: ${rango.max} días, actual: ${edadActualDias} días)`);
+              } else {
+                // Aún está dentro del rango o no ha llegado, EN SEGUIMIENTO
+                estadoFinal = 'SEGUIMIENTO';
+                totalSeguimiento++;
+              }
+            }
+
+            // Actualizar elementos en la tabla
+            if (fechaElement) fechaElement.textContent = fechaControlStr;
+            if (edadElement) edadElement.textContent = edadDiasStr;
+            
+            if (estadoElement) {
+              if (estadoFinal === 'CUMPLE') {
+                estadoElement.className = 'estado-badge cumple';
+                estadoElement.textContent = 'CUMPLE';
+              } else if (estadoFinal === 'NO CUMPLE') {
+                estadoElement.className = 'estado-badge no-cumple';
+                estadoElement.textContent = 'NO CUMPLE';
+              } else {
+                estadoElement.className = 'estado-badge estado-seguimiento';
+                estadoElement.textContent = 'SEGUIMIENTO';
+              }
             }
           }
 
+          // REGLA 1: Verificar si faltan controles
+          const controlesRegistradosCount = Object.keys(controlesMap).length;
+          if (controlesRegistradosCount < 11) {
+            console.warn(`⚠️ REGLA 1: Faltan ${11 - controlesRegistradosCount} controles. Total registrados: ${controlesRegistradosCount}/11`);
+            // Nota: Esto ya está contabilizado en totalNoCumple para los controles que faltan y vencieron
+          }
+
+          console.log(`✅ Evaluación CRED completada: CUMPLE: ${totalCumple}, NO CUMPLE: ${totalNoCumple}, SEGUIMIENTO: ${totalSeguimiento}`);
           console.log('✅ Controles CRED mensual cargados y tabla actualizada correctamente');
         })
         .catch(error => {
@@ -7209,29 +7257,176 @@
         }
       }
 
-      // 2. Procesar controles recién nacido
-      if (datos.controles_recien_nacido && datos.controles_recien_nacido.controles) {
-        datos.controles_recien_nacido.controles.forEach(control => {
-          if (typeof actualizarControlRecienNacido === 'function') {
-            actualizarControlRecienNacido(control);
-          }
-        });
+      // 1.1. Guardar datos extras en variable global para usar cuando se abra el modal
+      if (datos.datos_extra) {
+        window.datosExtrasActuales = datos.datos_extra;
+      }
 
-        // Actualizar cumplimiento
-        if (datos.controles_recien_nacido.cumplimiento) {
-          const estadoGeneral = document.getElementById('estado-general-control');
-          if (estadoGeneral) {
-            if (datos.controles_recien_nacido.cumplimiento.cumple) {
-              estadoGeneral.className = 'estado-badge cumple';
-              estadoGeneral.textContent = 'CUMPLE';
-            } else if (datos.controles_recien_nacido.cumplimiento.no_cumple) {
-              estadoGeneral.className = 'estado-badge no-cumple';
-              estadoGeneral.textContent = 'NO CUMPLE';
+      // 2. Procesar controles recién nacido
+      console.log('🔄 Procesando controles recién nacido:', datos.controles_recien_nacido);
+      
+      // Definir rangos de los 4 controles recién nacido
+      const rangosRecienNacido = {
+        1: { min: 2, max: 6 },   // Control 1: 2-6 días
+        2: { min: 7, max: 13 },  // Control 2: 7-13 días
+        3: { min: 14, max: 20 }, // Control 3: 14-20 días
+        4: { min: 21, max: 28 }  // Control 4: 21-28 días
+      };
+
+      // Calcular edad actual del niño en días
+      let edadActualDias = 0;
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        try {
+          const fechaNac = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const hoy = new Date();
+          const diffTime = hoy - fechaNac;
+          edadActualDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          console.log(`📅 Edad actual del niño: ${edadActualDias} días`);
+        } catch (e) {
+          console.error('❌ Error al calcular edad actual:', e);
+        }
+      }
+
+      // Obtener controles registrados
+      const controlesRegistrados = datos.controles_recien_nacido && datos.controles_recien_nacido.controles && Array.isArray(datos.controles_recien_nacido.controles)
+        ? datos.controles_recien_nacido.controles
+        : [];
+      
+      console.log(`📋 Controles registrados encontrados: ${controlesRegistrados.length}`);
+
+      // Crear un mapa de controles por número para fácil acceso
+      const controlesMap = {};
+      controlesRegistrados.forEach(control => {
+        const num = control.numero_control;
+        if (num >= 1 && num <= 4) {
+          controlesMap[num] = control;
+        }
+      });
+
+      // Procesar cada control (1-4)
+      for (let num = 1; num <= 4; num++) {
+        const rango = rangosRecienNacido[num];
+        const control = controlesMap[num];
+        
+        const fechaElement = document.getElementById(`control-${num}-fecha`);
+        const edadElement = document.getElementById(`control-${num}-edad`);
+        const estadoElement = document.getElementById(`control-${num}-estado`);
+
+        let fechaControlStr = '-';
+        let edadDiasStr = '-';
+        let estadoFinal = 'SEGUIMIENTO';
+        let edadDiasControl = null;
+
+        // Si HAY control registrado
+        if (control) {
+          // Obtener fecha del control
+          if (control.fecha_control || control.fecha) {
+            try {
+              const fechaStr = control.fecha_control || control.fecha;
+              const fechaControl = crearFechaLocal(fechaStr);
+              fechaControlStr = fechaControl.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              });
+              
+              // Calcular edad en días al momento del control
+              if (datos.nino && datos.nino.fecha_nacimiento) {
+                const fechaNac = crearFechaLocal(datos.nino.fecha_nacimiento);
+                const diffTime = fechaControl - fechaNac;
+                edadDiasControl = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                edadDiasStr = edadDiasControl.toString();
+              } else if (control.edad_dias || control.edad) {
+                edadDiasControl = parseInt(control.edad_dias || control.edad);
+                edadDiasStr = edadDiasControl.toString();
+              }
+            } catch (e) {
+              console.error(`❌ Error al procesar fecha del control ${num}:`, e);
+            }
+          } else if (control.edad_dias || control.edad) {
+            edadDiasControl = parseInt(control.edad_dias || control.edad);
+            edadDiasStr = edadDiasControl.toString();
+          }
+
+          // Verificar si la edad del control está dentro del rango
+          if (edadDiasControl !== null) {
+            if (edadDiasControl >= rango.min && edadDiasControl <= rango.max) {
+              estadoFinal = 'CUMPLE';
             } else {
-              estadoGeneral.className = 'estado-badge estado-seguimiento';
-              estadoGeneral.textContent = 'SEGUIMIENTO';
+              estadoFinal = 'NO CUMPLE';
+              console.warn(`⚠️ Control ${num} fuera de rango: ${edadDiasControl} días (rango: ${rango.min}-${rango.max})`);
+            }
+          } else {
+            // Usar el estado que viene del control si no se puede calcular la edad
+            if (control.estado === 'cumple') {
+              estadoFinal = 'CUMPLE';
+            } else if (control.estado === 'no_cumple' || control.estado === 'no cumple') {
+              estadoFinal = 'NO CUMPLE';
+            } else {
+              estadoFinal = 'SEGUIMIENTO';
             }
           }
+
+          console.log(`✅ Control ${num} registrado: ${fechaControlStr} (${edadDiasStr} días) - ${estadoFinal}`);
+        } else {
+          // Si NO HAY control registrado
+          // Verificar si ya pasó el límite máximo del rango
+          if (edadActualDias > rango.max) {
+            // Ya pasó el límite, NO CUMPLE (falta el control y ya venció)
+            estadoFinal = 'NO CUMPLE';
+            console.warn(`⚠️ Control ${num} no registrado y ya pasó el límite (máx: ${rango.max} días, actual: ${edadActualDias} días)`);
+          } else {
+            // Aún está dentro del rango o no ha llegado, EN SEGUIMIENTO
+            estadoFinal = 'SEGUIMIENTO';
+          }
+        }
+
+        // Actualizar elementos en la tabla
+        if (fechaElement) {
+          fechaElement.textContent = fechaControlStr;
+          if (fechaControlStr !== '-') {
+            fechaElement.style.color = '#1e293b';
+            fechaElement.style.fontWeight = '500';
+          }
+        }
+        
+        if (edadElement) {
+          edadElement.textContent = edadDiasStr !== '-' ? edadDiasStr + ' días' : '-';
+          if (edadDiasStr !== '-') {
+            edadElement.style.color = '#1e293b';
+            edadElement.style.fontWeight = '500';
+          }
+        }
+        
+        if (estadoElement) {
+          if (estadoFinal === 'CUMPLE') {
+            estadoElement.className = 'estado-badge cumple';
+            estadoElement.textContent = 'CUMPLE';
+          } else if (estadoFinal === 'NO CUMPLE') {
+            estadoElement.className = 'estado-badge no-cumple';
+            estadoElement.textContent = 'NO CUMPLE';
+          } else {
+            estadoElement.className = 'estado-badge estado-seguimiento';
+            estadoElement.textContent = 'SEGUIMIENTO';
+          }
+        }
+      }
+
+      console.log('✅ Controles recién nacido procesados correctamente');
+
+      // 2.1. Actualizar fecha de nacimiento en tab de recién nacido
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaNacimientoControlRN = document.getElementById('fecha-nacimiento-control-recien-nacido');
+        if (fechaNacimientoControlRN) {
+          const fechaNacStr = datos.nino.fecha_nacimiento;
+          const fechaISO = formatearFechaISO(fechaNacStr);
+          const fecha = crearFechaLocal(fechaNacStr);
+          const fechaFormateada = fecha.toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          fechaNacimientoControlRN.textContent = fechaFormateada + ' (' + fechaISO + ')';
         }
       }
 
@@ -7274,99 +7469,293 @@
       }
 
       // 4. Procesar tamizaje
-      if (datos.tamizaje) {
-        const fechaTamizaje = document.getElementById('fecha-tamizaje-1');
-        const edadTamizaje = document.getElementById('edad-tamizaje-1');
-        const cumpleTamizaje = document.getElementById('cumple-tamizaje');
+      const rangoTamizajeMin = 1;
+      const rangoTamizajeMax = 29;
 
-        if (fechaTamizaje && datos.tamizaje.fecha_tamizaje) {
-          const fecha = crearFechaLocal(datos.tamizaje.fecha_tamizaje);
-          fechaTamizaje.textContent = fecha.toLocaleDateString('es-PE', {
+      // Calcular edad actual del niño en días
+      let edadActualDiasTamizaje = 0;
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        try {
+          const fechaNacTamizaje = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const hoyTamizaje = new Date();
+          const diffTimeTamizaje = hoyTamizaje - fechaNacTamizaje;
+          edadActualDiasTamizaje = Math.floor(diffTimeTamizaje / (1000 * 60 * 60 * 24));
+          console.log(`📅 Edad actual del niño para tamizaje: ${edadActualDiasTamizaje} días`);
+        } catch (e) {
+          console.error('❌ Error al calcular edad actual para tamizaje:', e);
+        }
+      }
+
+      const fechaTamizajeEl = document.getElementById('fecha-tamizaje-1');
+      const edadTamizajeEl = document.getElementById('edad-tamizaje-1');
+      const cumpleTamizajeEl = document.getElementById('cumple-tamizaje');
+
+      if (datos.tamizaje && datos.tamizaje.fecha_tamizaje && datos.nino && datos.nino.fecha_nacimiento) {
+        try {
+          const fechaTamizaje = crearFechaLocal(datos.tamizaje.fecha_tamizaje);
+          const fechaNacTamizaje = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const fechaFormateada = fechaTamizaje.toLocaleDateString('es-PE', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
           });
-          fechaTamizaje.style.color = '#1e293b';
-          fechaTamizaje.style.fontWeight = '500';
+
+          // Calcular edad en días al momento del tamizaje
+          const diffTime = fechaTamizaje - fechaNacTamizaje;
+          const edadDiasTamizaje = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+          if (fechaTamizajeEl) {
+            fechaTamizajeEl.textContent = fechaFormateada;
+            fechaTamizajeEl.style.color = '#1e293b';
+            fechaTamizajeEl.style.fontWeight = '500';
+          }
+
+          if (edadTamizajeEl) {
+            edadTamizajeEl.textContent = edadDiasTamizaje + ' días';
+            edadTamizajeEl.style.color = '#1e293b';
+            edadTamizajeEl.style.fontWeight = '500';
+          }
+
+          if (cumpleTamizajeEl) {
+            // Evaluar si cumple con el rango (1-29 días)
+            if (edadDiasTamizaje >= rangoTamizajeMin && edadDiasTamizaje <= rangoTamizajeMax) {
+              cumpleTamizajeEl.className = 'estado-badge cumple';
+              cumpleTamizajeEl.textContent = 'CUMPLE';
+            } else {
+              cumpleTamizajeEl.className = 'estado-badge no-cumple';
+              cumpleTamizajeEl.textContent = 'NO CUMPLE';
+            }
+          }
+
+          console.log(`✅ Tamizaje Neonatal: ${fechaFormateada} (${edadDiasTamizaje} días) - ${edadDiasTamizaje >= rangoTamizajeMin && edadDiasTamizaje <= rangoTamizajeMax ? 'CUMPLE' : 'NO CUMPLE'}`);
+        } catch (e) {
+          console.error('❌ Error al procesar tamizaje:', e);
         }
-        if (edadTamizaje) {
-          edadTamizaje.textContent = datos.tamizaje.edad_dias || '-';
-          edadTamizaje.style.color = '#1e293b';
-          edadTamizaje.style.fontWeight = '500';
-        }
-        if (cumpleTamizaje) {
-          if (datos.tamizaje.cumple) {
-            cumpleTamizaje.className = 'estado-badge cumple';
-            cumpleTamizaje.textContent = 'CUMPLE';
-          } else if (datos.tamizaje.cumple === false) {
-            cumpleTamizaje.className = 'estado-badge no-cumple';
-            cumpleTamizaje.textContent = 'NO CUMPLE';
+      } else {
+        // Si NO hay tamizaje registrado, evaluar según edad actual
+        if (cumpleTamizajeEl) {
+          if (edadActualDiasTamizaje > rangoTamizajeMax) {
+            // Ya pasó el límite (más de 29 días) y no está registrado → NO CUMPLE
+            cumpleTamizajeEl.className = 'estado-badge no-cumple';
+            cumpleTamizajeEl.textContent = 'NO CUMPLE';
+            console.log(`⚠️ Tamizaje Neonatal: No registrado y ya pasó el límite (${edadActualDiasTamizaje} días > ${rangoTamizajeMax} días) → NO CUMPLE`);
           } else {
-            cumpleTamizaje.className = 'estado-badge estado-seguimiento';
-            cumpleTamizaje.textContent = 'SEGUIMIENTO';
+            // Aún está dentro del rango o no ha llegado → SEGUIMIENTO
+            cumpleTamizajeEl.className = 'estado-badge estado-seguimiento';
+            cumpleTamizajeEl.textContent = 'SEGUIMIENTO';
+            console.log(`ℹ️ Tamizaje Neonatal: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
+          }
+        }
+      }
+
+      // Procesar Tamizaje Galen (si existe)
+      if (datos.tamizaje && datos.tamizaje.fecha_tamizaje_galen && datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaTamizajeGalenEl = document.getElementById('fecha-tamizaje-galen');
+        const edadTamizajeGalenEl = document.getElementById('edad-tamizaje-galen');
+        const cumpleTamizajeGalenEl = document.getElementById('cumple-tamizaje-galen');
+
+        try {
+          const fechaTamizajeGalen = crearFechaLocal(datos.tamizaje.fecha_tamizaje_galen);
+          const fechaNacTamizajeGalen = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const fechaFormateadaGalen = fechaTamizajeGalen.toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+
+          const diffTimeGalen = fechaTamizajeGalen - fechaNacTamizajeGalen;
+          const edadDiasGalen = Math.floor(diffTimeGalen / (1000 * 60 * 60 * 24));
+
+          if (fechaTamizajeGalenEl) {
+            fechaTamizajeGalenEl.textContent = fechaFormateadaGalen;
+            fechaTamizajeGalenEl.style.color = '#1e293b';
+            fechaTamizajeGalenEl.style.fontWeight = '500';
+          }
+
+          if (edadTamizajeGalenEl) {
+            edadTamizajeGalenEl.textContent = edadDiasGalen + ' días';
+            edadTamizajeGalenEl.style.color = '#1e293b';
+            edadTamizajeGalenEl.style.fontWeight = '500';
+          }
+
+          if (cumpleTamizajeGalenEl) {
+            if (edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax) {
+              cumpleTamizajeGalenEl.className = 'estado-badge cumple';
+              cumpleTamizajeGalenEl.textContent = 'CUMPLE';
+            } else {
+              cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
+              cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
+            }
+          }
+        } catch (e) {
+          console.error('❌ Error al procesar tamizaje Galen:', e);
+        }
+      } else {
+        // Si NO hay tamizaje Galen registrado
+        const cumpleTamizajeGalenEl = document.getElementById('cumple-tamizaje-galen');
+        if (cumpleTamizajeGalenEl) {
+          if (edadActualDiasTamizaje > rangoTamizajeMax) {
+            cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
+            cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
+          } else {
+            cumpleTamizajeGalenEl.className = 'estado-badge estado-seguimiento';
+            cumpleTamizajeGalenEl.textContent = 'SEGUIMIENTO';
           }
         }
       }
 
       // 5. Procesar vacunas
-      if (datos.vacunas && datos.vacunas.length > 0) {
-        datos.vacunas.forEach(vacuna => {
-          const nombre = (vacuna.nombre_vacuna || '').toUpperCase();
-          const esBcg = nombre === 'BCG' || nombre.includes('BCG');
-          const esHvb = nombre === 'HVB' || nombre.includes('HVB') || nombre.includes('HEPATITIS');
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaNacimientoStr = datos.nino.fecha_nacimiento;
+        const fechaNacimiento = crearFechaLocal(fechaNacimientoStr);
+        const rangoMin = 1; // Mínimo 1 día
+        const rangoMax = 2; // Máximo 2 días
 
-          if (esBcg) {
-            const fechaBcg = document.getElementById('fecha-bcg');
-            const edadBcg = document.getElementById('edad-bcg');
-            const estadoBcg = document.getElementById('estado-bcg');
+        // Calcular edad actual del niño en días
+        const hoy = new Date();
+        const diffTimeHoy = hoy - fechaNacimiento;
+        const edadActualDias = Math.floor(diffTimeHoy / (1000 * 60 * 60 * 24));
 
-            if (fechaBcg && vacuna.fecha_aplicacion) {
-              const fecha = crearFechaLocal(vacuna.fecha_aplicacion);
-              fechaBcg.textContent = fecha.toLocaleDateString('es-PE', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-              });
-              fechaBcg.style.color = '#1e293b';
-              fechaBcg.style.fontWeight = '500';
+        // Variables para rastrear si hay vacunas registradas
+        let tieneBcg = false;
+        let tieneHvb = false;
+
+        // Procesar vacunas registradas
+        if (datos.vacunas && datos.vacunas.length > 0) {
+          datos.vacunas.forEach(vacuna => {
+            const nombre = (vacuna.nombre_vacuna || '').toUpperCase();
+            const esBcg = nombre === 'BCG' || nombre.includes('BCG');
+            const esHvb = nombre === 'HVB' || nombre.includes('HVB') || nombre.includes('HEPATITIS');
+
+            if (esBcg && vacuna.fecha_aplicacion) {
+              tieneBcg = true;
+              const fechaBcg = document.getElementById('fecha-bcg');
+              const edadBcg = document.getElementById('edad-bcg');
+              const estadoBcg = document.getElementById('estado-bcg');
+
+              try {
+                const fechaAplicacion = crearFechaLocal(vacuna.fecha_aplicacion);
+                const fechaFormateada = fechaAplicacion.toLocaleDateString('es-PE', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                });
+
+                // Calcular edad en días al momento de la aplicación
+                const diffTime = fechaAplicacion - fechaNacimiento;
+                const edadDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (fechaBcg) {
+                  fechaBcg.textContent = fechaFormateada;
+                  fechaBcg.style.color = '#1e293b';
+                  fechaBcg.style.fontWeight = '500';
+                }
+
+                if (edadBcg) {
+                  edadBcg.textContent = edadDias + ' días';
+                  edadBcg.style.color = '#1e293b';
+                  edadBcg.style.fontWeight = '500';
+                }
+
+                if (estadoBcg) {
+                  // Evaluar si cumple con el rango (1-2 días)
+                  if (edadDias >= rangoMin && edadDias <= rangoMax) {
+                    estadoBcg.className = 'estado-badge cumple';
+                    estadoBcg.textContent = 'CUMPLE';
+                  } else {
+                    estadoBcg.className = 'estado-badge no-cumple';
+                    estadoBcg.textContent = 'NO CUMPLE';
+                  }
+                }
+
+                console.log(`✅ Vacuna BCG: ${fechaFormateada} (${edadDias} días) - ${edadDias >= rangoMin && edadDias <= rangoMax ? 'CUMPLE' : 'NO CUMPLE'}`);
+              } catch (e) {
+                console.error('❌ Error al procesar vacuna BCG:', e);
+              }
             }
-            if (edadBcg) {
-              edadBcg.textContent = vacuna.edad_dias || '-';
-              edadBcg.style.color = '#1e293b';
-              edadBcg.style.fontWeight = '500';
+
+            if (esHvb && vacuna.fecha_aplicacion) {
+              tieneHvb = true;
+              const fechaHvb = document.getElementById('fecha-hvb');
+              const edadHvb = document.getElementById('edad-hvb');
+              const estadoHvb = document.getElementById('estado-hvb');
+
+              try {
+                const fechaAplicacion = crearFechaLocal(vacuna.fecha_aplicacion);
+                const fechaFormateada = fechaAplicacion.toLocaleDateString('es-PE', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                });
+
+                // Calcular edad en días al momento de la aplicación
+                const diffTime = fechaAplicacion - fechaNacimiento;
+                const edadDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (fechaHvb) {
+                  fechaHvb.textContent = fechaFormateada;
+                  fechaHvb.style.color = '#1e293b';
+                  fechaHvb.style.fontWeight = '500';
+                }
+
+                if (edadHvb) {
+                  edadHvb.textContent = edadDias + ' días';
+                  edadHvb.style.color = '#1e293b';
+                  edadHvb.style.fontWeight = '500';
+                }
+
+                if (estadoHvb) {
+                  // Evaluar si cumple con el rango (1-2 días)
+                  if (edadDias >= rangoMin && edadDias <= rangoMax) {
+                    estadoHvb.className = 'estado-badge cumple';
+                    estadoHvb.textContent = 'CUMPLE';
+                  } else {
+                    estadoHvb.className = 'estado-badge no-cumple';
+                    estadoHvb.textContent = 'NO CUMPLE';
+                  }
+                }
+
+                console.log(`✅ Vacuna HVB: ${fechaFormateada} (${edadDias} días) - ${edadDias >= rangoMin && edadDias <= rangoMax ? 'CUMPLE' : 'NO CUMPLE'}`);
+              } catch (e) {
+                console.error('❌ Error al procesar vacuna HVB:', e);
+              }
             }
-            if (estadoBcg) {
-              estadoBcg.className = 'estado-badge cumple';
-              estadoBcg.textContent = 'APLICADA';
-            }
+          });
+        }
+
+        // Si no hay vacunas registradas, evaluar según la edad actual
+        const estadoBcg = document.getElementById('estado-bcg');
+        const estadoHvb = document.getElementById('estado-hvb');
+
+        // Evaluar BCG
+        if (!tieneBcg && estadoBcg) {
+          if (edadActualDias > rangoMax) {
+            // Ya pasó el límite (más de 2 días) y no está aplicada → NO CUMPLE
+            estadoBcg.className = 'estado-badge no-cumple';
+            estadoBcg.textContent = 'NO CUMPLE';
+            console.log(`⚠️ Vacuna BCG: No registrada y ya pasó el límite (${edadActualDias} días > ${rangoMax} días) → NO CUMPLE`);
+          } else {
+            // Aún está dentro del rango o no ha llegado → PENDIENTE
+            estadoBcg.className = 'estado-badge estado-seguimiento';
+            estadoBcg.textContent = 'PENDIENTE';
+            console.log(`ℹ️ Vacuna BCG: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
           }
+        }
 
-          if (esHvb) {
-            const fechaHvb = document.getElementById('fecha-hvb');
-            const edadHvb = document.getElementById('edad-hvb');
-            const estadoHvb = document.getElementById('estado-hvb');
-
-            if (fechaHvb && vacuna.fecha_aplicacion) {
-              const fecha = crearFechaLocal(vacuna.fecha_aplicacion);
-              fechaHvb.textContent = fecha.toLocaleDateString('es-PE', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-              });
-              fechaHvb.style.color = '#1e293b';
-              fechaHvb.style.fontWeight = '500';
-            }
-            if (edadHvb) {
-              edadHvb.textContent = vacuna.edad_dias || '-';
-              edadHvb.style.color = '#1e293b';
-              edadHvb.style.fontWeight = '500';
-            }
-            if (estadoHvb) {
-              estadoHvb.className = 'estado-badge cumple';
-              estadoHvb.textContent = 'APLICADA';
-            }
+        // Evaluar HVB
+        if (!tieneHvb && estadoHvb) {
+          if (edadActualDias > rangoMax) {
+            // Ya pasó el límite (más de 2 días) y no está aplicada → NO CUMPLE
+            estadoHvb.className = 'estado-badge no-cumple';
+            estadoHvb.textContent = 'NO CUMPLE';
+            console.log(`⚠️ Vacuna HVB: No registrada y ya pasó el límite (${edadActualDias} días > ${rangoMax} días) → NO CUMPLE`);
+          } else {
+            // Aún está dentro del rango o no ha llegado → PENDIENTE
+            estadoHvb.className = 'estado-badge estado-seguimiento';
+            estadoHvb.textContent = 'PENDIENTE';
+            console.log(`ℹ️ Vacuna HVB: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
           }
-        });
+        }
       }
 
       // 6. Procesar CNV
@@ -7375,22 +7764,32 @@
         if (infoCard) {
           const infoRows = infoCard.querySelectorAll('.info-row');
           infoRows.forEach((row) => {
-            const label = row.querySelector('label');
-            const span = row.querySelector('span');
-            if (label && span) {
-              const labelText = label.textContent.trim();
-              if (labelText.includes('Peso')) {
-                span.textContent = datos.cnv.peso_nacer ? datos.cnv.peso_nacer + ' g' : 'No registrado';
-                span.style.color = datos.cnv.peso_nacer ? '#1e293b' : '#64748b';
-                span.style.fontWeight = datos.cnv.peso_nacer ? '600' : '400';
-              } else if (labelText.includes('Edad gestacional')) {
+            // Buscar el texto de la etiqueta en el primer TD (que contiene el SVG y texto)
+            const firstTd = row.querySelector('td:first-child');
+            const secondTd = row.querySelector('td:last-child');
+            const span = secondTd ? secondTd.querySelector('span') : null;
+            
+            if (firstTd && span) {
+              const labelText = firstTd.textContent.trim().toLowerCase();
+              
+              if (labelText.includes('peso')) {
+                // El peso viene en kg desde la BD, pero mostrar en gramos para CNV
+                const pesoKg = datos.cnv.peso_nacer || datos.cnv.peso;
+                const pesoGramos = pesoKg ? Math.round(pesoKg * 1000) : null;
+                span.textContent = pesoGramos ? pesoGramos + ' g' : 'No registrado';
+                span.style.color = pesoGramos ? '#1e293b' : '#64748b';
+                span.style.fontWeight = pesoGramos ? '600' : '400';
+                console.log(`✅ CNV Peso actualizado: ${pesoGramos} g`);
+              } else if (labelText.includes('edad gestacional') || labelText.includes('gestacional')) {
                 span.textContent = datos.cnv.edad_gestacional ? datos.cnv.edad_gestacional + ' semanas' : '-';
                 span.style.color = datos.cnv.edad_gestacional ? '#1e293b' : '#64748b';
                 span.style.fontWeight = datos.cnv.edad_gestacional ? '600' : '400';
-              } else if (labelText.includes('Clasificación')) {
+                console.log(`✅ CNV Edad gestacional actualizada: ${datos.cnv.edad_gestacional} semanas`);
+              } else if (labelText.includes('clasificación') || labelText.includes('clasificacion')) {
                 if (datos.cnv.clasificacion) {
                   span.className = 'estado-badge cumple';
                   span.textContent = datos.cnv.clasificacion;
+                  console.log(`✅ CNV Clasificación actualizada: ${datos.cnv.clasificacion}`);
                 } else {
                   span.className = 'estado-badge pendiente';
                   span.textContent = 'PENDIENTE';
@@ -7399,57 +7798,121 @@
             }
           });
         }
+      } else {
+        console.log('ℹ️ No se encontraron datos CNV para este niño');
+      }
+
+      // 6.1. Actualizar fecha de nacimiento en tab de CNV
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaNacimientoCNV = document.getElementById('fecha-nacimiento-cnv');
+        if (fechaNacimientoCNV) {
+          const fechaNacStr = datos.nino.fecha_nacimiento;
+          const fechaISO = formatearFechaISO(fechaNacStr);
+          const fecha = crearFechaLocal(fechaNacStr);
+          const fechaFormateada = fecha.toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          fechaNacimientoCNV.textContent = fechaFormateada + ' (' + fechaISO + ')';
+        }
       }
 
       // 7. Procesar visitas
-      if (datos.visitas && datos.visitas.length > 0) {
+      if (datos.visitas && datos.visitas.length > 0 && datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaNacimientoStr = datos.nino.fecha_nacimiento;
+        const fechaNacimiento = crearFechaLocal(fechaNacimientoStr);
+
         datos.visitas.forEach(visita => {
           const fechaVisitaISO = visita.fecha_visita || '';
-          const fechaVisita = fechaVisitaISO ? crearFechaLocal(fechaVisitaISO).toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          }) : '-';
-          const periodo = visita.periodo || '';
-
-          // Mapear períodos a IDs de elementos
-          const periodoMap = {
-            '28 días de vida': { fecha: 'fecha-visita-28', estado: 'estado-visita-28' },
-            '2-5 meses': { fecha: 'fecha-visita-2-5', estado: 'estado-visita-2-5' },
-            '6-8 meses': { fecha: 'fecha-visita-6-8', estado: 'estado-visita-6-8' },
-            '9-11 meses': { fecha: 'fecha-visita-9-11', estado: 'estado-visita-9-11' }
+          const grupoVisita = visita.grupo_visita || ''; // A, B, C, D
+          
+          // Mapear grupos de visita a IDs de elementos
+          const grupoMap = {
+            'A': { fecha: 'visita-fecha-28d', edad: 'visita-edad-28d', estado: 'visita-estado-28d' },
+            'B': { fecha: 'visita-fecha-2-5m', edad: 'visita-edad-2-5m', estado: 'visita-estado-2-5m' },
+            'C': { fecha: 'visita-fecha-6-8m', edad: 'visita-edad-6-8m', estado: 'visita-estado-6-8m' },
+            'D': { fecha: 'visita-fecha-9-11m', edad: 'visita-edad-9-11m', estado: 'visita-estado-9-11m' }
           };
 
-          const mapItem = periodoMap[periodo];
-          if (mapItem && fechaVisita !== '-') {
-            const fechaEl = document.getElementById(mapItem.fecha);
-            const estadoEl = document.getElementById(mapItem.estado);
+          const mapItem = grupoMap[grupoVisita];
+          
+          if (mapItem && fechaVisitaISO) {
+            try {
+              const fechaVisita = crearFechaLocal(fechaVisitaISO);
+              const fechaVisitaFormateada = fechaVisita.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              });
 
-            if (fechaEl) {
-              fechaEl.textContent = fechaVisita;
-              fechaEl.style.color = '#1e293b';
-              fechaEl.style.fontWeight = '500';
-            }
+              // Calcular edad en días
+              const diffTime = fechaVisita - fechaNacimiento;
+              const edadDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-            if (estadoEl) {
-              estadoEl.className = 'visita-estado-badge cumple';
-              estadoEl.textContent = 'CUMPLE';
+              const fechaEl = document.getElementById(mapItem.fecha);
+              const edadEl = document.getElementById(mapItem.edad);
+              const estadoEl = document.getElementById(mapItem.estado);
+
+              if (fechaEl) {
+                fechaEl.textContent = fechaVisitaFormateada;
+                fechaEl.style.color = '#1e293b';
+                fechaEl.style.fontWeight = '500';
+              }
+
+              if (edadEl) {
+                edadEl.textContent = edadDias + ' días';
+                edadEl.style.color = '#1e293b';
+                edadEl.style.fontWeight = '500';
+              }
+
+              if (estadoEl) {
+                estadoEl.className = 'estado-badge cumple';
+                estadoEl.textContent = 'CUMPLE';
+              }
+
+              console.log(`✅ Visita ${grupoVisita} actualizada: ${fechaVisitaFormateada} (${edadDias} días)`);
+            } catch (e) {
+              console.error(`❌ Error al procesar visita ${grupoVisita}:`, e);
             }
           }
         });
       }
 
-      // Actualizar fecha de nacimiento en la sección de visitas
-      const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
-      if (fechaNacimientoVisitas && datos.nino && datos.nino.fecha_nacimiento) {
-        const fechaNac = crearFechaLocal(datos.nino.fecha_nacimiento);
-        const fechaFormateada = fechaNac.toLocaleDateString('es-PE', {
+      // Actualizar fecha de nacimiento en todas las tabs
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        const fechaNacStr = datos.nino.fecha_nacimiento;
+        const fechaISO = formatearFechaISO(fechaNacStr);
+        const fecha = crearFechaLocal(fechaNacStr);
+        const fechaFormateada = fecha.toLocaleDateString('es-PE', {
           year: 'numeric',
           month: 'long',
           day: 'numeric'
         });
-        const fechaISO = formatearFechaISO(datos.nino.fecha_nacimiento);
-        fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
+
+        // Tab de visitas
+        const fechaNacimientoVisitas = document.getElementById('fecha-nacimiento-visitas');
+        if (fechaNacimientoVisitas) {
+          fechaNacimientoVisitas.textContent = fechaFormateada + ' (' + fechaISO + ')';
+        }
+
+        // Tab de vacunas
+        const fechaNacimientoVacunas = document.getElementById('fecha-nacimiento-vacunas');
+        if (fechaNacimientoVacunas) {
+          fechaNacimientoVacunas.textContent = fechaFormateada + ' (' + fechaISO + ')';
+        }
+
+        // Tab de tamizaje
+        const fechaNacimientoTamizaje = document.getElementById('fecha-nacimiento-tamizaje');
+        if (fechaNacimientoTamizaje) {
+          fechaNacimientoTamizaje.textContent = fechaFormateada + ' (' + fechaISO + ')';
+        }
+
+        // Tab de CRED mensual
+        const fechaNacimientoCredMensual = document.getElementById('fecha-nacimiento-cred-mensual');
+        if (fechaNacimientoCredMensual) {
+          fechaNacimientoCredMensual.textContent = fechaFormateada + ' (' + fechaISO + ')';
+        }
       }
 
       console.log('✅ Todos los datos procesados correctamente desde el controlador');
@@ -7565,4 +8028,5 @@
 </body>
 
 </html>
+
 

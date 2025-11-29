@@ -24,12 +24,33 @@
       </div>
     </div>
 
+    <!-- Información sobre rangos y estados -->
+    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border-radius: 10px; border-left: 4px solid #10b981;">
+      <div style="display: flex; align-items: start; gap: 12px;">
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">¿Cómo saber si una vacuna cumple?</div>
+          <div style="font-size: 12px; color: #1e293b; line-height: 1.6;">
+            <strong>CUMPLE:</strong> Si la vacuna fue aplicada entre 1 y 2 días de vida<br>
+            <strong>NO CUMPLE:</strong> Si la vacuna fue aplicada después de los 2 días de vida<br>
+            <strong>PENDIENTE:</strong> Si la vacuna aún no ha sido aplicada
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tabla de Vacunas -->
     <div style="margin-top: 24px; overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <thead>
           <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Vacuna</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Aplicación</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
@@ -39,50 +60,21 @@
           <!-- Vacuna BCG -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
             <td style="padding: 12px; color: #1e293b; font-weight: 600;">BCG</td>
+            <td style="padding: 12px; color: #64748b;">1 a 2 días</td>
             <td style="padding: 12px; color: #64748b;" id="fecha-bcg">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad-bcg">-</td>
-            <td style="padding: 12px;"><span class="estado-badge pendiente" id="estado-bcg">-</span></td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado-bcg">PENDIENTE</span></td>
           </tr>
           <!-- Vacuna HVB -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
             <td style="padding: 12px; color: #1e293b; font-weight: 600;">HVB (Hepatitis B)</td>
+            <td style="padding: 12px; color: #64748b;">1 a 2 días</td>
             <td style="padding: 12px; color: #64748b;" id="fecha-hvb">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad-hvb">-</td>
-            <td style="padding: 12px;"><span class="estado-badge pendiente" id="estado-hvb">-</span></td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado-hvb">PENDIENTE</span></td>
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- Evaluación del Cumplimiento -->
-    <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
-      <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0c4a6e; display: flex; align-items: center; gap: 8px;">
-        <span>✅</span>
-        Evaluación del Cumplimiento
-      </h4>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #10b981;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Vacunas Aplicadas</div>
-          <div style="font-size: 18px; font-weight: 700; color: #10b981;" id="vacunas-aplicadas">0</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">de 2 vacunas del recién nacido</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Pendientes</div>
-          <div style="font-size: 18px; font-weight: 700; color: #f59e0b;" id="vacunas-pendientes">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Vacunas aún no aplicadas</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #ef4444;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">No Cumple</div>
-          <div style="font-size: 18px; font-weight: 700; color: #ef4444;" id="vacunas-no-cumple">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Vacunas fuera del período recomendado</div>
-        </div>
-      </div>
-      <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px;">
-        <div style="font-size: 13px; color: #1e293b; font-weight: 600; margin-bottom: 8px;">Estado General:</div>
-        <div style="font-size: 18px; font-weight: 700;">
-          <span class="estado-badge estado-seguimiento" id="estado-general-vacunas">SEGUIMIENTO</span>
-        </div>
-      </div>
     </div>
   </div>
 </div>

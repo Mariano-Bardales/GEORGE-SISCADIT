@@ -145,15 +145,21 @@ class ApiController extends Controller
         $masculino = Nino::where('genero', 'M')->count();
         $femenino = Nino::where('genero', 'F')->count();
 
-        // Calcular calidad de datos basado en registros completos
+        // Calcular calidad de datos basado en registros completos y controles fuera de rango
         $totalNinos = Nino::count();
         $ninosConDatosCompletos = 0;
         $ninosConErrores = 0;
+        $hoy = Carbon::now();
 
         if ($totalNinos > 0) {
             $ninos = Nino::with(['datosExtra', 'madre'])->get();
             
             foreach ($ninos as $nino) {
+                if (!$nino->fecha_nacimiento) {
+                    $ninosConErrores++;
+                    continue;
+                }
+                
                 $tieneErrores = false;
                 
                 // Verificar datos básicos del niño
@@ -169,6 +175,61 @@ class ApiController extends Controller
                 // Verificar datos de la madre
                 if (!$nino->madre || empty($nino->madre->apellidos_nombres)) {
                     $tieneErrores = true;
+                }
+                
+                // Verificar controles fuera de rango (solo si los datos básicos están completos)
+                if (!$tieneErrores) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $edadDias = $fechaNacimiento->diffInDays($hoy);
+                    $ninoId = $this->getNinoId($nino);
+                    
+                    // Verificar controles CRED mensual fuera de rango
+                    if ($edadDias >= 29 && $edadDias <= 359) {
+                        $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
+                        $rangosCred = [
+                            1 => ['min' => 29, 'max' => 59], 2 => ['min' => 60, 'max' => 89], 3 => ['min' => 90, 'max' => 119],
+                            4 => ['min' => 120, 'max' => 149], 5 => ['min' => 150, 'max' => 179], 6 => ['min' => 180, 'max' => 209],
+                            7 => ['min' => 210, 'max' => 239], 8 => ['min' => 240, 'max' => 269], 9 => ['min' => 270, 'max' => 299],
+                            10 => ['min' => 300, 'max' => 329], 11 => ['min' => 330, 'max' => 359]
+                        ];
+                        
+                        foreach ($controlesCred as $control) {
+                            if ($control->fecha) {
+                                $fechaControl = Carbon::parse($control->fecha);
+                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
+                                $rango = $rangosCred[$control->numero_control] ?? null;
+                                
+                                if ($rango && ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max'])) {
+                                    $tieneErrores = true;
+                                    break; // Ya tiene un error, no necesitamos seguir verificando
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Verificar controles RN fuera de rango
+                    if ($edadDias <= 28) {
+                        $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
+                        $rangosRN = [
+                            1 => ['min' => 2, 'max' => 6],
+                            2 => ['min' => 7, 'max' => 13],
+                            3 => ['min' => 14, 'max' => 20],
+                            4 => ['min' => 21, 'max' => 28]
+                        ];
+                        
+                        foreach ($controlesRn as $control) {
+                            if ($control->fecha) {
+                                $fechaControl = Carbon::parse($control->fecha);
+                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
+                                $rango = $rangosRN[$control->numero_control] ?? null;
+                                
+                                if ($rango && ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max'])) {
+                                    $tieneErrores = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
                 
                 if ($tieneErrores) {
@@ -865,12 +926,12 @@ class ApiController extends Controller
         // Edad gestacional (entre 36 y 40 semanas)
         $edadGestacional = 36 + ($seed % 5);
         
-        // Clasificación basada en peso y edad gestacional
-        $clasificacion = 'A TÉRMINO';
-        if ($peso < 2.5) {
-            $clasificacion = ($edadGestacional < 37) ? 'PREMATURO BAJO PESO' : 'BAJO PESO';
-        } elseif ($edadGestacional < 37) {
-            $clasificacion = 'PREMATURO';
+        // Clasificación: Normal o Bajo Peso al Nacer y/o Prematuro
+        // Bajo peso: < 2.5 kg, Prematuro: < 37 semanas
+        if ($peso < 2.5 || $edadGestacional < 37) {
+            $clasificacion = 'Bajo Peso al Nacer y/o Prematuro';
+        } else {
+            $clasificacion = 'Normal';
         }
         
         return (object)[
@@ -889,7 +950,7 @@ class ApiController extends Controller
             'nino_id' => 'required|integer',
             'peso_nacer' => 'nullable|numeric|min:0',
             'edad_gestacional' => 'nullable|numeric|min:20|max:45',
-            'clasificacion' => 'nullable|string|in:A TÉRMINO,PREMATURO,BAJO PESO,PREMATURO BAJO PESO',
+            'clasificacion' => 'nullable|string|in:Normal,Bajo Peso al Nacer y/o Prematuro',
         ]);
 
         if ($validator->fails()) {
@@ -1413,7 +1474,10 @@ class ApiController extends Controller
             // Alertas de CRED mensual (29-359 días)
             if ($edadDias >= 29 && $edadDias <= 359) {
                 $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
-                $controlesRegistrados = $controlesCred->pluck('numero_control')->toArray();
+                $controlesRegistradosMap = [];
+                foreach ($controlesCred as $control) {
+                    $controlesRegistradosMap[$control->numero_control] = $control;
+                }
                 
                 $rangosCred = [
                     1 => ['min' => 29, 'max' => 59, 'nombre' => 'Mes 1'],
@@ -1429,6 +1493,8 @@ class ApiController extends Controller
                     11 => ['min' => 330, 'max' => 359, 'nombre' => 'Mes 11']
                 ];
                 
+                $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                
                 foreach ($rangosCred as $mes => $rango) {
                     $debeTener = false;
                     if ($edadDias > $rango['max']) {
@@ -1437,7 +1503,42 @@ class ApiController extends Controller
                         $debeTener = true;
                     }
                     
-                    if ($debeTener && !in_array($mes, $controlesRegistrados)) {
+                    $control = isset($controlesRegistradosMap[$mes]) ? $controlesRegistradosMap[$mes] : null;
+                    
+                    if ($control && $control->fecha) {
+                        // Verificar si el control está fuera de rango
+                        $fechaControl = Carbon::parse($control->fecha);
+                        $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
+                        
+                        if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
+                            // Control fuera de rango
+                            $diasFuera = $edadDiasControl > $rango['max'] ? ($edadDiasControl - $rango['max']) : ($rango['min'] - $edadDiasControl);
+                            $mensaje = $edadDiasControl > $rango['max']
+                                ? "El control {$rango['nombre']} fue realizado a los {$edadDiasControl} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) fuera del límite máximo."
+                                : "El control {$rango['nombre']} fue realizado a los {$edadDiasControl} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) antes del límite mínimo.";
+                            
+                            $alertas[] = [
+                                'tipo' => 'control_cred_mensual',
+                                'nino_id' => $ninoId,
+                                'nino_nombre' => $nino->apellidos_nombres,
+                                'nino_dni' => $nino->numero_doc,
+                                'establecimiento' => $nino->establecimiento,
+                                'control' => $rango['nombre'],
+                                'mes' => $mes,
+                                'edad_dias' => $edadDias,
+                                'edad_dias_control' => $edadDiasControl,
+                                'rango_min' => $rango['min'],
+                                'rango_max' => $rango['max'],
+                                'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                                'prioridad' => 'alta',
+                                'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                                'fecha_control' => $control->fecha->format('Y-m-d'),
+                                'mensaje' => $mensaje,
+                                'dias_fuera' => $diasFuera,
+                            ];
+                        }
+                    } else if ($debeTener && !$control) {
+                        // Control faltante
                         $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
                         $mensaje = $edadDias > $rango['max'] 
                             ? "El niño tiene {$edadDias} días y el control {$rango['nombre']} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo."
@@ -1618,6 +1719,189 @@ class ApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener datos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener todos los controles de un niño (endpoint consolidado)
+     */
+    public function obtenerTodosControles($ninoId)
+    {
+        try {
+            $nino = $this->findNino($ninoId);
+            $ninoIdReal = $this->getNinoId($nino);
+            
+            // Obtener todos los controles
+            $controlesRn = ControlRn::where('id_niño', $ninoIdReal)->orderBy('numero_control', 'asc')->get();
+            $controlesCred = ControlMenor1::where('id_niño', $ninoIdReal)->orderBy('numero_control', 'asc')->get();
+            $tamizaje = TamizajeNeonatal::where('id_niño', $ninoIdReal)->first();
+            $cnv = RecienNacido::where('id_niño', $ninoIdReal)->first();
+            $visitas = VisitaDomiciliaria::where('id_niño', $ninoIdReal)->orderBy('fecha_visita', 'desc')->get();
+            $vacunas = VacunaRn::where('id_niño', $ninoIdReal)->first();
+            $datosExtra = DatosExtra::where('id_niño', $ninoIdReal)->first();
+            
+            // Formatear controles recién nacido
+            $controlesRnFormateados = $controlesRn->map(function($control) {
+                return [
+                    'id' => $control->id_crn ?? $control->id,
+                    'id_niño' => $control->id_niño,
+                    'numero_control' => $control->numero_control,
+                    'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'fecha_control' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'edad' => $control->edad,
+                    'edad_dias' => $control->edad,
+                    'estado' => $control->estado,
+                    'peso' => $control->peso ?? null,
+                    'talla' => $control->talla ?? null,
+                    'perimetro_cefalico' => $control->perimetro_cefalico ?? null,
+                    'es_ejemplo' => false,
+                ];
+            });
+            
+            // Formatear controles CRED mensual
+            $controlesCredFormateados = $controlesCred->map(function($control) {
+                return [
+                    'id' => $control->id_cred ?? $control->id,
+                    'id_niño' => $control->id_niño,
+                    'mes' => $control->numero_control,
+                    'numero_control' => $control->numero_control,
+                    'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'fecha_control' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'edad' => $control->edad,
+                    'edad_dias' => $control->edad,
+                    'estado' => $control->estado,
+                    'peso' => $control->peso ?? null,
+                    'talla' => $control->talla ?? null,
+                    'perimetro_cefalico' => $control->perimetro_cefalico ?? null,
+                    'es_ejemplo' => false,
+                ];
+            });
+            
+            // Formatear tamizaje
+            $tamizajeFormateado = null;
+            if ($tamizaje) {
+                $tamizajeFormateado = [
+                    'id' => $tamizaje->id_tamizaje ?? $tamizaje->id,
+                    'id_niño' => $tamizaje->id_niño,
+                    'fecha_tamizaje' => $tamizaje->fecha_tam_neo ? Carbon::parse($tamizaje->fecha_tam_neo)->format('Y-m-d') : null,
+                    'edad_dias' => $tamizaje->edad_tam_neo ?? null,
+                    'cumple' => $tamizaje->cumple_tam_neo ?? null,
+                    'es_ejemplo' => false,
+                ];
+            }
+            
+            // Formatear CNV
+            $cnvFormateado = null;
+            if ($cnv) {
+                $cnvFormateado = [
+                    'id' => $cnv->id_rn ?? $cnv->id,
+                    'id_niño' => $cnv->id_niño,
+                    'peso' => $cnv->peso,
+                    'peso_nacer' => $cnv->peso, // Alias para compatibilidad con frontend
+                    'edad_gestacional' => $cnv->edad_gestacional,
+                    'clasificacion' => $cnv->clasificacion,
+                    'es_ejemplo' => false,
+                ];
+            }
+            
+            // Formatear visitas
+            $visitasFormateadas = $visitas->map(function($visita) {
+                // Mapear grupo_visita a texto legible
+                $periodoMap = [
+                    'A' => '28 días de vida',
+                    'B' => '2-5 meses',
+                    'C' => '6-8 meses',
+                    'D' => '9-11 meses',
+                    // Mantener compatibilidad con códigos antiguos
+                    '28d' => '28 días de vida',
+                    '2-5m' => '2-5 meses',
+                    '6-8m' => '6-8 meses',
+                    '9-11m' => '9-11 meses',
+                ];
+                $periodoTexto = $periodoMap[$visita->grupo_visita] ?? $visita->grupo_visita;
+                
+                return [
+                    'id' => $visita->id_visita ?? $visita->id,
+                    'id_niño' => $visita->id_niño,
+                    'fecha_visita' => $visita->fecha_visita ? Carbon::parse($visita->fecha_visita)->format('Y-m-d') : null,
+                    'grupo_visita' => $visita->grupo_visita,
+                    'periodo' => $periodoTexto, // Para compatibilidad con frontend
+                    'numero_visitas' => $visita->numero_visitas,
+                    'es_ejemplo' => false,
+                ];
+            });
+            
+            // Formatear vacunas (como array para compatibilidad con el frontend)
+            $vacunasFormateadas = [];
+            if ($vacunas) {
+                if ($vacunas->fecha_bcg) {
+                    $vacunasFormateadas[] = [
+                        'id' => ($vacunas->id_vacuna ?? $vacunas->id) . '_bcg',
+                        'id_niño' => $vacunas->id_niño,
+                        'nombre_vacuna' => 'BCG',
+                        'fecha_aplicacion' => Carbon::parse($vacunas->fecha_bcg)->format('Y-m-d'),
+                        'edad_dias' => $vacunas->edad_bcg,
+                        'es_ejemplo' => false,
+                    ];
+                }
+                if ($vacunas->fecha_hvb) {
+                    $vacunasFormateadas[] = [
+                        'id' => ($vacunas->id_vacuna ?? $vacunas->id) . '_hvb',
+                        'id_niño' => $vacunas->id_niño,
+                        'nombre_vacuna' => 'HVB',
+                        'fecha_aplicacion' => Carbon::parse($vacunas->fecha_hvb)->format('Y-m-d'),
+                        'edad_dias' => $vacunas->edad_hvb,
+                        'es_ejemplo' => false,
+                    ];
+                }
+            }
+            
+            // Formatear datos extras
+            $datosExtraFormateado = null;
+            if ($datosExtra) {
+                $datosExtraFormateado = [
+                    'id' => $datosExtra->id_extra ?? $datosExtra->id,
+                    'id_niño' => $datosExtra->id_niño,
+                    'red' => $datosExtra->red,
+                    'microred' => $datosExtra->microred,
+                    'eess_nacimiento' => $datosExtra->eess_nacimiento,
+                    'distrito' => $datosExtra->distrito,
+                    'provincia' => $datosExtra->provincia,
+                    'departamento' => $datosExtra->departamento,
+                    'seguro' => $datosExtra->seguro,
+                    'programa' => $datosExtra->programa,
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'nino' => [
+                        'id_niño' => $nino->id_niño,
+                        'apellidos_nombres' => $nino->apellidos_nombres,
+                        'numero_doc' => $nino->numero_doc,
+                        'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null,
+                        'genero' => $nino->genero,
+                    ],
+                    'datos_extra' => $datosExtraFormateado,
+                    'controles_recien_nacido' => [
+                        'controles' => $controlesRnFormateados,
+                    ],
+                    'controles_cred_mensual' => [
+                        'controles' => $controlesCredFormateados,
+                    ],
+                    'tamizaje' => $tamizajeFormateado,
+                    'cnv' => $cnvFormateado,
+                    'visitas' => $visitasFormateadas,
+                    'vacunas' => $vacunasFormateadas,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener controles: ' . $e->getMessage(),
+                'data' => null
             ], 500);
         }
     }

@@ -24,6 +24,26 @@
       </div>
     </div>
 
+    <!-- Información sobre rangos y estados -->
+    <div style="margin-top: 16px; padding: 14px 16px; background: #f8fafc; border-radius: 10px; border-left: 4px solid #10b981;">
+      <div style="display: flex; align-items: start; gap: 12px;">
+        <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">¿Cómo saber si una visita cumple?</div>
+          <div style="font-size: 12px; color: #1e293b; line-height: 1.6;">
+            <strong>CUMPLE:</strong> Si la visita se realizó dentro del rango de edad establecido (ver columna "Rango Estimado")<br>
+            <strong>NO CUMPLE:</strong> Si la visita se realizó fuera del rango establecido<br>
+            <strong>SEGUIMIENTO:</strong> Si la visita aún no ha sido registrada
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tabla de Visitas Domiciliarias -->
     <div style="margin-top: 24px; overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -31,7 +51,7 @@
             <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Período</th>
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango Estimado</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango de Edad</th>
+              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Visita</th>
               <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
             </tr>
@@ -39,69 +59,38 @@
           <tbody>
             <!-- Visita 28 días -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b;">28 días</td>
+              <td style="padding: 12px; color: #1e293b; font-weight: 600;">28 días</td>
               <td style="padding: 12px; color: #64748b;">28 días</td>
-              <td style="padding: 12px; color: #64748b;">-</td>
+              <td style="padding: 12px; color: #64748b;" id="visita-edad-28d">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-28d">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-28d">SEGUIMIENTO</span></td>
             </tr>
             <!-- Visita 2-5 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b;">2-5 meses</td>
+              <td style="padding: 12px; color: #1e293b; font-weight: 600;">2-5 meses</td>
               <td style="padding: 12px; color: #64748b;">60 a 150 días</td>
-              <td style="padding: 12px; color: #64748b;">-</td>
+              <td style="padding: 12px; color: #64748b;" id="visita-edad-2-5m">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-2-5m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-2-5m">SEGUIMIENTO</span></td>
             </tr>
             <!-- Visita 6-8 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b;">6-8 meses</td>
+              <td style="padding: 12px; color: #1e293b; font-weight: 600;">6-8 meses</td>
               <td style="padding: 12px; color: #64748b;">180 a 240 días</td>
-              <td style="padding: 12px; color: #64748b;">-</td>
+              <td style="padding: 12px; color: #64748b;" id="visita-edad-6-8m">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-6-8m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-6-8m">SEGUIMIENTO</span></td>
             </tr>
             <!-- Visita 9-11 meses -->
             <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b;">9-11 meses</td>
+              <td style="padding: 12px; color: #1e293b; font-weight: 600;">9-11 meses</td>
               <td style="padding: 12px; color: #64748b;">270 a 330 días</td>
-              <td style="padding: 12px; color: #64748b;">-</td>
+              <td style="padding: 12px; color: #64748b;" id="visita-edad-9-11m">-</td>
               <td style="padding: 12px; color: #64748b;" id="visita-fecha-9-11m">-</td>
               <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-9-11m">SEGUIMIENTO</span></td>
             </tr>
           </tbody>
         </table>
-    </div>
-
-    <!-- Evaluación del Cumplimiento -->
-    <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; border: 1px solid #bae6fd;">
-      <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0c4a6e; display: flex; align-items: center; gap: 8px;">
-        <span>✅</span>
-        Evaluación del Cumplimiento
-      </h4>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 16px;">
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #10b981;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Visitas Completadas</div>
-          <div style="font-size: 18px; font-weight: 700; color: #10b981;" id="visitas-completadas">0</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">de 4 visitas programadas</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #f59e0b;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Pendientes</div>
-          <div style="font-size: 18px; font-weight: 700; color: #f59e0b;" id="visitas-pendientes">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Visitas aún no realizadas</div>
-        </div>
-        <div style="padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #ef4444;">
-          <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Atrasadas</div>
-          <div style="font-size: 18px; font-weight: 700; color: #ef4444;" id="visitas-atrasadas">-</div>
-          <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Visitas fuera del período establecido</div>
-        </div>
-      </div>
-      <div style="margin-top: 16px; padding: 12px; background: white; border-radius: 8px;">
-        <div style="font-size: 13px; color: #1e293b; font-weight: 600; margin-bottom: 8px;">Estado General:</div>
-        <div style="font-size: 18px; font-weight: 700;">
-          <span class="estado-badge estado-seguimiento" id="estado-general-visitas">SEGUIMIENTO</span>
-        </div>
-      </div>
     </div>
   </div>
 </div>

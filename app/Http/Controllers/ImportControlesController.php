@@ -131,51 +131,69 @@ class ImportControlesController extends Controller
 
             // Recién nacido (0-28 días)
             if ($edadDias <= 28) {
-                // CRN 1 (2-6 días)
+                // CRN 1 (2-6 días) con datos antropométricos
                 if ($edadDias >= 2) {
                     $fecha = $fechaNacimiento->copy()->addDays(rand(2, min(6, $edadDias)));
-                    fputcsv($fp, [$ninoId, 'CRN', 1, $fecha->format('Y-m-d'), 'Completo', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $peso = 3200 + rand(-200, 200);
+                    $talla = 50.0 + rand(-5, 5) / 10;
+                    $pc = 35.0 + rand(-3, 3) / 10;
+                    fputcsv($fp, [$ninoId, 'CRN', 1, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
                 }
                 // CRN 2 (7-13 días)
                 if ($edadDias >= 7) {
                     $fecha = $fechaNacimiento->copy()->addDays(rand(7, min(13, $edadDias)));
-                    fputcsv($fp, [$ninoId, 'CRN', 2, $fecha->format('Y-m-d'), 'Completo', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $peso = 3300 + rand(-200, 200);
+                    $talla = 51.0 + rand(-5, 5) / 10;
+                    $pc = 35.5 + rand(-3, 3) / 10;
+                    fputcsv($fp, [$ninoId, 'CRN', 2, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
                 }
                 // CRN 3 (14-20 días)
                 if ($edadDias >= 14) {
                     $fecha = $fechaNacimiento->copy()->addDays(rand(14, min(20, $edadDias)));
-                    fputcsv($fp, [$ninoId, 'CRN', 3, $fecha->format('Y-m-d'), 'Completo', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $peso = 3400 + rand(-200, 200);
+                    $talla = 52.0 + rand(-5, 5) / 10;
+                    $pc = 36.0 + rand(-3, 3) / 10;
+                    fputcsv($fp, [$ninoId, 'CRN', 3, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
                 }
                 // CRN 4 (21-28 días)
                 if ($edadDias >= 21) {
                     $fecha = $fechaNacimiento->copy()->addDays(rand(21, min(28, $edadDias)));
-                    fputcsv($fp, [$ninoId, 'CRN', 4, $fecha->format('Y-m-d'), 'Completo', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+                    $peso = 3500 + rand(-200, 200);
+                    $talla = 53.0 + rand(-5, 5) / 10;
+                    $pc = 36.5 + rand(-3, 3) / 10;
+                    fputcsv($fp, [$ninoId, 'CRN', 4, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
                 }
 
-                // Vacunas
-                $fechaBCG = $fechaNacimiento->copy()->addDays(rand(0, min(7, $edadDias)));
-                $fechaHVB = $fechaNacimiento->copy()->addDays(rand(0, min(7, $edadDias)));
-                fputcsv($fp, [$ninoId, 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '']);
+                // Vacunas (1-2 días)
+                $fechaBCG = $fechaNacimiento->copy()->addDays(rand(1, min(2, $edadDias)));
+                $fechaHVB = $fechaNacimiento->copy()->addDays(rand(1, min(2, $edadDias)));
+                fputcsv($fp, [$ninoId, 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '', '', '']);
 
-                // Tamizaje
+                // Tamizaje (1-29 días)
                 $fechaTamizaje = $fechaNacimiento->copy()->addDays(rand(1, min(29, $edadDias)));
-                fputcsv($fp, [$ninoId, 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '']);
+                fputcsv($fp, [$ninoId, 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '', '', '', '']);
+
+                // Recién Nacido (CNV)
+                $pesoRN = 3500 + rand(-500, 500);
+                $edadGestacional = 38 + rand(-2, 2);
+                $clasificacion = rand(0, 1) === 0 ? 'Normal' : 'Bajo Peso al Nacer y/o Prematuro';
+                fputcsv($fp, [$ninoId, 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $pesoRN, $edadGestacional, $clasificacion, '']);
             }
 
-            // Menor de 1 año (29-365 días) - Usando los mismos rangos que el ApiController
-            if ($edadDias >= 29 && $edadDias <= 365) {
+            // Menor de 1 año (29-359 días) - Usando los mismos rangos que el ApiController
+            if ($edadDias >= 29 && $edadDias <= 359) {
                 $rangos = [
-                    1 => ['min' => 30, 'max' => 60],
-                    2 => ['min' => 60, 'max' => 90],
-                    3 => ['min' => 90, 'max' => 120],
-                    4 => ['min' => 120, 'max' => 150],
-                    5 => ['min' => 150, 'max' => 180],
-                    6 => ['min' => 180, 'max' => 210],
-                    7 => ['min' => 210, 'max' => 240],
-                    8 => ['min' => 240, 'max' => 270],
-                    9 => ['min' => 270, 'max' => 300],
-                    10 => ['min' => 300, 'max' => 330],
-                    11 => ['min' => 330, 'max' => 365],
+                    1 => ['min' => 29, 'max' => 59],
+                    2 => ['min' => 60, 'max' => 89],
+                    3 => ['min' => 90, 'max' => 119],
+                    4 => ['min' => 120, 'max' => 149],
+                    5 => ['min' => 150, 'max' => 179],
+                    6 => ['min' => 180, 'max' => 209],
+                    7 => ['min' => 210, 'max' => 239],
+                    8 => ['min' => 240, 'max' => 269],
+                    9 => ['min' => 270, 'max' => 299],
+                    10 => ['min' => 300, 'max' => 329],
+                    11 => ['min' => 330, 'max' => 359],
                 ];
 
                 foreach ($rangos as $numControl => $rango) {
@@ -207,14 +225,24 @@ class ImportControlesController extends Controller
                             $ninoId, 'CRED', $numControl, $fechaControl->format('Y-m-d'), $estado, 
                             $estadoCredOnce, $estadoCredFinal, 
                             $peso, $talla, $pc,
-                            '', '', '', '', '', '', '', '', '', ''
+                            '', '', '', '', '', '', '', '', '', '', '', '', ''
                         ]);
                     }
                 }
             }
 
+            // Visitas domiciliarias (si el niño tiene más de 28 días)
+            if ($edadDias >= 28) {
+                $fechaVisita28 = $fechaNacimiento->copy()->addDays(28);
+                fputcsv($fp, [$ninoId, 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita28->format('Y-m-d'), 'A', '', '', '', '', '', '', '']);
+            }
+            if ($edadDias >= 60) {
+                $fechaVisita2_5 = $fechaNacimiento->copy()->addDays(rand(60, min(150, $edadDias)));
+                fputcsv($fp, [$ninoId, 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita2_5->format('Y-m-d'), 'B', '', '', '', '', '', '', '']);
+            }
+
             // Datos extra (para todos)
-            fputcsv($fp, [$ninoId, 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '']);
+            fputcsv($fp, [$ninoId, 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '', '', '', '']);
         }
 
         fclose($fp);
@@ -232,32 +260,40 @@ class ImportControlesController extends Controller
             'ID_NINO', 'TIPO_CONTROL', 'NUMERO_CONTROL', 'FECHA', 'ESTADO',
             'ESTADO_CRED_ONCE', 'ESTADO_CRED_FINAL', 'PESO', 'TALLA', 'PERIMETRO_CEFALICO',
             'FECHA_BCG', 'ESTADO_BCG', 'FECHA_HVB', 'ESTADO_HVB', 'FECHA_TAMIZAJE', 
-            'FECHA_VISITA', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'SOBRESCRIBIR'
+            'FECHA_VISITA', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 
+            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION', 'SOBRESCRIBIR'
         ]);
 
         // Datos de ejemplo básicos con valores realistas
         $hoy = Carbon::now();
         $fechaNacimientoEjemplo = $hoy->copy()->subDays(45);
         
-        // CRN 1 (2-6 días después del nacimiento)
+        // CRN 1 (2-6 días después del nacimiento) con datos antropométricos
         $fechaCRN1 = $fechaNacimientoEjemplo->copy()->addDays(4);
-        fputcsv($fp, ['1', 'CRN', '1', $fechaCRN1->format('Y-m-d'), 'Completo', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+        fputcsv($fp, ['1', 'CRN', '1', $fechaCRN1->format('Y-m-d'), 'Completo', '', '', '3200', '50.5', '35.2', '', '', '', '', '', '', '', '', '', '', '', '', '']);
         
-        // CRED 1 (30-60 días) - dentro del rango válido
+        // CRED 1 (29-59 días) - dentro del rango válido
         $fechaCRED1 = $fechaNacimientoEjemplo->copy()->addDays(45);
-        fputcsv($fp, ['1', 'CRED', '1', $fechaCRED1->format('Y-m-d'), 'cumple', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', '', '', '', '']);
+        fputcsv($fp, ['1', 'CRED', '1', $fechaCRED1->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', '', '', '', '', '', '']);
         
-        // Vacunas (0-7 días después del nacimiento)
-        $fechaBCG = $fechaNacimientoEjemplo->copy()->addDays(2);
-        $fechaHVB = $fechaNacimientoEjemplo->copy()->addDays(2);
-        fputcsv($fp, ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '']);
+        // Vacunas (1-2 días después del nacimiento)
+        $fechaBCG = $fechaNacimientoEjemplo->copy()->addDays(1);
+        $fechaHVB = $fechaNacimientoEjemplo->copy()->addDays(1);
+        fputcsv($fp, ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '', '', '']);
         
         // Tamizaje (1-29 días después del nacimiento)
-        $fechaTamizaje = $fechaNacimientoEjemplo->copy()->addDays(15);
-        fputcsv($fp, ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '']);
+        $fechaTamizaje = $fechaNacimientoEjemplo->copy()->addDays(5);
+        fputcsv($fp, ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '', '', '', '']);
+        
+        // Visita domiciliaria
+        $fechaVisita = $fechaNacimientoEjemplo->copy()->addDays(28);
+        fputcsv($fp, ['1', 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita->format('Y-m-d'), 'A', '', '', '', '', '', '', '']);
+        
+        // Recién Nacido (CNV)
+        fputcsv($fp, ['1', 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '3500', '38', 'Normal', '']);
         
         // Datos extra
-        fputcsv($fp, ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '']);
+        fputcsv($fp, ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '', '', '', '']);
 
         fclose($fp);
     }

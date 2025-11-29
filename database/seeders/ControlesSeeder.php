@@ -88,11 +88,23 @@ class ControlesSeeder extends Seeder
             return;
         }
 
+        // Determinar clasificación basada en peso y edad gestacional
+        $peso = rand(2500, 4000) / 100; // 2.5 a 4.0 kg
+        $edadGestacional = rand(37, 42); // semanas
+        
+        // Clasificar: Normal o Bajo Peso al Nacer y/o Prematuro
+        // Bajo peso: < 2.5 kg, Prematuro: < 37 semanas
+        if ($peso < 2.5 || $edadGestacional < 37) {
+            $clasificacion = 'Bajo Peso al Nacer y/o Prematuro';
+        } else {
+            $clasificacion = 'Normal';
+        }
+        
         DB::table('recien_nacido')->insert([
             'id_niño' => $ninoId,
-            'peso' => rand(2500, 4000) / 100, // 2.5 a 4.0 kg
-            'edad_gestacional' => rand(37, 42), // semanas
-            'clasificacion' => ['AEG', 'PEG', 'GEG'][rand(0, 2)], // AEG: Adecuado, PEG: Pequeño, GEG: Grande
+            'peso' => $peso,
+            'edad_gestacional' => $edadGestacional,
+            'clasificacion' => $clasificacion,
         ]);
 
         $this->command->line("  ✅ Recién nacido creado para niño {$ninoId}");

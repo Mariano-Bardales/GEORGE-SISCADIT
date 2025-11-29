@@ -67,7 +67,7 @@ class ControlesImport implements ToCollection, WithHeadingRow
         switch ($tipoControl) {
             case 'crn':
             case 'control rn':
-            case 'recien nacido':
+            case 'control recien nacido':
                 $this->importControlRN($ninoId, $row);
                 break;
             
@@ -100,7 +100,8 @@ class ControlesImport implements ToCollection, WithHeadingRow
                 break;
             
             case 'recien nacido':
-            case 'rn':
+            case 'recien_nacido':
+            case 'cnv':
                 $this->importRecienNacido($ninoId, $row);
                 break;
             
@@ -130,22 +131,23 @@ class ControlesImport implements ToCollection, WithHeadingRow
         $fecha = $this->parseDate($row['fecha'] ?? null);
         $edad = $this->calculateAge($ninoId, $fecha);
 
+        $data = [
+            'id_niño' => $ninoId,
+            'numero_control' => $numeroControl,
+            'fecha' => $fecha,
+            'edad' => $edad,
+            'estado' => $row['estado'] ?? 'Completo',
+            'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
+            'talla' => !empty($row['talla']) ? (float)$row['talla'] : null,
+            'perimetro_cefalico' => !empty($row['perimetro_cefalico']) || !empty($row['pc']) ? (float)($row['perimetro_cefalico'] ?? $row['pc']) : null,
+        ];
+
         if ($existe) {
             ControlRn::where('id_niño', $ninoId)
                      ->where('numero_control', $numeroControl)
-                     ->update([
-                         'fecha' => $fecha,
-                         'edad' => $edad,
-                         'estado' => $row['estado'] ?? 'Completo',
-                     ]);
+                     ->update($data);
         } else {
-            ControlRn::create([
-                'id_niño' => $ninoId,
-                'numero_control' => $numeroControl,
-                'fecha' => $fecha,
-                'edad' => $edad,
-                'estado' => $row['estado'] ?? 'Completo',
-            ]);
+            ControlRn::create($data);
         }
 
         $this->stats['controles_rn']++;
@@ -277,11 +279,21 @@ class ControlesImport implements ToCollection, WithHeadingRow
             return;
         }
 
+        // Mapear grupo de visita a código de una letra (A, B, C, D)
+        $grupoVisita = strtoupper(trim($row['grupo_visita'] ?? 'A'));
+        $grupoMap = [
+            'A' => 'A', '28D' => 'A', '28 DÍAS' => 'A', '28 DIAS' => 'A',
+            'B' => 'B', '2-5M' => 'B', '2-5 MESES' => 'B', '2-5 MES' => 'B',
+            'C' => 'C', '6-8M' => 'C', '6-8 MESES' => 'C', '6-8 MES' => 'C',
+            'D' => 'D', '9-11M' => 'D', '9-11 MESES' => 'D', '9-11 MES' => 'D',
+        ];
+        $grupoVisitaCodigo = $grupoMap[$grupoVisita] ?? 'A';
+
         VisitaDomiciliaria::create([
             'id_niño' => $ninoId,
-            'grupo_visita' => $row['grupo_visita'] ?? 'Grupo A',
+            'grupo_visita' => $grupoVisitaCodigo,
             'fecha_visita' => $fechaVisita->format('Y-m-d'),
-            'numero_visitas' => $row['numero_visita'] ?? 1,
+            'numero_visitas' => (int)($row['numero_visita'] ?? $row['numero_visitas'] ?? 1),
         ]);
 
         $this->stats['visitas']++;
@@ -318,11 +330,28 @@ class ControlesImport implements ToCollection, WithHeadingRow
     {
         $existe = RecienNacido::where('id_niño', $ninoId)->exists();
 
+        // Validar clasificación (solo Normal o Bajo Peso al Nacer y/o Prematuro)
+        $clasificacion = $row['clasificacion'] ?? null;
+        $clasificacionesValidas = ['Normal', 'Bajo Peso al Nacer y/o Prematuro'];
+        if ($clasificacion && !in_array($clasificacion, $clasificacionesValidas)) {
+            $this->errors[] = "Clasificación inválida para niño ID: {$ninoId}. Debe ser 'Normal' o 'Bajo Peso al Nacer y/o Prematuro'";
+            return;
+        }
+
+        // Convertir peso de gramos a kg si viene en gramos (valores > 10 probablemente son gramos)
+        // Puede venir como 'peso' o 'peso_rn'
+        $peso = $row['peso_rn'] ?? $row['peso'] ?? null;
+        if ($peso && is_numeric($peso) && $peso > 10) {
+            $peso = (float)$peso / 1000; // Convertir gramos a kg
+        } elseif ($peso && is_numeric($peso)) {
+            $peso = (float)$peso;
+        }
+
         $data = [
             'id_niño' => $ninoId,
-            'peso' => $row['peso'] ?? null,
-            'edad_gestacional' => $row['edad_gestacional'] ?? null,
-            'clasificacion' => $row['clasificacion'] ?? 'AEG',
+            'peso' => $peso,
+            'edad_gestacional' => !empty($row['edad_gestacional']) ? (int)$row['edad_gestacional'] : null,
+            'clasificacion' => $clasificacion ?? 'Normal',
         ];
 
         if ($existe) {

@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reportes/estadisticas', [ApiController::class, 'reportesEstadisticas'])->name('api.reportes.estadisticas');
         Route::get('/ninos', [ApiController::class, 'ninos'])->name('api.ninos');
         Route::get('/nino/datos-extras', [ApiController::class, 'datosExtras'])->name('api.nino.datos-extras');
+        Route::get('/nino/{id}/controles', [ApiController::class, 'obtenerTodosControles'])->name('api.nino.controles');
         
         // Controles Recién Nacido
         Route::get('/controles-recien-nacido', [ApiController::class, 'controlesRecienNacido'])->name('api.controles-recien-nacido');

@@ -12,11 +12,26 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
 {
     public function array(): array
     {
+        $hoy = \Carbon\Carbon::now();
+        $fechaNacimiento = $hoy->copy()->subDays(45);
+        
         return [
-            ['1', 'CRED', '1', '2024-01-15', 'Completo', 'Adecuado', 'Normal', '', '', '', '', '', '', '', 'Red Lima Norte', 'Microred 01', 'San Juan de Lurigancho', ''],
-            ['1', 'CRED', '2', '2024-02-15', 'Completo', 'Adecuado', 'Normal', '', '', '', '', '', '', '', '', '', '', ''],
-            ['1', 'VACUNA', '', '', '', '', '', '2024-01-01', 'SI', '2024-01-01', 'SI', '', '', '', '', '', '', ''],
-            ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '2024-01-10', '', '', '', '', '', ''],
+            // CRED con todos los campos
+            ['1', 'CRED', '1', $fechaNacimiento->copy()->addDays(45)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', ''],
+            ['1', 'CRED', '2', $fechaNacimiento->copy()->addDays(75)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '4200', '56.5', '38.2', '', '', '', '', '', '', '', ''],
+            // CRN con todos los campos
+            ['1', 'CRN', '1', $fechaNacimiento->copy()->addDays(4)->format('Y-m-d'), 'Completo', '', '', '3200', '50.5', '35.2', '', '', '', '', '', '', '', ''],
+            ['1', 'CRN', '2', $fechaNacimiento->copy()->addDays(10)->format('Y-m-d'), 'Completo', '', '', '3400', '51.8', '35.8', '', '', '', '', '', '', '', ''],
+            // Vacunas
+            ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', '', '', '', '', ''],
+            // Tamizaje
+            ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(5)->format('Y-m-d'), '', '', '', ''],
+            // Visita
+            ['1', 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(28)->format('Y-m-d'), 'A', '', '', ''],
+            // Datos Extra
+            ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', ''],
+            // Recién Nacido
+            ['1', 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '3500', '38', 'Normal', ''],
         ];
     }
 
@@ -30,6 +45,9 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
             'ESTADO',
             'ESTADO_CRED_ONCE',
             'ESTADO_CRED_FINAL',
+            'PESO',
+            'TALLA',
+            'PERIMETRO_CEFALICO',
             'FECHA_BCG',
             'ESTADO_BCG',
             'FECHA_HVB',
@@ -40,6 +58,9 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
             'RED',
             'MICRORED',
             'DISTRITO',
+            'PESO_RN',
+            'EDAD_GESTACIONAL',
+            'CLASIFICACION',
             'SOBRESCRIBIR',
         ];
     }
@@ -54,24 +75,30 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
     public function columnWidths(): array
     {
         return [
-            'A' => 12,
-            'B' => 15,
-            'C' => 15,
-            'D' => 15,
-            'E' => 12,
-            'F' => 18,
-            'G' => 18,
-            'H' => 15,
-            'I' => 12,
-            'J' => 15,
-            'K' => 12,
-            'L' => 15,
-            'M' => 15,
-            'N' => 15,
-            'O' => 20,
-            'P' => 15,
-            'Q' => 20,
-            'R' => 15,
+            'A' => 12,  // ID_NINO
+            'B' => 15,  // TIPO_CONTROL
+            'C' => 15,  // NUMERO_CONTROL
+            'D' => 15,  // FECHA
+            'E' => 12,  // ESTADO
+            'F' => 18,  // ESTADO_CRED_ONCE
+            'G' => 18,  // ESTADO_CRED_FINAL
+            'H' => 12,  // PESO
+            'I' => 12,  // TALLA
+            'J' => 18,  // PERIMETRO_CEFALICO
+            'K' => 15,  // FECHA_BCG
+            'L' => 12,  // ESTADO_BCG
+            'M' => 15,  // FECHA_HVB
+            'N' => 12,  // ESTADO_HVB
+            'O' => 15,  // FECHA_TAMIZAJE
+            'P' => 15,  // FECHA_VISITA
+            'Q' => 15,  // GRUPO_VISITA
+            'R' => 20,  // RED
+            'S' => 15,  // MICRORED
+            'T' => 20,  // DISTRITO
+            'U' => 12,  // PESO_RN
+            'V' => 15,  // EDAD_GESTACIONAL
+            'W' => 25,  // CLASIFICACION
+            'X' => 15,  // SOBRESCRIBIR
         ];
     }
 }
