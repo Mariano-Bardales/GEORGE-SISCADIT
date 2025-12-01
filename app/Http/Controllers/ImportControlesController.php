@@ -27,8 +27,22 @@ class ImportControlesController extends Controller
 
         try {
             $file = $request->file('archivo_excel');
+            
+            // Validar que el archivo existe y es válido
+            if (!$file || !$file->isValid()) {
+                return redirect()->route('controles-cred')
+                    ->with('import_error', 'El archivo no es válido o no se pudo cargar correctamente.');
+            }
+
+            // Validar tamaño del archivo
+            if ($file->getSize() > 10485760) { // 10MB en bytes
+                return redirect()->route('controles-cred')
+                    ->with('import_error', 'El archivo excede el tamaño máximo permitido de 10MB.');
+            }
+
             $import = new ControlesImport();
             
+            // Importar el archivo
             Excel::import($import, $file);
 
             $stats = $import->getStats();
