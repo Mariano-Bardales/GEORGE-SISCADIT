@@ -240,49 +240,6 @@
                 </a>
               </div>
             </div>
-            <!-- Resumen de Alertas y Accesos Rápidos -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mt-6">
-              <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                  <div class="p-2 bg-amber-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-alert w-6 h-6 text-amber-600">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" x2="12" y1="8" y2="12"></line>
-                      <line x1="12" x2="12.01" y1="16" y2="16"></line>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-bold text-slate-800">Resumen de Alertas y Accesos Rápidos</h3>
-                    <p class="text-sm text-slate-500">Alertas críticas y enlaces de acceso</p>
-                  </div>
-                </div>
-                <div style="display: flex; gap: 0.75rem;">
-                  <a href="{{ route('alertas-cred') }}" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" x2="12" y1="8" y2="12"></line>
-                      <line x1="12" x2="12.01" y1="16" y2="16"></line>
-                    </svg>
-                    Ver Alertas
-                  </a>
-                  <a href="{{ route('controles-cred') }}" class="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all text-sm font-semibold flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" x2="8" y1="13" y2="13"></line>
-                      <line x1="16" x2="8" y1="17" y2="17"></line>
-                    </svg>
-                    Ver Controles CRED
-                  </a>
-                </div>
-              </div>
-              <div id="alertasResumen" style="padding: 1rem;">
-                <div class="text-center py-8 text-slate-500">
-                  <div class="spinner" style="margin: 0 auto; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-                  <p style="margin-top: 1rem;">Cargando resumen de alertas...</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>

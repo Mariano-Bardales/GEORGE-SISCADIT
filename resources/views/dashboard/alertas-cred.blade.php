@@ -236,6 +236,11 @@
               Alertas CRED
             </h1>
             <p>Niños con controles pendientes o fuera del rango establecido</p>
+            <div style="margin-top: 1rem;">
+              <button onclick="limpiarCacheYRecargar()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+                🔄 Limpiar Caché y Recargar
+              </button>
+            </div>
           </div>
 
           <!-- Filtros -->
@@ -309,14 +314,41 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     let todasLasAlertas = [];
 
-    async function cargarAlertas() {
+    // Función para limpiar caché del navegador
+    function limpiarCache() {
       try {
-        const response = await fetch('/api/alertas', {
+        // Limpiar localStorage relacionado con alertas
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.includes('alerta') || key.includes('control') || key.includes('cache')) {
+            localStorage.removeItem(key);
+          }
+        });
+        console.log('✅ Caché del navegador limpiado');
+      } catch (e) {
+        console.warn('⚠️ No se pudo limpiar localStorage:', e);
+      }
+    }
+
+    async function cargarAlertas(forzarRecarga = false) {
+      try {
+        // Limpiar caché si se fuerza la recarga
+        if (forzarRecarga) {
+          limpiarCache();
+        }
+        
+        // Agregar timestamp para evitar caché del navegador
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/alertas?t=${timestamp}`, {
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-          }
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          },
+          cache: 'no-store'
         });
         const data = await response.json();
         
@@ -463,12 +495,34 @@
       cargarAlertas();
     }, 30000);
 
+    // Función para limpiar caché y recargar alertas
+    function limpiarCacheYRecargar() {
+      limpiarCache();
+      cargarAlertas(true);
+      // Mostrar mensaje de confirmación
+      const tbody = document.getElementById('tablaAlertas');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 2rem; color: #3b82f6;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; display: block; animation: spin 1s linear infinite;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Limpiando caché y recargando alertas...
+          </td>
+        </tr>
+      `;
+    }
+
     // Cargar alertas al iniciar
     document.addEventListener('DOMContentLoaded', function() {
-      cargarAlertas();
+      // Limpiar caché al cargar la página
+      limpiarCache();
+      cargarAlertas(true);
       
-      // Recargar cada 5 minutos
-      setInterval(cargarAlertas, 300000);
+      // Recargar cada 5 minutos (sin forzar, para no limpiar caché constantemente)
+      setInterval(() => cargarAlertas(false), 300000);
     });
   </script>
 </body>

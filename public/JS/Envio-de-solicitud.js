@@ -14,11 +14,67 @@ document.addEventListener('DOMContentLoaded', function() {
         return emailRegex.test(email);
     }
 
-    // Función para validar teléfono (solo números y algunos caracteres especiales)
-    function isValidPhone(phone) {
-        const phoneRegex = /^[0-9+\-() ]+$/;
-        return phoneRegex.test(phone) && phone.trim().length >= 9;
+    // Función para validar DNI (exactamente 8 dígitos)
+    function isValidDNI(dni) {
+        const dniRegex = /^[0-9]{8}$/;
+        return dniRegex.test(dni.trim());
     }
+
+    // Función para validar teléfono (solo números, máximo 9 dígitos)
+    function isValidPhone(phone) {
+        const phoneRegex = /^[0-9]{1,9}$/;
+        return phoneRegex.test(phone.trim());
+    }
+
+    // Función para mostrar modal de errores
+    function showErrorModal(errors) {
+        const modal = document.getElementById('errorModal');
+        const errorList = document.getElementById('errorList');
+        
+        if (!modal || !errorList) return;
+        
+        // Limpiar lista anterior
+        errorList.innerHTML = '';
+        
+        // Agregar cada error a la lista con animación escalonada
+        errors.forEach((error, index) => {
+            const li = document.createElement('li');
+            li.style.animationDelay = `${index * 0.05}s`;
+            li.innerHTML = `
+                <span class="error-number">${index + 1}</span>
+                <span class="error-text">${error}</span>
+            `;
+            errorList.appendChild(li);
+        });
+        
+        // Mostrar modal con animación
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+    }
+
+    // Función para cerrar modal de errores
+    function closeErrorModal() {
+        const modal = document.getElementById('errorModal');
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = ''; // Restaurar scroll del body
+        }
+    }
+
+    // Cerrar modal al hacer clic fuera de él
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('errorModal');
+        if (modal && e.target === modal) {
+            closeErrorModal();
+        }
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeErrorModal();
+        }
+    });
 
     // Función para mostrar error en un campo
     function showFieldError(input) {
@@ -38,8 +94,113 @@ document.addEventListener('DOMContentLoaded', function() {
         input.classList.add('field-valid');
     }
 
-    // Validar campos en tiempo real
+        // Validar campos en tiempo real
     const inputs = form.querySelectorAll("input, select");
+    const dniInput = document.getElementById('Numero_Documento');
+    const celularInput = document.getElementById('Celular');
+    const dniHint = document.getElementById('dniHint');
+    const celularHint = document.getElementById('celularHint');
+
+    // Validar solo números en DNI con contador mejorado
+    if (dniInput) {
+        dniInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            const length = this.value.length;
+            const remaining = 8 - length;
+            
+            const counter = document.getElementById('dniCounter');
+            
+            // Actualizar contador con animación
+            if (counter) {
+                counter.textContent = `${length}/8`;
+                counter.classList.add('updating');
+                setTimeout(() => counter.classList.remove('updating'), 300);
+            }
+            
+            if (dniHint) {
+                const icon = dniHint.querySelector('.validation-icon i');
+                const label = dniHint.querySelector('.validation-label');
+                const value = dniHint.querySelector('.validation-value');
+                
+                if (length === 8) {
+                    // DNI completo y válido
+                    dniHint.className = 'validation-message valid';
+                    if (icon) icon.className = 'bi bi-check-circle-fill';
+                    if (label) label.textContent = 'DNI válido';
+                    if (value) value.textContent = 'Formato correcto';
+                } else if (length > 0 && length < 8) {
+                    // DNI incompleto
+                    dniHint.className = 'validation-message warning';
+                    if (icon) icon.className = 'bi bi-exclamation-triangle';
+                    if (label) label.textContent = 'Faltan dígitos';
+                    if (value) value.textContent = `${remaining} dígito${remaining !== 1 ? 's' : ''} restante${remaining !== 1 ? 's' : ''}`;
+                } else if (length > 8) {
+                    // DNI excede el límite (no debería pasar por maxlength, pero por si acaso)
+                    dniHint.className = 'validation-message error';
+                    if (icon) icon.className = 'bi bi-x-circle-fill';
+                    if (label) label.textContent = 'Excede el límite';
+                    if (value) value.textContent = 'Máximo 8 dígitos';
+                } else {
+                    // DNI vacío
+                    dniHint.className = 'validation-message';
+                    if (icon) icon.className = 'bi bi-info-circle';
+                    if (label) label.textContent = 'Formato requerido';
+                    if (value) value.textContent = '8 dígitos numéricos';
+                }
+            }
+        });
+    }
+    
+    // Validar solo números en Celular con contador mejorado
+    if (celularInput) {
+        celularInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            const length = this.value.length;
+            const remaining = 9 - length;
+            
+            const counter = document.getElementById('celularCounter');
+            
+            // Actualizar contador con animación
+            if (counter) {
+                counter.textContent = `${length}/9`;
+                counter.classList.add('updating');
+                setTimeout(() => counter.classList.remove('updating'), 300);
+            }
+            
+            if (celularHint) {
+                const icon = celularHint.querySelector('.validation-icon i');
+                const label = celularHint.querySelector('.validation-label');
+                const value = celularHint.querySelector('.validation-value');
+                
+                if (length === 9) {
+                    // Celular completo y válido
+                    celularHint.className = 'validation-message valid';
+                    if (icon) icon.className = 'bi bi-check-circle-fill';
+                    if (label) label.textContent = 'Celular válido';
+                    if (value) value.textContent = 'Formato correcto';
+                } else if (length > 0 && length < 9) {
+                    // Celular incompleto pero válido
+                    celularHint.className = 'validation-message';
+                    if (icon) icon.className = 'bi bi-info-circle';
+                    if (label) label.textContent = 'Formato requerido';
+                    if (value) value.textContent = `Máximo 9 dígitos (${length} ingresado${length !== 1 ? 's' : ''})`;
+                } else if (length > 9) {
+                    // Celular excede el límite
+                    celularHint.className = 'validation-message error';
+                    if (icon) icon.className = 'bi bi-x-circle-fill';
+                    if (label) label.textContent = 'Excede el límite';
+                    if (value) value.textContent = 'Máximo 9 dígitos permitidos';
+                } else {
+                    // Celular vacío
+                    celularHint.className = 'validation-message';
+                    if (icon) icon.className = 'bi bi-info-circle';
+                    if (label) label.textContent = 'Formato requerido';
+                    if (value) value.textContent = 'Máximo 9 dígitos numéricos';
+                }
+            }
+        });
+    }
+
     inputs.forEach((input) => {
         input.addEventListener('blur', function() {
             if (this.hasAttribute("required")) {
@@ -58,6 +219,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (this.type === 'text' && this.id === 'Celular') {
                     if (!isValidPhone(this.value.trim())) {
                         showFieldError(this);
+                        if (celularHint) {
+                            const icon = celularHint.querySelector('.validation-icon i');
+                            const label = celularHint.querySelector('.validation-label');
+                            const value = celularHint.querySelector('.validation-value');
+                            celularHint.className = 'validation-message error';
+                            if (icon) icon.className = 'bi bi-x-circle-fill';
+                            if (label) label.textContent = 'Error de formato';
+                            if (value) value.textContent = 'Máximo 9 dígitos (solo números)';
+                        }
+                    } else {
+                        clearFieldError(this);
+                    }
+                } else if (this.id === 'Numero_Documento') {
+                    if (!isValidDNI(this.value.trim())) {
+                        showFieldError(this);
+                        if (dniHint) {
+                            const icon = dniHint.querySelector('.validation-icon i');
+                            const label = dniHint.querySelector('.validation-label');
+                            const value = dniHint.querySelector('.validation-value');
+                            dniHint.className = 'validation-message error';
+                            if (icon) icon.className = 'bi bi-x-circle-fill';
+                            if (label) label.textContent = 'Error de formato';
+                            if (value) value.textContent = 'Debe tener exactamente 8 dígitos';
+                        }
                     } else {
                         clearFieldError(this);
                     }
@@ -120,6 +305,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessages.push('Debe ingresar un correo electrónico válido');
                     }
                 }
+                // Validar DNI
+                else if (input.id === 'Numero_Documento') {
+                    if (input.value.trim() === "") {
+                        valid = false;
+                        showFieldError(input);
+                        if (!firstInvalidField) firstInvalidField = input;
+                        errorMessages.push('El número de DNI es obligatorio');
+                    } else if (!isValidDNI(input.value.trim())) {
+                        valid = false;
+                        showFieldError(input);
+                        if (!firstInvalidField) firstInvalidField = input;
+                        errorMessages.push('El número de DNI debe tener exactamente 8 dígitos');
+                    }
+                }
                 // Validar teléfono
                 else if (input.id === 'Celular') {
                     if (input.value.trim() === "") {
@@ -131,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         valid = false;
                         showFieldError(input);
                         if (!firstInvalidField) firstInvalidField = input;
-                        errorMessages.push('Ingrese un número de celular válido (mínimo 9 dígitos)');
+                        errorMessages.push('El celular debe tener máximo 9 dígitos (solo números)');
                     }
                 }
                 // Validar selects
@@ -156,16 +355,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (!valid) {
-            // Mostrar mensaje de error
-            const errorMsg = errorMessages.length > 0 
-                ? errorMessages[0] 
-                : "Por favor, complete todos los campos requeridos.";
-            alert(errorMsg);
+            // Mostrar modal con todos los errores
+            showErrorModal(errorMessages);
             
             // Hacer scroll al primer campo con error
             if (firstInvalidField) {
-                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                firstInvalidField.focus();
+                setTimeout(() => {
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalidField.focus();
+                }, 100);
             }
             return;
         }
@@ -255,13 +453,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorMsg = data.message;
                 }
 
-                alert(errorMsg);
+                // Mostrar errores en modal si hay múltiples errores
+                if (data.errors && typeof data.errors === 'object') {
+                    const errorList = [];
+                    Object.values(data.errors).forEach(err => {
+                        if (Array.isArray(err)) {
+                            errorList.push(...err);
+                        } else {
+                            errorList.push(err);
+                        }
+                    });
+                    if (errorList.length > 0) {
+                        showErrorModal(errorList);
+                    } else {
+                        showErrorModal([errorMsg]);
+                    }
+                } else {
+                    showErrorModal([errorMsg]);
+                }
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-send-fill"></i> Solicitar';
             }
         } catch (error) {
             console.error('Error al enviar formulario:', error);
-            alert("Error de conexión. Por favor, verifique su conexión a internet e intente nuevamente.");
+            showErrorModal(["Error de conexión. Por favor, verifique su conexión a internet e intente nuevamente."]);
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-send-fill"></i> Solicitar';
         }

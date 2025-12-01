@@ -37,6 +37,12 @@ class ImportControlesController extends Controller
 
             $mensaje = "✅ Importación completada exitosamente!\n\n";
             $mensaje .= "📊 Estadísticas:\n";
+            if (isset($stats['ninos']) && $stats['ninos'] > 0) {
+                $mensaje .= "- Niños creados/actualizados: {$stats['ninos']}\n";
+            }
+            if (isset($stats['madres']) && $stats['madres'] > 0) {
+                $mensaje .= "- Madres creadas/actualizadas: {$stats['madres']}\n";
+            }
             $mensaje .= "- Controles RN: {$stats['controles_rn']}\n";
             $mensaje .= "- Controles CRED: {$stats['controles_cred']}\n";
             $mensaje .= "- Tamizajes: {$stats['tamizajes']}\n";
@@ -120,7 +126,11 @@ class ImportControlesController extends Controller
             'ID_NINO', 'TIPO_CONTROL', 'NUMERO_CONTROL', 'FECHA', 'ESTADO',
             'ESTADO_CRED_ONCE', 'ESTADO_CRED_FINAL', 'PESO', 'TALLA', 'PERIMETRO_CEFALICO',
             'FECHA_BCG', 'ESTADO_BCG', 'FECHA_HVB', 'ESTADO_HVB', 'FECHA_TAMIZAJE', 
-            'FECHA_VISITA', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'SOBRESCRIBIR'
+            'FECHA_VISITA', 'PERIODO', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'PROVINCIA', 'DEPARTAMENTO', 'SEGURO', 'PROGRAMA',
+            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION',
+            'NUMERO_DOCUMENTO', 'TIPO_DOCUMENTO', 'APELLIDOS_NOMBRES', 'FECHA_NACIMIENTO', 'GENERO', 'ESTABLECIMIENTO',
+            'DNI_MADRE', 'APELLIDOS_NOMBRES_MADRE', 'CELULAR_MADRE', 'DOMICILIO_MADRE', 'REFERENCIA_DIRECCION',
+            'SOBRESCRIBIR'
         ]);
 
         foreach ($ninos as $nino) {
@@ -260,8 +270,11 @@ class ImportControlesController extends Controller
             'ID_NINO', 'TIPO_CONTROL', 'NUMERO_CONTROL', 'FECHA', 'ESTADO',
             'ESTADO_CRED_ONCE', 'ESTADO_CRED_FINAL', 'PESO', 'TALLA', 'PERIMETRO_CEFALICO',
             'FECHA_BCG', 'ESTADO_BCG', 'FECHA_HVB', 'ESTADO_HVB', 'FECHA_TAMIZAJE', 
-            'FECHA_VISITA', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 
-            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION', 'SOBRESCRIBIR'
+            'FECHA_VISITA', 'PERIODO', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'PROVINCIA', 'DEPARTAMENTO', 'SEGURO', 'PROGRAMA',
+            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION',
+            'NUMERO_DOCUMENTO', 'TIPO_DOCUMENTO', 'APELLIDOS_NOMBRES', 'FECHA_NACIMIENTO', 'GENERO', 'ESTABLECIMIENTO',
+            'DNI_MADRE', 'APELLIDOS_NOMBRES_MADRE', 'CELULAR_MADRE', 'DOMICILIO_MADRE', 'REFERENCIA_DIRECCION',
+            'SOBRESCRIBIR'
         ]);
 
         // Datos de ejemplo básicos con valores realistas

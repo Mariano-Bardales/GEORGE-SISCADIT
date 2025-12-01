@@ -16,22 +16,26 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
         $fechaNacimiento = $hoy->copy()->subDays(45);
         
         return [
+            // NINO - Crear/actualizar datos del niño
+            ['', 'NINO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '73811019', 'DNI', 'Juan Pérez García', $fechaNacimiento->format('Y-m-d'), 'M', 'PREVISTO', '', '', '', '', ''],
+            // MADRE - Crear/actualizar datos de la madre
+            ['1', 'MADRE', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '12345678', 'María García López', '987654321', 'Jr. Ejemplo 123', 'Frente al parque', ''],
             // CRED con todos los campos
-            ['1', 'CRED', '1', $fechaNacimiento->copy()->addDays(45)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', ''],
-            ['1', 'CRED', '2', $fechaNacimiento->copy()->addDays(75)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '4200', '56.5', '38.2', '', '', '', '', '', '', '', ''],
+            ['1', 'CRED', '1', $fechaNacimiento->copy()->addDays(45)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            ['1', 'CRED', '2', $fechaNacimiento->copy()->addDays(75)->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '4200', '56.5', '38.2', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // CRN con todos los campos
-            ['1', 'CRN', '1', $fechaNacimiento->copy()->addDays(4)->format('Y-m-d'), 'Completo', '', '', '3200', '50.5', '35.2', '', '', '', '', '', '', '', ''],
-            ['1', 'CRN', '2', $fechaNacimiento->copy()->addDays(10)->format('Y-m-d'), 'Completo', '', '', '3400', '51.8', '35.8', '', '', '', '', '', '', '', ''],
+            ['1', 'CRN', '1', $fechaNacimiento->copy()->addDays(4)->format('Y-m-d'), 'Completo', '', '', '3200', '50.5', '35.2', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+            ['1', 'CRN', '2', $fechaNacimiento->copy()->addDays(10)->format('Y-m-d'), 'Completo', '', '', '3400', '51.8', '35.8', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // Vacunas
-            ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', '', '', '', '', ''],
+            ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', $fechaNacimiento->copy()->addDays(1)->format('Y-m-d'), 'SI', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // Tamizaje
-            ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(5)->format('Y-m-d'), '', '', '', ''],
+            ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(5)->format('Y-m-d'), '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // Visita
-            ['1', 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(28)->format('Y-m-d'), 'A', '', '', ''],
+            ['1', 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaNacimiento->copy()->addDays(28)->format('Y-m-d'), '28 días', 'A', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
             // Datos Extra
-            ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', ''],
+            ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', 'Lima', 'Lima', 'SIS', 'Programa CRED', '', '', '', '', '', '', '', '', '', '', ''],
             // Recién Nacido
-            ['1', 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '3500', '38', 'Normal', ''],
+            ['1', 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '3500', '38', 'Normal', '', '', '', '', '', '', '', ''],
         ];
     }
 
@@ -54,13 +58,31 @@ class TemplateControlesExport implements FromArray, WithHeadings, WithStyles, Wi
             'ESTADO_HVB',
             'FECHA_TAMIZAJE',
             'FECHA_VISITA',
+            'PERIODO',
             'GRUPO_VISITA',
             'RED',
             'MICRORED',
             'DISTRITO',
+            'PROVINCIA',
+            'DEPARTAMENTO',
+            'SEGURO',
+            'PROGRAMA',
             'PESO_RN',
             'EDAD_GESTACIONAL',
             'CLASIFICACION',
+            // Campos para NINO
+            'NUMERO_DOCUMENTO',
+            'TIPO_DOCUMENTO',
+            'APELLIDOS_NOMBRES',
+            'FECHA_NACIMIENTO',
+            'GENERO',
+            'ESTABLECIMIENTO',
+            // Campos para MADRE
+            'DNI_MADRE',
+            'APELLIDOS_NOMBRES_MADRE',
+            'CELULAR_MADRE',
+            'DOMICILIO_MADRE',
+            'REFERENCIA_DIRECCION',
             'SOBRESCRIBIR',
         ];
     }

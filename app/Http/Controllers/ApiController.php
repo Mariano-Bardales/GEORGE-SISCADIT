@@ -183,7 +183,7 @@ class ApiController extends Controller
                     $edadDias = $fechaNacimiento->diffInDays($hoy);
                     $ninoId = $this->getNinoId($nino);
                     
-                    // Verificar controles CRED mensual fuera de rango
+                    // Verificar controles CRED mensual fuera de rango o faltantes
                     if ($edadDias >= 29 && $edadDias <= 359) {
                         $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
                         $rangosCred = [
@@ -193,21 +193,27 @@ class ApiController extends Controller
                             10 => ['min' => 300, 'max' => 329], 11 => ['min' => 330, 'max' => 359]
                         ];
                         
-                        foreach ($controlesCred as $control) {
-                            if ($control->fecha) {
+                        foreach ($rangosCred as $numControl => $rango) {
+                            $control = $controlesCred->firstWhere('numero_control', $numControl);
+                            
+                            if ($control && $control->fecha) {
+                                // Verificar si el control está fuera de rango
                                 $fechaControl = Carbon::parse($control->fecha);
                                 $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                $rango = $rangosCred[$control->numero_control] ?? null;
                                 
-                                if ($rango && ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max'])) {
+                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
                                     $tieneErrores = true;
                                     break; // Ya tiene un error, no necesitamos seguir verificando
                                 }
+                            } elseif ($edadDias > $rango['max']) {
+                                // Ya pasó el rango y no hay control registrado - es un error
+                                $tieneErrores = true;
+                                break;
                             }
                         }
                     }
                     
-                    // Verificar controles RN fuera de rango
+                    // Verificar controles RN fuera de rango o faltantes
                     if ($edadDias <= 28) {
                         $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
                         $rangosRN = [
@@ -217,16 +223,52 @@ class ApiController extends Controller
                             4 => ['min' => 21, 'max' => 28]
                         ];
                         
-                        foreach ($controlesRn as $control) {
-                            if ($control->fecha) {
+                        foreach ($rangosRN as $numControl => $rango) {
+                            $control = $controlesRn->firstWhere('numero_control', $numControl);
+                            
+                            if ($control && $control->fecha) {
+                                // Verificar si el control está fuera de rango
                                 $fechaControl = Carbon::parse($control->fecha);
                                 $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                $rango = $rangosRN[$control->numero_control] ?? null;
                                 
-                                if ($rango && ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max'])) {
+                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
                                     $tieneErrores = true;
                                     break;
                                 }
+                            } elseif ($edadDias > $rango['max']) {
+                                // Ya pasó el rango y no hay control registrado - es un error
+                                $tieneErrores = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Verificar visitas domiciliarias fuera de rango o faltantes
+                    if ($edadDias <= 365) {
+                        $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+                        $rangosVisitas = [
+                            '28 días' => ['min' => 28, 'max' => 35],
+                            '2-5 meses' => ['min' => 60, 'max' => 150],
+                            '6-8 meses' => ['min' => 180, 'max' => 240],
+                            '9-11 meses' => ['min' => 270, 'max' => 330]
+                        ];
+                        
+                        foreach ($rangosVisitas as $periodo => $rango) {
+                            $visita = $visitas->firstWhere('periodo', $periodo);
+                            
+                            if ($visita && $visita->fecha_visita) {
+                                // Verificar si la visita está fuera de rango
+                                $fechaVisita = Carbon::parse($visita->fecha_visita);
+                                $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
+                                
+                                if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
+                                    $tieneErrores = true;
+                                    break;
+                                }
+                            } elseif ($edadDias > $rango['max']) {
+                                // Ya pasó el rango y no hay visita registrada - es un error
+                                $tieneErrores = true;
+                                break;
                             }
                         }
                     }
@@ -1245,14 +1287,18 @@ class ApiController extends Controller
             $totalControlesCred = ControlMenor1::whereIn('id_niño', $ninosIds)->count();
             $totalControles = $totalControlesRn + $totalControlesCred;
             
-            // Calcular calidad de datos (porcentaje de niños con datos completos)
+            // Calcular calidad de datos (porcentaje de niños con datos completos Y controles que cumplen)
             $ninosCompletos = 0;
             $ninos = Nino::where('establecimiento', $establecimiento)
                 ->with(['datosExtra', 'madre'])
                 ->get();
             
+            $hoy = Carbon::now();
+            
             foreach ($ninos as $nino) {
                 $completo = true;
+                
+                // Verificar datos básicos
                 if (empty($nino->apellidos_nombres) || empty($nino->fecha_nacimiento) || empty($nino->genero)) {
                     $completo = false;
                 }
@@ -1262,6 +1308,98 @@ class ApiController extends Controller
                 if (!$nino->madre || empty($nino->madre->apellidos_nombres)) {
                     $completo = false;
                 }
+                
+                // Si los datos básicos están completos, verificar controles que cumplen
+                if ($completo && $nino->fecha_nacimiento) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $edadDias = $fechaNacimiento->diffInDays($hoy);
+                    $ninoId = $this->getNinoId($nino);
+                    
+                    // Verificar controles CRED mensual fuera de rango o faltantes
+                    if ($edadDias >= 29 && $edadDias <= 359) {
+                        $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
+                        $rangosCred = [
+                            1 => ['min' => 29, 'max' => 59], 2 => ['min' => 60, 'max' => 89], 3 => ['min' => 90, 'max' => 119],
+                            4 => ['min' => 120, 'max' => 149], 5 => ['min' => 150, 'max' => 179], 6 => ['min' => 180, 'max' => 209],
+                            7 => ['min' => 210, 'max' => 239], 8 => ['min' => 240, 'max' => 269], 9 => ['min' => 270, 'max' => 299],
+                            10 => ['min' => 300, 'max' => 329], 11 => ['min' => 330, 'max' => 359]
+                        ];
+                        
+                        foreach ($rangosCred as $numControl => $rango) {
+                            $control = $controlesCred->firstWhere('numero_control', $numControl);
+                            
+                            if ($control && $control->fecha) {
+                                $fechaControl = Carbon::parse($control->fecha);
+                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
+                                
+                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
+                                    $completo = false;
+                                    break;
+                                }
+                            } elseif ($edadDias > $rango['max']) {
+                                $completo = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Verificar controles RN fuera de rango o faltantes
+                    if ($completo && $edadDias <= 28) {
+                        $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
+                        $rangosRN = [
+                            1 => ['min' => 2, 'max' => 6],
+                            2 => ['min' => 7, 'max' => 13],
+                            3 => ['min' => 14, 'max' => 20],
+                            4 => ['min' => 21, 'max' => 28]
+                        ];
+                        
+                        foreach ($rangosRN as $numControl => $rango) {
+                            $control = $controlesRn->firstWhere('numero_control', $numControl);
+                            
+                            if ($control && $control->fecha) {
+                                $fechaControl = Carbon::parse($control->fecha);
+                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
+                                
+                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
+                                    $completo = false;
+                                    break;
+                                }
+                            } elseif ($edadDias > $rango['max']) {
+                                $completo = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Verificar visitas domiciliarias fuera de rango o faltantes
+                    if ($completo && $edadDias <= 365) {
+                        $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+                        $rangosVisitas = [
+                            '28 días' => ['min' => 28, 'max' => 35],
+                            '2-5 meses' => ['min' => 60, 'max' => 150],
+                            '6-8 meses' => ['min' => 180, 'max' => 240],
+                            '9-11 meses' => ['min' => 270, 'max' => 330]
+                        ];
+                        
+                        foreach ($rangosVisitas as $periodo => $rango) {
+                            $visita = $visitas->firstWhere('periodo', $periodo);
+                            
+                            if ($visita && $visita->fecha_visita) {
+                                $fechaVisita = Carbon::parse($visita->fecha_visita);
+                                $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
+                                
+                                if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
+                                    $completo = false;
+                                    break;
+                                }
+                            } elseif ($edadDias > $rango['max']) {
+                                $completo = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 if ($completo) {
                     $ninosCompletos++;
                 }
@@ -1565,6 +1703,84 @@ class ApiController extends Controller
                 }
             }
             
+            // Alertas de visitas domiciliarias (0-365 días)
+            if ($edadDias <= 365) {
+                $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+                $visitasRegistradasMap = [];
+                foreach ($visitas as $visita) {
+                    $visitasRegistradasMap[$visita->periodo] = $visita;
+                }
+                
+                $rangosVisitas = [
+                    '28 días' => ['min' => 28, 'max' => 35],
+                    '2-5 meses' => ['min' => 60, 'max' => 150],
+                    '6-8 meses' => ['min' => 180, 'max' => 240],
+                    '9-11 meses' => ['min' => 270, 'max' => 330]
+                ];
+                
+                $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                
+                foreach ($rangosVisitas as $periodo => $rango) {
+                    $visita = isset($visitasRegistradasMap[$periodo]) ? $visitasRegistradasMap[$periodo] : null;
+                    
+                    if ($visita && $visita->fecha_visita) {
+                        // Verificar si la visita está fuera de rango
+                        $fechaVisita = Carbon::parse($visita->fecha_visita);
+                        $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
+                        
+                        if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
+                            // Visita fuera de rango
+                            $diasFuera = $edadDiasVisita > $rango['max'] ? ($edadDiasVisita - $rango['max']) : ($rango['min'] - $edadDiasVisita);
+                            $mensaje = $edadDiasVisita > $rango['max']
+                                ? "La visita {$periodo} fue realizada a los {$edadDiasVisita} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) fuera del límite máximo."
+                                : "La visita {$periodo} fue realizada a los {$edadDiasVisita} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) antes del límite mínimo.";
+                            
+                            $alertas[] = [
+                                'tipo' => 'visita',
+                                'nino_id' => $ninoId,
+                                'nino_nombre' => $nino->apellidos_nombres,
+                                'nino_dni' => $nino->numero_doc,
+                                'establecimiento' => $nino->establecimiento,
+                                'control' => "Visita {$periodo}",
+                                'periodo' => $periodo,
+                                'edad_dias' => $edadDias,
+                                'edad_dias_visita' => $edadDiasVisita,
+                                'rango_min' => $rango['min'],
+                                'rango_max' => $rango['max'],
+                                'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                                'prioridad' => 'alta',
+                                'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                                'fecha_visita' => $visita->fecha_visita->format('Y-m-d'),
+                                'mensaje' => $mensaje,
+                                'dias_fuera' => $diasFuera,
+                            ];
+                        }
+                    } else if ($edadDias > $rango['max']) {
+                        // Visita faltante y ya pasó el rango
+                        $diasFuera = $edadDias - $rango['max'];
+                        $mensaje = "El niño tiene {$edadDias} días y la visita {$periodo} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo.";
+                        
+                        $alertas[] = [
+                            'tipo' => 'visita',
+                            'nino_id' => $ninoId,
+                            'nino_nombre' => $nino->apellidos_nombres,
+                            'nino_dni' => $nino->numero_doc,
+                            'establecimiento' => $nino->establecimiento,
+                            'control' => "Visita {$periodo}",
+                            'periodo' => $periodo,
+                            'edad_dias' => $edadDias,
+                            'rango_min' => $rango['min'],
+                            'rango_max' => $rango['max'],
+                            'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                            'prioridad' => 'alta',
+                            'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                            'mensaje' => $mensaje,
+                            'dias_fuera' => $diasFuera,
+                        ];
+                    }
+                }
+            }
+            
             // Alertas de tamizaje (1-29 días)
             if ($edadDias >= 1 && $edadDias <= 29) {
                 $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
@@ -1657,7 +1873,9 @@ class ApiController extends Controller
             'success' => true,
             'data' => $alertas,
             'total' => count($alertas)
-        ]);
+        ])->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+          ->header('Pragma', 'no-cache')
+          ->header('Expires', '0');
     }
 
     /**

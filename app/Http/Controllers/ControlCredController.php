@@ -311,53 +311,6 @@ class ControlCredController extends Controller
             ];
             $tipoDoc = $tipoDocMap[$request->Id_Tipo_Documento] ?? 'S/ DOCUMENTO';
 
-            // Handle mother data
-            $madre = null;
-            if ($request->filled('DNI_Madre') || $request->filled('Apellidos_Nombres_Madre')) {
-                // Try to find existing mother by DNI
-                if ($request->filled('DNI_Madre')) {
-                    $madre = Madre::where('dni', $request->DNI_Madre)->first();
-                }
-
-                // If not found, create new mother
-                if (!$madre) {
-                    $madre = Madre::create([
-                        'dni' => $request->DNI_Madre ?? null,
-                        'apellidos_nombres' => $request->Apellidos_Nombres_Madre ?? 'Sin especificar',
-                        'celular' => $request->Celular_Madre ?? null,
-                        'domicilio' => $request->Domicilio_Madre ?? null,
-                        'referencia_direccion' => $request->Referencia_Direccion ?? null,
-                    ]);
-                } else {
-                    // Update existing mother if new data is provided
-                    $updateData = [];
-                    if ($request->filled('Apellidos_Nombres_Madre')) {
-                        $updateData['apellidos_nombres'] = $request->Apellidos_Nombres_Madre;
-                    }
-                    if ($request->filled('Celular_Madre')) {
-                        $updateData['celular'] = $request->Celular_Madre;
-                    }
-                    if ($request->filled('Domicilio_Madre')) {
-                        $updateData['domicilio'] = $request->Domicilio_Madre;
-                    }
-                    if ($request->filled('Referencia_Direccion')) {
-                        $updateData['referencia_direccion'] = $request->Referencia_Direccion;
-                    }
-                    if (!empty($updateData)) {
-                        $madre->update($updateData);
-                    }
-                }
-            } else {
-                // Create a default mother if no data is provided
-                $madre = Madre::create([
-                    'dni' => null,
-                    'apellidos_nombres' => 'Sin especificar',
-                    'celular' => null,
-                    'domicilio' => null,
-                    'referencia_direccion' => null,
-                ]);
-            }
-
             // Calculate age from fecha_nacimiento
             $fechaNacimiento = Carbon::parse($request->Fecha_Nacimiento);
             $now = Carbon::now();
@@ -365,21 +318,14 @@ class ControlCredController extends Controller
             $edadDias = $fechaNacimiento->diffInDays($now);
 
             // Obtener el nombre del establecimiento
-            // Si se seleccionó desde el select, obtener el texto del establecimiento seleccionado
             $nombreEstablecimiento = $request->Nombre_Establecimiento;
             
-            // Si no hay nombre pero hay ID de establecimiento, intentar obtener el nombre
             if (empty($nombreEstablecimiento) && $request->filled('Id_Establecimiento')) {
-                // El nombre debería venir del formulario, pero si no, usar el ID como fallback
                 $nombreEstablecimiento = 'Establecimiento ID: ' . $request->Id_Establecimiento;
             }
 
-            // Create child (nino)
-            // Obtener el ID correcto de la madre (puede ser id_madre o id)
-            $madreId = $madre->id_madre ?? $madre->id;
-            
+            // PRIMERO: Crear el niño (tabla principal)
             $nino = Nino::create([
-                'id_madre' => $madreId,
                 'establecimiento' => $nombreEstablecimiento,
                 'tipo_doc' => $tipoDoc,
                 'numero_doc' => $request->Numero_Documento,
@@ -388,11 +334,32 @@ class ControlCredController extends Controller
                 'genero' => $request->Genero,
                 'edad_meses' => $edadMeses,
                 'edad_dias' => $edadDias,
-                'datos_extras' => null,
             ]);
             
-            // Obtener el ID real del niño creado (puede ser id_niño)
+            // Obtener el ID del niño creado
             $ninoId = $nino->id_niño;
+
+            // SEGUNDO: Crear la madre con referencia al niño
+            if ($request->filled('DNI_Madre') || $request->filled('Apellidos_Nombres_Madre')) {
+                Madre::create([
+                    'id_niño' => $ninoId,
+                    'dni' => $request->DNI_Madre ?? null,
+                    'apellidos_nombres' => $request->Apellidos_Nombres_Madre ?? 'Sin especificar',
+                    'celular' => $request->Celular_Madre ?? null,
+                    'domicilio' => $request->Domicilio_Madre ?? null,
+                    'referencia_direccion' => $request->Referencia_Direccion ?? null,
+                ]);
+            } else {
+                // Crear madre por defecto con referencia al niño
+                Madre::create([
+                    'id_niño' => $ninoId,
+                    'dni' => null,
+                    'apellidos_nombres' => 'Sin especificar',
+                    'celular' => null,
+                    'domicilio' => null,
+                    'referencia_direccion' => null,
+                ]);
+            }
 
             // Obtener el nombre de la red y microred seleccionadas
             $nombreRed = null;

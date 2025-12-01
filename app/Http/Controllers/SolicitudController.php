@@ -17,11 +17,21 @@ class SolicitudController extends Controller
     {
         $query = Solicitud::query();
 
-        // Filtro por estado - por defecto solo mostrar pendientes
-        $estadoFiltro = $request->has('estado') && $request->estado !== '' && $request->estado !== 'all' 
-            ? $request->estado 
-            : 'pendiente';
-        $query->where('estado', $estadoFiltro);
+        // Filtro por user_id (si se busca por user_id, no aplicar filtro de estado por defecto)
+        if ($request->has('user_id') && $request->user_id !== '') {
+            $query->where('user_id', $request->user_id);
+        } else {
+            // Filtro por estado - por defecto solo mostrar pendientes (solo si no se busca por user_id)
+            $estadoFiltro = $request->has('estado') && $request->estado !== '' && $request->estado !== 'all' 
+                ? $request->estado 
+                : 'pendiente';
+            $query->where('estado', $estadoFiltro);
+        }
+        
+        // Si se especifica estado explícitamente, aplicarlo incluso con user_id
+        if ($request->has('estado') && $request->estado !== '' && $request->estado !== 'all') {
+            $query->where('estado', $request->estado);
+        }
 
         // Búsqueda por documento, correo o motivo
         if ($request->has('buscar') && $request->buscar !== '') {

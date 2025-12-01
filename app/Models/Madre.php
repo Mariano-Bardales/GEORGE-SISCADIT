@@ -19,6 +19,7 @@ class Madre extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_niño',
         'dni',
         'apellidos_nombres',
         'celular',
@@ -26,8 +27,12 @@ class Madre extends Model
         'referencia_direccion',
     ];
 
-    public function ninos()
+    /**
+     * Relación con el niño
+     * La madre pertenece a un niño (tiene id_niño)
+     */
+    public function nino()
     {
-        return $this->hasMany(Nino::class, 'id_madre', 'id_madre');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id_niño');
     }
 }

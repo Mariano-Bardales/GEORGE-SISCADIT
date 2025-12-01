@@ -2253,8 +2253,12 @@
       // Cancelar todos los timeouts pendientes del ModalManager
       ModalManager.cancelarTimeouts();
 
-      // Obtener fecha de nacimiento
-      const fechaNacimientoText = document.getElementById('fechaNacimientoValue')?.textContent;
+      // Obtener fecha de nacimiento (intentar desde header o desde sección de visitas)
+      let fechaNacimientoText = document.getElementById('fechaNacimientoValue')?.textContent;
+      if (!fechaNacimientoText || fechaNacimientoText === '-') {
+        // Intentar obtener desde la sección de visitas domiciliarias
+        fechaNacimientoText = document.getElementById('fecha-nacimiento-visitas')?.textContent;
+      }
       if (!fechaNacimientoText || fechaNacimientoText === '-') {
         console.warn('⚠️ No se encontró fecha de nacimiento');
         validacionEnProceso = false;
@@ -2306,7 +2310,7 @@
         const edadControlEl = document.getElementById(`control-${numControl}-edad`);
         const estadoBadge = document.getElementById(`control-${numControl}-estado`);
 
-        const tieneRegistro = estadoBadge && !estadoBadge.textContent.includes('PENDIENTE');
+        const tieneRegistro = estadoBadge && !estadoBadge.textContent.includes('PENDIENTE') && !estadoBadge.textContent.includes('SEGUIMIENTO');
         let edadDiasControl = null;
         let cumpleRango = false;
 
@@ -2330,6 +2334,12 @@
                 estadoBadge.textContent = 'NO CUMPLE';
               }
             }
+          }
+        } else if (!tieneRegistro && edadDiasActual > rango.max) {
+          // NO hay control registrado y YA PASÓ el rango - marcar como NO CUMPLE
+          if (estadoBadge) {
+            estadoBadge.className = 'estado-badge no-cumple';
+            estadoBadge.textContent = 'NO CUMPLE';
           }
         }
 
@@ -2567,9 +2577,9 @@
             };
             btn.title = `✅ Dentro del rango (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días.`;
           } else if (edadDiasActual > rango.max && !tieneRegistro) {
-            // Ya pasó el rango pero no está registrado
+            // Ya pasó el rango pero no está registrado - NO CUMPLE
             btn.disabled = false;
-            btn.classList.add('btn-registrar-rango-pasado');
+            btn.classList.add('btn-registrar-no-cumple');
             btn.onclick = function(e) {
               e.preventDefault();
               e.stopPropagation();
@@ -2577,11 +2587,11 @@
                 const match = onclickOriginal.match(/abrirModalRegistro\((\d+),\s*(\d+),\s*(\d+)\)/);
                 if (match) {
                   mostrarModalInfo(
-                    `Control ${numControl} - Rango Pasado`,
+                    `Control ${numControl} - No Cumple`,
                     `<div class="space-y-3">
-                      <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
                         <div class="flex items-center gap-2 mb-2">
-                          <span class="text-orange-600 font-bold text-base">⚠️ RANGO PASADO</span>
+                          <span class="text-red-600 font-bold text-base">❌ NO CUMPLE</span>
                         </div>
                         <div class="space-y-1.5 text-sm">
                           <div class="flex justify-between">
@@ -2594,13 +2604,13 @@
                           </div>
                         </div>
                       </div>
-                      <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <p class="text-xs text-amber-800 leading-relaxed">
-                          El rango óptimo para este control ya pasó. Aún puede registrarlo, pero se recomienda hacerlo lo antes posible.
+                      <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p class="text-xs text-red-800 leading-relaxed">
+                          El control no se realizó dentro del rango establecido. El niño ya tiene ${edadDiasActual} días y el rango máximo era de ${rango.max} días.
                         </p>
                       </div>
                     </div>`,
-                    'rango-pasado',
+                    'no-cumple',
                     () => {
                       abrirModalRegistro(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
                     }
@@ -2608,11 +2618,11 @@
                 }
               } else {
                 mostrarModalInfo(
-                  `Control ${numControl} - Rango Pasado`,
+                  `Control ${numControl} - No Cumple`,
                   `<div class="space-y-3">
-                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
                       <div class="flex items-center gap-2 mb-2">
-                        <span class="text-orange-600 font-bold text-base">⚠️ RANGO PASADO</span>
+                        <span class="text-red-600 font-bold text-base">❌ NO CUMPLE</span>
                       </div>
                       <div class="space-y-1.5 text-sm">
                         <div class="flex justify-between">
@@ -2625,17 +2635,17 @@
                         </div>
                       </div>
                     </div>
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                      <p class="text-xs text-amber-800 leading-relaxed">
-                        El rango óptimo para este control ya pasó. Aún puede registrarlo, pero se recomienda hacerlo lo antes posible.
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p class="text-xs text-red-800 leading-relaxed">
+                        El control no se realizó dentro del rango establecido. El niño ya tiene ${edadDiasActual} días y el rango máximo era de ${rango.max} días.
                       </p>
                     </div>
                   </div>`,
-                  'rango-pasado'
+                  'no-cumple'
                 );
               }
             };
-            btn.title = `⚠️ Rango pasado (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
+            btn.title = `❌ NO CUMPLE - Rango pasado (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días.`;
           }
         });
       }
@@ -2665,7 +2675,7 @@
         const edadControlEl = document.getElementById(`edad_cred_${mes}`);
         const estadoBadge = document.getElementById(`estado_cred_${mes}`);
 
-        const tieneRegistro = estadoBadge && !estadoBadge.textContent.includes('PENDIENTE');
+        const tieneRegistro = estadoBadge && !estadoBadge.textContent.includes('PENDIENTE') && !estadoBadge.textContent.includes('SEGUIMIENTO');
         let edadDiasControl = null;
         let cumpleRango = false;
 
@@ -2689,6 +2699,12 @@
                 estadoBadge.textContent = 'NO CUMPLE';
               }
             }
+          }
+        } else if (!tieneRegistro && edadDiasActual > rango.max) {
+          // NO hay control registrado y YA PASÓ el rango - marcar como NO CUMPLE
+          if (estadoBadge) {
+            estadoBadge.className = 'estado-badge no-cumple';
+            estadoBadge.textContent = 'NO CUMPLE';
           }
         }
 
@@ -2838,20 +2854,20 @@
             };
             btn.title = `✅ Dentro del rango (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días.`;
           } else if (edadDiasActual > rango.max && !tieneRegistro) {
-            // Ya pasó el rango pero no está registrado
+            // Ya pasó el rango pero no está registrado - NO CUMPLE
             btn.disabled = false;
-            btn.classList.add('btn-registrar-rango-pasado');
+            btn.classList.add('btn-registrar-no-cumple');
             btn.onclick = function(e) {
               e.preventDefault();
               e.stopPropagation();
               mostrarModalInfo(
-                `CRED Mes ${mes} - Rango Pasado`,
+                `CRED Mes ${mes} - No Cumple`,
                 `<div class="space-y-2">
-                  <p><strong>Estado:</strong> <span class="text-orange-600 font-semibold">⚠️ RANGO PASADO</span></p>
+                  <p><strong>Estado:</strong> <span class="text-red-600 font-semibold">❌ NO CUMPLE</span></p>
                   <p><strong>Edad actual del niño:</strong> ${edadDiasActual} días</p>
                   <p><strong>Rango válido:</strong> ${rango.min} - ${rango.max} días</p>
-                  <p class="text-xs text-orange-600 mt-3 pt-3 border-t border-orange-200">
-                    El rango óptimo para este control ya pasó. Aún puede registrarlo, pero se recomienda hacerlo lo antes posible.
+                  <p class="text-xs text-red-600 mt-3 pt-3 border-t border-red-200">
+                    El control no se realizó dentro del rango establecido. El niño ya tiene ${edadDiasActual} días y el rango máximo era de ${rango.max} días.
                   </p>
                 </div>`
               );
@@ -2863,7 +2879,7 @@
                 }
               }
             };
-            btn.title = `⚠️ Rango pasado (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
+            btn.title = `❌ NO CUMPLE - Rango pasado (${rango.min}-${rango.max} días). El niño tiene ${edadDiasActual} días.`;
           }
         });
       }
@@ -3465,73 +3481,257 @@
         }
       });
 
-      // ========== VISITAS DOMICILIARIAS (sin validación de rango estricto) ==========
-      const botonesVisitas = document.querySelectorAll('button[onclick*="abrirModalVisita"]');
-      botonesVisitas.forEach(btn => {
-        // Remover estilos inline
-        btn.style.background = '';
-        btn.style.opacity = '';
-        btn.style.cursor = '';
+      // ========== VISITAS DOMICILIARIAS (con validación de rango) ==========
+      const rangosVisitas = {
+        '28 días': { min: 28, max: 35 },
+        '2-5 meses': { min: 60, max: 150 },
+        '6-8 meses': { min: 180, max: 240 },
+        '9-11 meses': { min: 270, max: 330 }
+      };
 
-        // Guardar onclick original
-        const onclickOriginal = btn.getAttribute('data-onclick-original') || btn.getAttribute('onclick') || '';
-        if (!btn.hasAttribute('data-onclick-original') && onclickOriginal) {
-          btn.setAttribute('data-onclick-original', onclickOriginal);
+      console.log('🔍 Validando visitas domiciliarias. Edad actual:', edadDiasActual, 'días');
+      console.log('📅 Fecha de nacimiento ISO:', fechaNacimientoISO);
+      
+      // Primero, buscar todos los items de visita directamente
+      const visitaItems = document.querySelectorAll('#tab-visitas .visita-item');
+      console.log('📋 Items de visita encontrados:', visitaItems.length);
+      
+      if (visitaItems.length === 0) {
+        console.warn('⚠️ No se encontraron items de visita en #tab-visitas');
+      }
+      
+      // Validar cada item de visita
+      visitaItems.forEach(item => {
+        const periodoElement = item.querySelector('.visita-periodo');
+        const estadoBadge = item.querySelector('.visita-estado-badge');
+        const button = item.querySelector('button[onclick*="abrirModalVisita"]');
+        
+        if (!periodoElement || !estadoBadge) {
+          console.warn('⚠️ Item de visita sin período o badge:', item);
+          return;
         }
+        
+        const periodo = periodoElement.textContent.trim();
+        const rango = rangosVisitas[periodo];
+        
+        if (!rango) {
+          console.warn('⚠️ No se encontró rango para período:', periodo);
+          return;
+        }
+        
+        const rangoMin = rango.min;
+        const rangoMax = rango.max;
+        
+        console.log(`📝 Validando visita ${periodo}: edad actual=${edadDiasActual}, rango=${rangoMin}-${rangoMax}, badge="${estadoBadge.textContent}"`);
+        
+        // Verificar si tiene visita registrada (fecha en formato DD/MM/YYYY)
+        const textoBadge = estadoBadge.textContent.trim();
+        const textoBadgeUpper = textoBadge.toUpperCase();
+        const tieneFecha = /^\d{2}\/\d{2}\/\d{4}$/.test(textoBadge);
+        const esNoCumple = textoBadgeUpper.includes('NO CUMPLE');
+        const esSeguimiento = textoBadgeUpper.includes('SEGUIMIENTO') || textoBadgeUpper.includes('PENDIENTE') || textoBadge === '-' || textoBadge === '';
+        
+        // Tiene visita SOLO si tiene fecha válida (NO si dice NO CUMPLE sin fecha)
+        // Si dice NO CUMPLE pero tiene data-fecha, significa que hay visita pero fuera de rango
+        const tieneVisitaRegistrada = tieneFecha || (esNoCumple && estadoBadge.getAttribute('data-fecha'));
+        
+        console.log(`  - Badge texto: "${textoBadge}"`);
+        console.log(`  - Tiene fecha: ${tieneFecha}`);
+        console.log(`  - Es NO CUMPLE: ${esNoCumple}`);
+        console.log(`  - Es SEGUIMIENTO/PENDIENTE: ${esSeguimiento}`);
+        console.log(`  - Tiene visita registrada: ${tieneVisitaRegistrada}`);
+        console.log(`  - Edad actual: ${edadDiasActual} días, Rango max: ${rangoMax} días`);
+        
+        // PRIORIDAD 1: Si NO tiene visita registrada y ya pasó el rango, SIEMPRE actualizar badge a NO CUMPLE
+        // Esto debe ejecutarse SIEMPRE, incluso si el badge ya dice SEGUIMIENTO o PENDIENTE
+        if (!tieneVisitaRegistrada && edadDiasActual > rangoMax) {
+          console.log(`  → Actualizando badge a NO CUMPLE (no tiene visita registrada y edad ${edadDiasActual} > ${rangoMax})`);
+          estadoBadge.className = 'visita-estado-badge no-cumple';
+          estadoBadge.textContent = 'NO CUMPLE';
+          estadoBadge.style.background = '#fee2e2';
+          estadoBadge.style.color = '#dc2626';
+          estadoBadge.style.fontWeight = '600';
+          estadoBadge.style.border = '1px solid #dc2626';
+          estadoBadge.removeAttribute('data-fecha');
+          console.log(`✅ Badge actualizado a NO CUMPLE para visita ${periodo} (edad: ${edadDiasActual} días > rango max: ${rangoMax} días, badge anterior: "${textoBadge}")`);
+        } else if (esNoCumple && tieneVisitaRegistrada) {
+          // Ya está marcado como NO CUMPLE y tiene visita registrada - mantenerlo así
+          console.log(`  → Badge ya está marcado como NO CUMPLE con visita registrada, manteniendo estado`);
+        } else if (!tieneVisitaRegistrada && edadDiasActual <= rangoMax) {
+          // No tiene visita pero aún está dentro del rango - mantener SEGUIMIENTO/PENDIENTE
+          console.log(`  → No tiene visita pero aún está dentro del rango, manteniendo estado actual`);
+        } else {
+          console.log(`  → No se actualiza badge (tieneVisitaRegistrada: ${tieneVisitaRegistrada}, edad: ${edadDiasActual}, rangoMax: ${rangoMax})`);
+        }
+        
+        // Configurar el botón
+        if (button) {
+          // Remover estilos inline y clases previas
+          button.style.background = '';
+          button.style.opacity = '';
+          button.style.cursor = '';
+          button.classList.remove('btn-registrar-cumple', 'btn-registrar-no-cumple', 'btn-registrar-pendiente', 'btn-registrar-rango-pasado');
 
-        btn.disabled = false;
-        btn.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          // Extraer período del onclick si existe
-          let periodo = 'General';
-          let rangoMin = 0;
-          let rangoMax = 365;
+          // Guardar onclick original
+          const onclickOriginal = button.getAttribute('data-onclick-original') || button.getAttribute('onclick') || '';
+          if (!button.hasAttribute('data-onclick-original') && onclickOriginal) {
+            button.setAttribute('data-onclick-original', onclickOriginal);
+          }
+          
+          // Si tiene visita, verificar si la fecha cumple con el rango
+          let cumpleRangoVisita = false;
+          let edadDiasVisita = null;
+          let fechaVisitaISO = null;
+          
+          // Si el badge dice NO CUMPLE, significa que hay visita pero fuera de rango
+          if (esNoCumple) {
+            cumpleRangoVisita = false;
+            // Intentar obtener la fecha desde el atributo data-fecha si existe
+            const fechaData = estadoBadge.getAttribute('data-fecha');
+            if (fechaData) {
+              fechaVisitaISO = fechaData;
+              edadDiasVisita = calcularEdadDias(fechaNacimientoISO, fechaVisitaISO);
+            }
+          } else if (tieneFecha && estadoBadge) {
+            // Intentar obtener la fecha de la visita desde el badge
+            const fechaTexto = estadoBadge.textContent.trim();
+            const fechaMatch = fechaTexto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            if (fechaMatch) {
+              fechaVisitaISO = `${fechaMatch[3]}-${fechaMatch[2]}-${fechaMatch[1]}`;
+              edadDiasVisita = calcularEdadDias(fechaNacimientoISO, fechaVisitaISO);
+              cumpleRangoVisita = edadDiasVisita >= rangoMin && edadDiasVisita <= rangoMax;
+            }
+          }
 
-          if (onclickOriginal && onclickOriginal.includes('abrirModalVisita')) {
-            const match = onclickOriginal.match(/abrirModalVisita\(['"]?([^'"]+)['"]?\)/);
-            if (match) {
-              periodo = match[1];
-              // Definir rangos según período
-              const rangosPorPeriodo = {
-                '28 días': { min: 28, max: 35 },
-                '2-5 meses': { min: 60, max: 150 },
-                '6-8 meses': { min: 180, max: 240 },
-                '9-11 meses': { min: 270, max: 330 }
+          // Configurar el botón según el estado
+          if (tieneVisita) {
+            if (cumpleRangoVisita) {
+              // Visita registrada y CUMPLE con el rango
+              button.disabled = false;
+              button.classList.add('btn-registrar-cumple');
+              button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                mostrarModalInfo(
+                  `Visita ${periodo} - Registrada`,
+                  `<div class="space-y-2">
+                    <p><strong>Estado:</strong> <span class="text-green-600 font-semibold">✅ CUMPLE</span></p>
+                    <p><strong>Período:</strong> ${periodo}</p>
+                    <p><strong>Fecha de visita:</strong> ${estadoBadge ? estadoBadge.textContent : '-'}</p>
+                    <p><strong>Edad al momento de la visita:</strong> ${edadDiasVisita !== null ? edadDiasVisita + ' días' : '-'}</p>
+                    <p><strong>Rango válido:</strong> ${rangoMin} - ${rangoMax} días</p>
+                  </div>`
+                );
               };
-              if (rangosPorPeriodo[periodo]) {
-                rangoMin = rangosPorPeriodo[periodo].min;
-                rangoMax = rangosPorPeriodo[periodo].max;
-              }
-            }
-          }
-
-          const contenido = generarContenidoVisita(periodo, edadDiasActual, rangoMin, rangoMax, false, null);
-
-          if (onclickOriginal && onclickOriginal.includes('abrirModalVisita')) {
-            const match = onclickOriginal.match(/abrirModalVisita\(['"]?([^'"]+)['"]?\)/);
-            if (match) {
-              mostrarModalInfoVisita(
-                contenido,
-                periodo,
-                () => {
-                  abrirModalVisita(match[1]);
-                }
-              );
+              button.title = `✅ Visita ${periodo} registrada y CUMPLE con el rango.`;
             } else {
-              mostrarModalInfoVisita(
-                contenido,
-                periodo,
-                () => {
-                  abrirModalVisita();
+              // Visita registrada pero NO CUMPLE con el rango
+              button.disabled = false;
+              button.classList.add('btn-registrar-no-cumple');
+              
+              // Asegurar que el badge muestre NO CUMPLE
+              if (estadoBadge && estadoBadge.textContent !== 'NO CUMPLE') {
+                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.textContent = 'NO CUMPLE';
+                estadoBadge.style.background = '#fee2e2';
+                estadoBadge.style.color = '#dc2626';
+              }
+              
+              button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                mostrarModalInfo(
+                  `Visita ${periodo} - No Cumple`,
+                  `<div class="space-y-2">
+                    <p><strong>Estado:</strong> <span class="text-red-600 font-semibold">❌ NO CUMPLE</span></p>
+                    <p><strong>Período:</strong> ${periodo}</p>
+                    <p><strong>Fecha de visita:</strong> ${estadoBadge && estadoBadge.textContent !== 'NO CUMPLE' ? estadoBadge.textContent : '-'}</p>
+                    <p><strong>Edad al momento de la visita:</strong> ${edadDiasVisita !== null ? edadDiasVisita + ' días' : '-'}</p>
+                    <p><strong>Rango válido:</strong> ${rangoMin} - ${rangoMax} días</p>
+                    <p class="text-xs text-red-600 mt-3">La visita fue realizada fuera del rango establecido.</p>
+                  </div>`
+                );
+                if (onclickOriginal && onclickOriginal.includes('abrirModalVisita')) {
+                  const match = onclickOriginal.match(/abrirModalVisita\(['"]?([^'"]+)['"]?\)/);
+                  if (match) {
+                    setTimeout(() => abrirModalVisita(match[1]), 300);
+                  }
                 }
-              );
+              };
+              button.title = `❌ Visita ${periodo} registrada pero NO CUMPLE con el rango (${rangoMin}-${rangoMax} días).`;
             }
-          } else {
-            mostrarModalInfoVisita(contenido, periodo);
+          } else if (edadDiasActual < rangoMin) {
+            // Aún no llega al rango - Pendiente
+            button.disabled = true;
+            button.classList.add('btn-registrar-pendiente');
+            button.style.opacity = '0.5';
+            button.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              mostrarModalInfo(
+                `Visita ${periodo} - Pendiente`,
+                `<div class="space-y-2">
+                  <p><strong>Estado:</strong> <span class="text-slate-500 font-semibold">⏳ PENDIENTE</span></p>
+                  <p><strong>Edad actual del niño:</strong> ${edadDiasActual} días</p>
+                  <p><strong>Rango válido:</strong> ${rangoMin} - ${rangoMax} días</p>
+                  <p class="text-xs text-slate-500 mt-3">Esta visita aún no puede realizarse. El niño debe tener al menos ${rangoMin} días.</p>
+                </div>`
+              );
+            };
+            button.title = `Esta visita debe realizarse entre los días ${rangoMin}-${rangoMax}. El niño tiene ${edadDiasActual} días.`;
+          } else if (edadDiasActual >= rangoMin && edadDiasActual <= rangoMax) {
+            // Dentro del rango - Puede registrar
+            button.disabled = false;
+            button.classList.add('btn-registrar-pendiente');
+            button.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              const contenido = generarContenidoVisita(periodo, edadDiasActual, rangoMin, rangoMax, false, null);
+              if (onclickOriginal && onclickOriginal.includes('abrirModalVisita')) {
+                const match = onclickOriginal.match(/abrirModalVisita\(['"]?([^'"]+)['"]?\)/);
+                if (match) {
+                  mostrarModalInfoVisita(contenido, periodo, () => abrirModalVisita(match[1]));
+                }
+              }
+            };
+            button.title = `✅ Dentro del rango (${rangoMin}-${rangoMax} días). El niño tiene ${edadDiasActual} días.`;
+          } else if (edadDiasActual > rangoMax) {
+            // Ya pasó el rango - NO CUMPLE (sin visita)
+            button.disabled = false;
+            button.classList.add('btn-registrar-no-cumple');
+            
+            // SIEMPRE actualizar badge de estado a NO CUMPLE si no tiene visita registrada
+            if (estadoBadge && !tieneVisita) {
+              estadoBadge.className = 'visita-estado-badge no-cumple';
+              estadoBadge.textContent = 'NO CUMPLE';
+              estadoBadge.style.background = '#fee2e2';
+              estadoBadge.style.color = '#dc2626';
+              estadoBadge.style.fontWeight = '600';
+              console.log(`✅ Badge actualizado a NO CUMPLE para visita ${periodo} (edad: ${edadDiasActual} días, rango max: ${rangoMax} días)`);
+            }
+            
+            button.onclick = function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              mostrarModalInfo(
+                `Visita ${periodo} - No Cumple`,
+                `<div class="space-y-2">
+                  <p><strong>Estado:</strong> <span class="text-red-600 font-semibold">❌ NO CUMPLE</span></p>
+                  <p><strong>Edad actual del niño:</strong> ${edadDiasActual} días</p>
+                  <p><strong>Rango válido:</strong> ${rangoMin} - ${rangoMax} días</p>
+                  <p class="text-xs text-red-600 mt-3">La visita no se realizó dentro del rango establecido. El niño ya tiene ${edadDiasActual} días y el rango máximo era de ${rangoMax} días.</p>
+                </div>`
+              );
+              if (onclickOriginal && onclickOriginal.includes('abrirModalVisita')) {
+                const match = onclickOriginal.match(/abrirModalVisita\(['"]?([^'"]+)['"]?\)/);
+                if (match) {
+                  setTimeout(() => abrirModalVisita(match[1]), 300);
+                }
+              }
+            };
+            button.title = `❌ NO CUMPLE - Rango pasado (${rangoMin}-${rangoMax} días). El niño tiene ${edadDiasActual} días.`;
           }
-        };
-        btn.title = `Registrar visita domiciliaria. El niño tiene ${edadDiasActual} días.`;
+        }
       });
 
       console.log('✅ Validación de rangos completada');
@@ -4328,7 +4528,22 @@
                 break;
               case 'visitas':
                 if (typeof cargarVisitas === 'function') {
-                  cargarVisitas(ninoIdActual);
+                  cargarVisitas(ninoIdActual).then(() => {
+                    // Validar rangos después de cargar visitas
+                    if (typeof validarRangosYHabilitarBotones === 'function') {
+                      setTimeout(() => validarRangosYHabilitarBotones(ninoIdActual), 500);
+                    }
+                  }).catch(() => {
+                    // Si hay error, aún así intentar validar
+                    if (typeof validarRangosYHabilitarBotones === 'function') {
+                      setTimeout(() => validarRangosYHabilitarBotones(ninoIdActual), 500);
+                    }
+                  });
+                } else {
+                  // Si no hay función cargarVisitas, validar directamente
+                  if (typeof validarRangosYHabilitarBotones === 'function') {
+                    setTimeout(() => validarRangosYHabilitarBotones(ninoIdActual), 500);
+                  }
                 }
                 break;
               case 'vacunas':
@@ -6280,10 +6495,10 @@
         console.log('🔄 Cargando visitas para ninoId:', ninoId);
         if (!ninoId) {
           console.error('❌ No se proporcionó ninoId');
-          return;
+          return Promise.reject('No se proporcionó ninoId');
         }
 
-        fetch(`{{ route("api.visitas") }}?nino_id=${ninoId}`, {
+        return fetch(`{{ route("api.visitas") }}?nino_id=${ninoId}`, {
           method: 'GET',
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -6297,74 +6512,160 @@
         .then(data => {
           console.log('📦 Datos recibidos visitas:', data);
 
-          // Limpiar primero todos los estados
+          // NO limpiar los estados aquí - se actualizarán según la lógica de validación
           const visitaItems = document.querySelectorAll('#tab-visitas .visita-item');
+
+          // Obtener fecha de nacimiento para validar rangos
+          const fechaNacimientoEl = document.getElementById('fecha-nacimiento-visitas');
+          let fechaNacimientoISO = null;
+          if (fechaNacimientoEl && fechaNacimientoEl.textContent) {
+            const fechaMatch = fechaNacimientoEl.textContent.match(/\((\d{4}-\d{2}-\d{2})\)/);
+            if (fechaMatch) {
+              fechaNacimientoISO = fechaMatch[1];
+            }
+          }
+
+          // Calcular edad actual
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+          const hoyISO = hoy.getFullYear() + '-' +
+                         String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+                         String(hoy.getDate()).padStart(2, '0');
+          const edadDiasActual = fechaNacimientoISO ? calcularEdadDias(fechaNacimientoISO, hoyISO) : 0;
+
+          // Rangos por período
+          const rangosVisitas = {
+            '28 días': { min: 28, max: 35 },
+            '2-5 meses': { min: 60, max: 150 },
+            '6-8 meses': { min: 180, max: 240 },
+            '9-11 meses': { min: 270, max: 330 }
+          };
+
+          const visitasRegistradas = data.success && data.data && data.data.visitas ? data.data.visitas : [];
+          const periodosConVisita = visitasRegistradas.map(v => v.periodo);
+
+          // Procesar todas las visitas (registradas y no registradas)
           visitaItems.forEach(item => {
+            const periodoElement = item.querySelector('.visita-periodo');
             const estadoBadge = item.querySelector('.visita-estado-badge');
             const button = item.querySelector('.btn-registrar-visita');
-            if (estadoBadge) {
-              estadoBadge.className = 'visita-estado-badge pendiente';
-              estadoBadge.textContent = 'Pendiente';
-            }
-            if (button) {
-              button.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="M12 5v14"></path>
-                </svg>
-                + Registrar
-              `;
-            }
-          });
+            
+            if (!periodoElement || !estadoBadge) return;
+            
+            const periodo = periodoElement.textContent.trim();
+            const rango = rangosVisitas[periodo];
+            if (!rango) return;
 
-          if (data.success && data.data && data.data.visitas && data.data.visitas.length > 0) {
-            console.log(`✅ Visitas encontradas: ${data.data.visitas.length}`);
-
-            // Actualizar cada visita según su período
-            data.data.visitas.forEach(visita => {
-              const fechaVisita = visita.fecha_visita ? new Date(visita.fecha_visita + 'T00:00:00').toLocaleDateString('es-PE', {
+            const visita = visitasRegistradas.find(v => v.periodo === periodo);
+            
+            if (visita && visita.fecha_visita && fechaNacimientoISO) {
+              // Hay visita registrada - verificar si cumple
+              const fechaVisitaISO = visita.fecha_visita;
+              const edadDiasVisita = calcularEdadDias(fechaNacimientoISO, fechaVisitaISO);
+              const cumpleRango = edadDiasVisita >= rango.min && edadDiasVisita <= rango.max;
+              
+              const fechaVisita = new Date(fechaVisitaISO + 'T00:00:00').toLocaleDateString('es-PE', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit'
-              }) : '-';
-              const periodo = visita.periodo || '';
-
-              console.log(`📝 Procesando visita período: ${periodo}, fecha: ${fechaVisita}`);
-
-              // Buscar el elemento de visita por período
-              visitaItems.forEach(item => {
-                const periodoElement = item.querySelector('.visita-periodo');
-                if (periodoElement && periodoElement.textContent.trim() === periodo) {
-                  const estadoBadge = item.querySelector('.visita-estado-badge');
-                  const button = item.querySelector('.btn-registrar-visita');
-
-                  if (estadoBadge) {
-                    estadoBadge.className = 'visita-estado-badge cumple';
-                    estadoBadge.textContent = fechaVisita;
-                    estadoBadge.style.fontWeight = '600';
-                    console.log(`✅ Visita actualizada período ${periodo}: ${fechaVisita}`);
-                  }
-
-                  if (button) {
-                    button.innerHTML = `
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                      </svg>
-                      Editar
-                    `;
-                  }
-                }
               });
-            });
 
-            console.log('✅ Visitas cargadas correctamente');
-          } else {
-            console.log('ℹ️ No hay visitas registradas para este niño');
+              if (cumpleRango) {
+                estadoBadge.className = 'visita-estado-badge cumple';
+                estadoBadge.textContent = fechaVisita;
+                estadoBadge.style.background = '#d1fae5';
+                estadoBadge.style.color = '#065f46';
+                estadoBadge.style.fontWeight = '';
+                estadoBadge.style.border = '';
+              } else {
+                // Visita registrada pero NO CUMPLE
+                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.textContent = 'NO CUMPLE';
+                estadoBadge.style.background = '#fee2e2';
+                estadoBadge.style.color = '#dc2626';
+                estadoBadge.style.fontWeight = '600';
+                estadoBadge.style.border = '1px solid #dc2626';
+                // Guardar la fecha en un atributo data para que validarRangosYHabilitarBotones pueda acceder a ella
+                estadoBadge.setAttribute('data-fecha', fechaVisitaISO);
+                console.log(`❌ Visita ${periodo} NO CUMPLE: realizada a los ${edadDiasVisita} días (rango: ${rango.min}-${rango.max} días)`);
+              }
+
+              if (button) {
+                button.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Editar
+                `;
+              }
+            } else {
+              // NO hay visita registrada - verificar según la edad actual
+              if (fechaNacimientoISO && edadDiasActual > rango.max) {
+                // YA PASÓ el rango - NO CUMPLE
+                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.textContent = 'NO CUMPLE';
+                estadoBadge.style.background = '#fee2e2';
+                estadoBadge.style.color = '#dc2626';
+                estadoBadge.style.fontWeight = '600';
+                estadoBadge.style.border = '1px solid #dc2626';
+                estadoBadge.removeAttribute('data-fecha');
+                console.log(`❌ Visita ${periodo} NO CUMPLE: no registrada y ya pasó el rango (edad: ${edadDiasActual} días > rango max: ${rango.max} días)`);
+              } else if (fechaNacimientoISO && edadDiasActual < rango.min) {
+                // Aún no llega al rango
+                estadoBadge.className = 'visita-estado-badge pendiente';
+                estadoBadge.textContent = 'PENDIENTE';
+                estadoBadge.style.background = '';
+                estadoBadge.style.color = '';
+                estadoBadge.style.fontWeight = '';
+                estadoBadge.style.border = '';
+                estadoBadge.removeAttribute('data-fecha');
+              } else if (fechaNacimientoISO && edadDiasActual >= rango.min && edadDiasActual <= rango.max) {
+                // Dentro del rango - puede registrar
+                estadoBadge.className = 'visita-estado-badge pendiente';
+                estadoBadge.textContent = 'PENDIENTE';
+                estadoBadge.style.background = '';
+                estadoBadge.style.color = '';
+                estadoBadge.style.fontWeight = '';
+                estadoBadge.style.border = '';
+                estadoBadge.removeAttribute('data-fecha');
+              } else {
+                // Sin fecha de nacimiento - mostrar SEGUIMIENTO
+                estadoBadge.className = 'visita-estado-badge pendiente';
+                estadoBadge.textContent = 'SEGUIMIENTO';
+                estadoBadge.style.background = '';
+                estadoBadge.style.color = '';
+                estadoBadge.style.fontWeight = '';
+                estadoBadge.style.border = '';
+                estadoBadge.removeAttribute('data-fecha');
+              }
+              
+              // Restaurar botón a estado inicial si no hay visita
+              if (button) {
+                button.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path>
+                  </svg>
+                  + Registrar
+                `;
+              }
+            }
+          });
+
+          console.log(`✅ Visitas procesadas: ${visitasRegistradas.length} registradas`);
+          
+          // Ejecutar validación de rangos después de cargar las visitas
+          if (typeof validarRangosYHabilitarBotones === 'function') {
+            setTimeout(() => validarRangosYHabilitarBotones(ninoId), 500);
           }
         })
         .catch(error => {
           console.error('❌ Error al cargar visitas:', error);
+          // Aún así, intentar validar rangos
+          if (typeof validarRangosYHabilitarBotones === 'function') {
+            setTimeout(() => validarRangosYHabilitarBotones(ninoId), 500);
+          }
         });
       }
 
@@ -6808,13 +7109,84 @@
         if (!alerta) return;
 
         if (edadDias >= 29 && edadDias <= 359) {
-          // El niño está en rango de CRED mensual
-          // TODO: Obtener controles CRED mensuales cuando esté implementado
-          alerta.style.display = 'block';
-          document.getElementById('datosPacienteCred').textContent = datosPaciente;
-          document.getElementById('estadoCredMensual').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
-          document.getElementById('errorCredMensual').textContent = 'Se requieren 11 controles mensuales desde los 29 días hasta los 11 meses y 29 días.';
-          document.getElementById('sugerenciaCredMensual').textContent = 'Programe controles mensuales según la edad: Mes 1 (29-59 días), Mes 2 (60-89 días), y así sucesivamente hasta el Mes 11 (330-359 días).';
+          // Obtener controles CRED mensuales desde la API
+          fetch(`{{ route("api.controles-cred-mensual") }}?nino_id=${ninoId}`, {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            const rangosCred = {
+              1: { min: 29, max: 59 }, 2: { min: 60, max: 89 }, 3: { min: 90, max: 119 },
+              4: { min: 120, max: 149 }, 5: { min: 150, max: 179 }, 6: { min: 180, max: 209 },
+              7: { min: 210, max: 239 }, 8: { min: 240, max: 269 }, 9: { min: 270, max: 299 },
+              10: { min: 300, max: 329 }, 11: { min: 330, max: 359 }
+            };
+
+            const controles = data.success && data.data && data.data.controles ? data.data.controles : [];
+            const fechaNacimientoISO = data.data && data.data.fecha_nacimiento ? data.data.fecha_nacimiento : null;
+            
+            const controlesNoCumplen = [];
+            const controlesFaltantes = [];
+            let tieneControlesNoCumplen = false;
+
+            // Verificar cada control esperado
+            Object.keys(rangosCred).forEach(numControl => {
+              const num = parseInt(numControl);
+              const rango = rangosCred[num];
+              const control = controles.find(c => c.numero_control === num);
+              
+              if (control && control.fecha && fechaNacimientoISO) {
+                // Calcular edad en días al momento del control
+                const edadDiasControl = calcularEdadDias(fechaNacimientoISO, control.fecha);
+                if (edadDiasControl < rango.min || edadDiasControl > rango.max) {
+                  controlesNoCumplen.push(`Mes ${num} (realizado a los ${edadDiasControl} días, rango: ${rango.min}-${rango.max} días)`);
+                  tieneControlesNoCumplen = true;
+                }
+              } else if (edadDias > rango.max) {
+                // Ya pasó el rango y no hay control registrado
+                controlesFaltantes.push(`Mes ${num} (rango: ${rango.min}-${rango.max} días)`);
+                tieneControlesNoCumplen = true;
+              }
+            });
+
+            if (tieneControlesNoCumplen || controlesFaltantes.length > 0) {
+              alerta.style.display = 'block';
+              document.getElementById('datosPacienteCred').textContent = datosPaciente;
+              
+              let error = '';
+              if (controlesNoCumplen.length > 0) {
+                error += `Controles fuera de rango: ${controlesNoCumplen.join('; ')}. `;
+              }
+              if (controlesFaltantes.length > 0) {
+                error += `Controles faltantes: ${controlesFaltantes.join('; ')}. `;
+              }
+              
+              document.getElementById('estadoCredMensual').innerHTML = '<span class="badge-alerta no-cumple">NO CUMPLE</span>';
+              document.getElementById('errorCredMensual').textContent = error || 'Hay controles CRED mensuales que no cumplen con los rangos establecidos.';
+              document.getElementById('sugerenciaCredMensual').textContent = 'Los controles CRED mensuales deben realizarse dentro de los rangos establecidos: Mes 1 (29-59 días), Mes 2 (60-89 días), y así sucesivamente hasta el Mes 11 (330-359 días).';
+            } else if (controles.length < 11 && edadDias >= 29) {
+              alerta.style.display = 'block';
+              document.getElementById('datosPacienteCred').textContent = datosPaciente;
+              document.getElementById('estadoCredMensual').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
+              document.getElementById('errorCredMensual').textContent = `Se requieren 11 controles mensuales. Actualmente hay ${controles.length} registrado(s).`;
+              document.getElementById('sugerenciaCredMensual').textContent = 'Programe controles mensuales según la edad: Mes 1 (29-59 días), Mes 2 (60-89 días), y así sucesivamente hasta el Mes 11 (330-359 días).';
+            } else {
+              alerta.style.display = 'none';
+            }
+          })
+          .catch(error => {
+            console.error('Error al evaluar controles CRED mensual:', error);
+            // En caso de error, mostrar alerta genérica
+            alerta.style.display = 'block';
+            document.getElementById('datosPacienteCred').textContent = datosPaciente;
+            document.getElementById('estadoCredMensual').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
+            document.getElementById('errorCredMensual').textContent = 'Se requieren 11 controles mensuales desde los 29 días hasta los 11 meses y 29 días.';
+            document.getElementById('sugerenciaCredMensual').textContent = 'Programe controles mensuales según la edad: Mes 1 (29-59 días), Mes 2 (60-89 días), y así sucesivamente hasta el Mes 11 (330-359 días).';
+          });
         } else {
           alerta.style.display = 'none';
         }
@@ -6848,12 +7220,91 @@
         if (!alerta) return;
 
         if (edadDias <= 365) {
-          // TODO: Verificar visitas registradas
-          alerta.style.display = 'block';
-          document.getElementById('datosPacienteVisitas').textContent = datosPaciente;
-          document.getElementById('estadoVisitas').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
-          document.getElementById('errorVisitas').textContent = 'Se requiere al menos 2 visitas domiciliarias durante el primer año de vida.';
-          document.getElementById('sugerenciaVisitas').textContent = 'Programe visitas domiciliarias en: 28 días de vida, 2-5 meses, 6-8 meses y 9-11 meses. Mínimo 2 visitas son requeridas para cumplir.';
+          // Obtener visitas registradas desde la API
+          fetch(`{{ route("api.visitas") }}?nino_id=${ninoId}`, {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            const rangosVisitas = {
+              '28 días': { min: 28, max: 35 },
+              '2-5 meses': { min: 60, max: 150 },
+              '6-8 meses': { min: 180, max: 240 },
+              '9-11 meses': { min: 270, max: 330 }
+            };
+
+            const visitas = data.success && data.data && data.data.visitas ? data.data.visitas : [];
+            const visitasNoCumplen = [];
+            const visitasFaltantes = [];
+            let tieneVisitasNoCumplen = false;
+
+            // Obtener fecha de nacimiento para calcular edades
+            const fechaNacimientoEl = document.getElementById('fecha-nacimiento-visitas');
+            let fechaNacimientoISO = null;
+            if (fechaNacimientoEl && fechaNacimientoEl.textContent) {
+              const fechaMatch = fechaNacimientoEl.textContent.match(/\((\d{4}-\d{2}-\d{2})\)/);
+              if (fechaMatch) {
+                fechaNacimientoISO = fechaMatch[1];
+              }
+            }
+
+            // Verificar cada período de visita
+            Object.keys(rangosVisitas).forEach(periodo => {
+              const rango = rangosVisitas[periodo];
+              const visita = visitas.find(v => v.periodo === periodo);
+              
+              if (visita && visita.fecha_visita && fechaNacimientoISO) {
+                // Calcular edad en días al momento de la visita
+                const edadDiasVisita = calcularEdadDias(fechaNacimientoISO, visita.fecha_visita);
+                if (edadDiasVisita < rango.min || edadDiasVisita > rango.max) {
+                  visitasNoCumplen.push(`${periodo} (realizada a los ${edadDiasVisita} días, rango: ${rango.min}-${rango.max} días)`);
+                  tieneVisitasNoCumplen = true;
+                }
+              } else if (edadDias > rango.max) {
+                // Ya pasó el rango y no hay visita registrada
+                visitasFaltantes.push(`${periodo} (rango: ${rango.min}-${rango.max} días)`);
+                tieneVisitasNoCumplen = true;
+              }
+            });
+
+            if (tieneVisitasNoCumplen || visitasFaltantes.length > 0) {
+              alerta.style.display = 'block';
+              document.getElementById('datosPacienteVisitas').textContent = datosPaciente;
+              
+              let error = '';
+              if (visitasNoCumplen.length > 0) {
+                error += `Visitas fuera de rango: ${visitasNoCumplen.join('; ')}. `;
+              }
+              if (visitasFaltantes.length > 0) {
+                error += `Visitas faltantes: ${visitasFaltantes.join('; ')}. `;
+              }
+              
+              document.getElementById('estadoVisitas').innerHTML = '<span class="badge-alerta no-cumple">NO CUMPLE</span>';
+              document.getElementById('errorVisitas').textContent = error || 'Hay visitas domiciliarias que no cumplen con los rangos establecidos.';
+              document.getElementById('sugerenciaVisitas').textContent = 'Las visitas domiciliarias deben realizarse dentro de los rangos establecidos: 28 días (28-35 días), 2-5 meses (60-150 días), 6-8 meses (180-240 días) y 9-11 meses (270-330 días).';
+            } else if (visitas.length < 2) {
+              alerta.style.display = 'block';
+              document.getElementById('datosPacienteVisitas').textContent = datosPaciente;
+              document.getElementById('estadoVisitas').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
+              document.getElementById('errorVisitas').textContent = `Se requiere al menos 2 visitas domiciliarias. Actualmente hay ${visitas.length} registrada(s).`;
+              document.getElementById('sugerenciaVisitas').textContent = 'Programe visitas domiciliarias en: 28 días de vida, 2-5 meses, 6-8 meses y 9-11 meses. Mínimo 2 visitas son requeridas para cumplir.';
+            } else {
+              alerta.style.display = 'none';
+            }
+          })
+          .catch(error => {
+            console.error('Error al evaluar visitas domiciliarias:', error);
+            // En caso de error, mostrar alerta genérica
+            alerta.style.display = 'block';
+            document.getElementById('datosPacienteVisitas').textContent = datosPaciente;
+            document.getElementById('estadoVisitas').innerHTML = '<span class="badge-alerta seguimiento">SEGUIMIENTO</span>';
+            document.getElementById('errorVisitas').textContent = 'Se requiere al menos 2 visitas domiciliarias durante el primer año de vida.';
+            document.getElementById('sugerenciaVisitas').textContent = 'Programe visitas domiciliarias en: 28 días de vida, 2-5 meses, 6-8 meses y 9-11 meses. Mínimo 2 visitas son requeridas para cumplir.';
+          });
         } else {
           alerta.style.display = 'none';
         }

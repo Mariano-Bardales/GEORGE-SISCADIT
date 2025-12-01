@@ -22,25 +22,28 @@ class FormularioController extends Controller
     public function submit(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'Id_Tipo_Documento' => 'required|integer|between:1,6',
-            'Numero_Documento' => 'required|string|max:20',
+            'Id_Tipo_Documento' => 'required|integer|in:1', // Solo DNI (valor 1)
+            'Numero_Documento' => 'required|string|regex:/^[0-9]{8}$/', // Exactamente 8 dígitos
             'Codigo_Red' => 'required|integer|between:1,9',
             'Codigo_Microred' => 'required|string|max:255',
             'Id_Establecimiento' => 'required|string|max:255',
             'Motivo' => 'required|string|max:255',
             'Cargo' => 'required|string|max:255',
-            'Celular' => 'required|string|max:20',
+            'Celular' => 'required|string|regex:/^[0-9]{1,9}$/', // Máximo 9 dígitos
             'Correo' => 'required|email|max:255',
             'acceptTerms' => 'required|accepted',
         ], [
             'Id_Tipo_Documento.required' => 'Debe seleccionar un tipo de documento',
-            'Numero_Documento.required' => 'El número de documento es obligatorio',
+            'Id_Tipo_Documento.in' => 'Solo se acepta DNI como tipo de documento',
+            'Numero_Documento.required' => 'El número de DNI es obligatorio',
+            'Numero_Documento.regex' => 'El número de DNI debe tener exactamente 8 dígitos',
             'Codigo_Red.required' => 'Debe seleccionar una red',
             'Codigo_Microred.required' => 'Debe seleccionar una microred',
             'Id_Establecimiento.required' => 'Debe seleccionar un establecimiento',
             'Motivo.required' => 'El motivo es obligatorio',
             'Cargo.required' => 'El cargo es obligatorio',
             'Celular.required' => 'El celular es obligatorio',
+            'Celular.regex' => 'El celular debe tener máximo 9 dígitos (solo números)',
             'Correo.required' => 'El correo electrónico es obligatorio',
             'Correo.email' => 'Debe ingresar un correo electrónico válido',
             'acceptTerms.required' => 'Debe aceptar la confidencialidad de datos',

@@ -19,7 +19,6 @@ class Nino extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_madre',
         'establecimiento',
         'tipo_doc',
         'numero_doc',
@@ -28,36 +27,39 @@ class Nino extends Model
         'genero',
         'edad_meses',
         'edad_dias',
-        'datos_extras',
     ];
 
     protected $casts = [
         'fecha_nacimiento' => 'date',
     ];
 
+    /**
+     * Relación con la madre
+     * La madre tiene el id_niño, así que usamos hasOne
+     */
     public function madre()
     {
-        return $this->belongsTo(Madre::class, 'id_madre', 'id_madre');
+        return $this->hasOne(Madre::class, 'id_niño', 'id_niño');
     }
 
     public function datosExtra()
     {
-        return $this->hasOne(DatosExtra::class, 'id_niño');
+        return $this->hasOne(DatosExtra::class, 'id_niño', 'id_niño');
     }
 
     public function recienNacido()
     {
-        return $this->hasOne(RecienNacido::class, 'id_niño');
+        return $this->hasOne(RecienNacido::class, 'id_niño', 'id_niño');
     }
 
     public function vacunaRn()
     {
-        return $this->hasOne(VacunaRn::class, 'id_niño');
+        return $this->hasOne(VacunaRn::class, 'id_niño', 'id_niño');
     }
 
     public function tamizajeNeonatal()
     {
-        return $this->hasOne(TamizajeNeonatal::class, 'id_niño');
+        return $this->hasOne(TamizajeNeonatal::class, 'id_niño', 'id_niño');
     }
 
     public function controlesRn()
@@ -72,6 +74,6 @@ class Nino extends Model
 
     public function visitasDomiciliarias()
     {
-        return $this->hasMany(VisitaDomiciliaria::class, 'id_niño');
+        return $this->hasMany(VisitaDomiciliaria::class, 'id_niño', 'id_niño');
     }
 }

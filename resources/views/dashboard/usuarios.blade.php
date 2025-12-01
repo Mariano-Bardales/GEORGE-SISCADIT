@@ -650,6 +650,162 @@
                 </div>
               </div>
             </div>
+
+            <!-- Datos de la Solicitud -->
+            <div class="modal-usuario-section" id="seccionSolicitud">
+              <h4 class="modal-usuario-section-title">
+                <div class="modal-usuario-section-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+                <span>Datos de la Solicitud</span>
+              </h4>
+              
+              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <!-- Tipo de Documento y Número -->
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      </svg>
+                      Tipo Documento
+                    </label>
+                    <select id="tipoDocumentoSolicitud" name="solicitud[id_tipo_documento]" class="modal-usuario-select" required>
+                      <option value="1">DNI</option>
+                      <option value="2">CE</option>
+                      <option value="3">PASS</option>
+                      <option value="4">DIE</option>
+                      <option value="5">S/ DOCUMENTO</option>
+                      <option value="6">CNV</option>
+                    </select>
+                  </div>
+                  
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      </svg>
+                      Número de Documento
+                    </label>
+                    <input type="text" id="numeroDocumentoSolicitud" name="solicitud[numero_documento]" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese el número de documento" maxlength="20" required>
+                  </div>
+                </div>
+
+                <!-- Red, Microred y Establecimiento -->
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                    Red
+                  </label>
+                  <select id="codigoRedSolicitud" name="solicitud[codigo_red]" class="modal-usuario-select" required>
+                    <option value="">Seleccione una Red</option>
+                    <option value="1">AGUAYTIA</option>
+                    <option value="2">ATALAYA</option>
+                    <option value="3">BAP-CURARAY</option>
+                    <option value="4">CORONEL PORTILLO</option>
+                    <option value="5">ESSALUD</option>
+                    <option value="6">FEDERICO BASADRE - YARINACOCHA</option>
+                    <option value="7">HOSPITAL AMAZONICO - YARINACOCHA</option>
+                    <option value="8">HOSPITAL REGIONAL DE PUCALLPA</option>
+                    <option value="9">NO PERTENECE A NINGUNA RED</option>
+                  </select>
+                </div>
+
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    </svg>
+                    Microred
+                  </label>
+                  <select id="codigoMicroredSolicitud" name="solicitud[codigo_microred]" class="modal-usuario-select" required disabled>
+                    <option value="">Seleccione una Microred</option>
+                  </select>
+                </div>
+
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Establecimiento
+                  </label>
+                  <select id="idEstablecimientoSolicitud" name="solicitud[id_establecimiento]" class="modal-usuario-select" required disabled>
+                    <option value="">Seleccione un Establecimiento</option>
+                  </select>
+                </div>
+
+                <!-- Motivo y Cargo -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                      </svg>
+                      Motivo
+                    </label>
+                    <input type="text" id="motivoSolicitud" name="solicitud[motivo]" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese el motivo" maxlength="255" required>
+                  </div>
+                  
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      </svg>
+                      Cargo
+                    </label>
+                    <input type="text" id="cargoSolicitud" name="solicitud[cargo]" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese el cargo" maxlength="255" required>
+                  </div>
+                </div>
+
+                <!-- Celular y Correo -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                      </svg>
+                      Celular
+                    </label>
+                    <input type="text" id="celularSolicitud" name="solicitud[celular]" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese el celular" maxlength="20" required>
+                  </div>
+                  
+                  <div class="modal-usuario-form-group">
+                    <label class="modal-usuario-label required">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                      Correo Electrónico
+                    </label>
+                    <input type="email" id="correoSolicitud" name="solicitud[correo]" 
+                      class="modal-usuario-input" 
+                      placeholder="Ingrese el correo electrónico" maxlength="255" required>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </form>
       </div>
@@ -1347,7 +1503,7 @@
           return;
         }
 
-        // Prellenar el formulario
+        // Prellenar el formulario de usuario
         document.getElementById('usuarioIdEditar').value = usuario.id;
         document.getElementById('nombreUsuarioEditar').value = usuario.name || '';
         document.getElementById('correoUsuarioEditar').value = usuario.email || '';
@@ -1363,6 +1519,149 @@
             eyeIcon.classList.add('hidden');
             eyeOffIcon.classList.remove('hidden');
           }
+        }
+
+        // Asegurar que la sección de solicitud esté siempre visible
+        const seccionSolicitud = document.getElementById('seccionSolicitud');
+        if (seccionSolicitud) {
+          seccionSolicitud.style.display = 'block';
+        }
+        
+        // Cargar datos de la solicitud si existe
+        try {
+          console.log('Cargando solicitud para usuario ID:', usuarioId);
+          const response = await fetch(`/api/solicitudes?user_id=${usuarioId}&estado=all`, {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          
+          console.log('Respuesta de solicitudes:', response.status, response.statusText);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Datos de solicitud recibidos:', data);
+            
+            if (data.success && data.data && data.data.length > 0) {
+              const solicitud = data.data[0]; // Tomar la primera solicitud
+              console.log('Solicitud encontrada:', solicitud);
+              
+              // Prellenar campos de solicitud con validación
+              const tipoDocInput = document.getElementById('tipoDocumentoSolicitud');
+              const numDocInput = document.getElementById('numeroDocumentoSolicitud');
+              const codRedInput = document.getElementById('codigoRedSolicitud');
+              const motivoInput = document.getElementById('motivoSolicitud');
+              const cargoInput = document.getElementById('cargoSolicitud');
+              const celularInput = document.getElementById('celularSolicitud');
+              const correoInput = document.getElementById('correoSolicitud');
+              
+              if (tipoDocInput) tipoDocInput.value = solicitud.id_tipo_documento || '1';
+              if (numDocInput) numDocInput.value = solicitud.numero_documento || '';
+              if (codRedInput) codRedInput.value = solicitud.codigo_red || '';
+              if (motivoInput) motivoInput.value = solicitud.motivo || '';
+              if (cargoInput) cargoInput.value = solicitud.cargo || '';
+              if (celularInput) celularInput.value = solicitud.celular || '';
+              if (correoInput) correoInput.value = solicitud.correo || '';
+              
+              // Guardar ID de solicitud para actualización
+              const usuarioIdInput = document.getElementById('usuarioIdEditar');
+              if (usuarioIdInput) {
+                usuarioIdInput.setAttribute('data-solicitud-id', solicitud.id);
+                console.log('ID de solicitud guardado:', solicitud.id);
+              }
+              
+              // Cargar microredes y establecimientos
+              if (solicitud.codigo_red) {
+                console.log('Cargando microredes para red:', solicitud.codigo_red);
+                await cargarMicroredesSolicitud(solicitud.codigo_red, solicitud.codigo_microred);
+                if (solicitud.codigo_microred) {
+                  console.log('Cargando establecimientos para microred:', solicitud.codigo_microred);
+                  await cargarEstablecimientosSolicitud(solicitud.codigo_red, solicitud.codigo_microred, solicitud.id_establecimiento);
+                }
+              }
+            } else {
+              console.log('No se encontró solicitud para este usuario');
+              // Si no hay solicitud, limpiar los campos pero mantener la sección visible
+              const tipoDocInput = document.getElementById('tipoDocumentoSolicitud');
+              const numDocInput = document.getElementById('numeroDocumentoSolicitud');
+              const codRedInput = document.getElementById('codigoRedSolicitud');
+              const microredSelect = document.getElementById('codigoMicroredSolicitud');
+              const establecimientoSelect = document.getElementById('idEstablecimientoSolicitud');
+              const motivoInput = document.getElementById('motivoSolicitud');
+              const cargoInput = document.getElementById('cargoSolicitud');
+              const celularInput = document.getElementById('celularSolicitud');
+              const correoInput = document.getElementById('correoSolicitud');
+              const usuarioIdInput = document.getElementById('usuarioIdEditar');
+              
+              if (tipoDocInput) tipoDocInput.value = '1';
+              if (numDocInput) numDocInput.value = '';
+              if (codRedInput) codRedInput.value = '';
+              if (microredSelect) {
+                microredSelect.innerHTML = '<option value="">Seleccione una Microred</option>';
+                microredSelect.disabled = true;
+              }
+              if (establecimientoSelect) {
+                establecimientoSelect.innerHTML = '<option value="">Seleccione un Establecimiento</option>';
+                establecimientoSelect.disabled = true;
+              }
+              if (motivoInput) motivoInput.value = '';
+              if (cargoInput) cargoInput.value = '';
+              if (celularInput) celularInput.value = '';
+              if (correoInput) correoInput.value = '';
+              // Remover ID de solicitud si existe
+              if (usuarioIdInput) {
+                usuarioIdInput.removeAttribute('data-solicitud-id');
+              }
+            }
+            
+            // Agregar listeners siempre (tanto si hay solicitud como si no)
+            const codigoRedSelect = document.getElementById('codigoRedSolicitud');
+            if (codigoRedSelect) {
+              // Remover listener anterior si existe para evitar duplicados
+              const nuevoCodigoRedSelect = codigoRedSelect.cloneNode(true);
+              codigoRedSelect.parentNode.replaceChild(nuevoCodigoRedSelect, codigoRedSelect);
+              
+              nuevoCodigoRedSelect.addEventListener('change', async function() {
+                const redValue = this.value;
+                if (redValue) {
+                  await cargarMicroredesSolicitud(redValue);
+                } else {
+                  document.getElementById('codigoMicroredSolicitud').innerHTML = '<option value="">Seleccione una Microred</option>';
+                  document.getElementById('codigoMicroredSolicitud').disabled = true;
+                  document.getElementById('idEstablecimientoSolicitud').innerHTML = '<option value="">Seleccione un Establecimiento</option>';
+                  document.getElementById('idEstablecimientoSolicitud').disabled = true;
+                }
+              });
+            }
+            
+            // Agregar listener para cambio de microred
+            const codigoMicroredSelect = document.getElementById('codigoMicroredSolicitud');
+            if (codigoMicroredSelect) {
+              // Remover listener anterior si existe para evitar duplicados
+              const nuevoCodigoMicroredSelect = codigoMicroredSelect.cloneNode(true);
+              codigoMicroredSelect.parentNode.replaceChild(nuevoCodigoMicroredSelect, codigoMicroredSelect);
+              
+              nuevoCodigoMicroredSelect.addEventListener('change', async function() {
+                const microredValue = this.value;
+                const redValue = document.getElementById('codigoRedSolicitud').value;
+                if (microredValue && redValue) {
+                  await cargarEstablecimientosSolicitud(redValue, microredValue);
+                } else {
+                  document.getElementById('idEstablecimientoSolicitud').innerHTML = '<option value="">Seleccione un Establecimiento</option>';
+                  document.getElementById('idEstablecimientoSolicitud').disabled = true;
+                }
+              });
+            }
+          } else {
+            // Si hay error, mantener la sección visible pero sin datos
+            if (seccionSolicitud) {
+              console.error('Error al cargar solicitud: respuesta no OK');
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar solicitud:', error);
+          // Mantener la sección visible incluso si hay error
         }
 
         // Mostrar el modal
@@ -1437,6 +1736,7 @@
           formData.password = nuevaPassword.trim();
         }
 
+        // Actualizar usuario
         const response = await fetch('{{ route("api.usuarios") }}/' + usuarioId, {
           method: 'PUT',
           headers: {
@@ -1483,21 +1783,93 @@
         }
 
         if (data.success) {
+          // Actualizar solicitud si existe
+          let solicitudActualizada = false;
+          let errorSolicitud = null;
+          
+          const seccionSolicitud = document.getElementById('seccionSolicitud');
+          if (seccionSolicitud) {
+            const solicitudId = document.getElementById('usuarioIdEditar').getAttribute('data-solicitud-id');
+            if (solicitudId) {
+              // Validar que todos los campos de solicitud estén completos
+              const tipoDoc = document.getElementById('tipoDocumentoSolicitud').value;
+              const numDoc = document.getElementById('numeroDocumentoSolicitud').value.trim();
+              const codRed = document.getElementById('codigoRedSolicitud').value;
+              const codMicrored = document.getElementById('codigoMicroredSolicitud').value;
+              const idEst = document.getElementById('idEstablecimientoSolicitud').value;
+              const motivo = document.getElementById('motivoSolicitud').value.trim();
+              const cargo = document.getElementById('cargoSolicitud').value.trim();
+              const celular = document.getElementById('celularSolicitud').value.trim();
+              const correo = document.getElementById('correoSolicitud').value.trim();
+
+              if (!tipoDoc || !numDoc || !codRed || !codMicrored || !idEst || !motivo || !cargo || !celular || !correo) {
+                errorSolicitud = 'Por favor, complete todos los campos de la solicitud';
+              } else {
+                const solicitudData = {
+                  id_tipo_documento: parseInt(tipoDoc),
+                  numero_documento: numDoc,
+                  codigo_red: parseInt(codRed),
+                  codigo_microred: codMicrored,
+                  id_establecimiento: idEst,
+                  motivo: motivo,
+                  cargo: cargo,
+                  celular: celular,
+                  correo: correo,
+                };
+
+                try {
+                  const solicitudResponse = await fetch(`/api/solicitudes/${solicitudId}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Requested-With': 'XMLHttpRequest',
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                      'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(solicitudData)
+                  });
+
+                  const solicitudDataResponse = await solicitudResponse.json();
+                  
+                  if (solicitudResponse.ok && solicitudDataResponse.success) {
+                    solicitudActualizada = true;
+                  } else {
+                    errorSolicitud = solicitudDataResponse.message || 'Error al actualizar la solicitud';
+                    console.error('Error al actualizar solicitud:', solicitudDataResponse);
+                  }
+                } catch (error) {
+                  errorSolicitud = 'Error de conexión al actualizar la solicitud';
+                  console.error('Error al actualizar solicitud:', error);
+                }
+              }
+            }
+          }
+
           // Cerrar el modal
           closeModalEditarUsuario();
 
           // Mostrar mensaje de éxito
+          let mensajeExito = 'Usuario actualizado exitosamente';
+          let mensajeDetalle = 'Los cambios del usuario han sido guardados correctamente.';
+          
+          if (solicitudActualizada) {
+            mensajeExito = 'Usuario y solicitud actualizados exitosamente';
+            mensajeDetalle = 'Los cambios del usuario y los datos de la solicitud han sido guardados correctamente.';
+          } else if (errorSolicitud) {
+            mensajeExito = 'Usuario actualizado con advertencia';
+            mensajeDetalle = `Usuario actualizado correctamente, pero hubo un error al actualizar la solicitud: ${errorSolicitud}`;
+          }
+          
           const successMessage = document.createElement('div');
-          successMessage.className = 'mensaje-exito animate-slide-in';
-          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.className = solicitudActualizada ? 'mensaje-exito animate-slide-in' : 'mensaje-error animate-slide-in';
+          successMessage.style.cssText = `position: fixed; top: 1rem; right: 1rem; background: ${solicitudActualizada ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f59e0b, #d97706)'}; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;`;
           successMessage.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              ${solicitudActualizada ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' : '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'}
             </svg>
             <div style="flex: 1;">
-              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Usuario actualizado exitosamente</div>
-              <div style="font-size: 0.75rem; opacity: 0.95;">Los cambios del usuario han sido guardados correctamente.</div>
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">${mensajeExito}</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${mensajeDetalle}</div>
             </div>
           `;
           document.body.appendChild(successMessage);
@@ -2312,6 +2684,74 @@
           setTimeout(() => errorDiv.remove(), 300);
         }, 5000);
       });
+    }
+
+    // Función para cargar microredes según la red seleccionada
+    async function cargarMicroredesSolicitud(codigoRed, microredSeleccionada = null) {
+      const microredSelect = document.getElementById('codigoMicroredSolicitud');
+      if (!microredSelect) return;
+
+      microredSelect.innerHTML = '<option value="">Cargando...</option>';
+      microredSelect.disabled = true;
+
+      try {
+        // Usar el objeto data del archivo formulario-selec-de-EESS.js si está disponible
+        if (typeof data !== 'undefined' && data[codigoRed]) {
+          const microredes = Object.keys(data[codigoRed]);
+          microredSelect.innerHTML = '<option value="">Seleccione una Microred</option>';
+          
+          microredes.forEach(microred => {
+            const option = document.createElement('option');
+            option.value = microred;
+            option.textContent = microred;
+            if (microredSeleccionada && microred === microredSeleccionada) {
+              option.selected = true;
+            }
+            microredSelect.appendChild(option);
+          });
+          
+          microredSelect.disabled = false;
+        } else {
+          microredSelect.innerHTML = '<option value="">No hay microredes disponibles</option>';
+        }
+      } catch (error) {
+        console.error('Error al cargar microredes:', error);
+        microredSelect.innerHTML = '<option value="">Error al cargar</option>';
+      }
+    }
+
+    // Función para cargar establecimientos según la red y microred seleccionadas
+    async function cargarEstablecimientosSolicitud(codigoRed, codigoMicrored, establecimientoSeleccionado = null) {
+      const establecimientoSelect = document.getElementById('idEstablecimientoSolicitud');
+      if (!establecimientoSelect) return;
+
+      establecimientoSelect.innerHTML = '<option value="">Cargando...</option>';
+      establecimientoSelect.disabled = true;
+
+      try {
+        // Usar el objeto data del archivo formulario-selec-de-EESS.js si está disponible
+        if (typeof data !== 'undefined' && data[codigoRed] && data[codigoRed][codigoMicrored]) {
+          const establecimientos = data[codigoRed][codigoMicrored];
+          establecimientoSelect.innerHTML = '<option value="">Seleccione un Establecimiento</option>';
+          
+          establecimientos.forEach(est => {
+            const option = document.createElement('option');
+            option.value = est.value;
+            option.textContent = est.text;
+            if (establecimientoSeleccionado && est.value === establecimientoSeleccionado) {
+              option.selected = true;
+            }
+            establecimientoSelect.appendChild(option);
+          });
+          
+          establecimientoSelect.disabled = false;
+        } else {
+          establecimientoSelect.innerHTML = '<option value="">No hay establecimientos disponibles</option>';
+        }
+      } catch (error) {
+        console.error('Error al cargar establecimientos:', error);
+        establecimientoSelect.innerHTML = '<option value="">Error al cargar</option>';
+      }
     }
 
     // Cargar solicitudes al iniciar

@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
   cargarDashboardStats();
   cargarGraficos();
   cargarTablaControles();
-  cargarResumenAlertas();
+  // cargarResumenAlertas(); // Sección eliminada
   cargarTopEstablecimientos();
   
   // Escuchar eventos de control registrado para actualizar el dashboard
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Recargar estadísticas y alertas después de un breve delay
     setTimeout(() => {
       cargarDashboardStats();
-      cargarResumenAlertas();
+      // cargarResumenAlertas(); // Sección eliminada
       cargarTablaControles();
     }, 1000);
   });
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
           console.log('🔄 Control registrado en otra pestaña, actualizando dashboard...');
           setTimeout(() => {
             cargarDashboardStats();
-            cargarResumenAlertas();
+            // cargarResumenAlertas(); // Sección eliminada
             cargarTablaControles();
           }, 500);
         }
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Actualizar dashboard periódicamente cada 30 segundos
   setInterval(() => {
     cargarDashboardStats();
-    cargarResumenAlertas();
+    // cargarResumenAlertas(); // Sección eliminada
   }, 30000);
 });
 

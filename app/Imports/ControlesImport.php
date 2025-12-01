@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Nino;
+use App\Models\Madre;
 use App\Models\ControlRn;
 use App\Models\ControlMenor1;
 use App\Models\TamizajeNeonatal;
@@ -14,6 +15,7 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ControlesImport implements ToCollection, WithHeadingRow
@@ -21,6 +23,8 @@ class ControlesImport implements ToCollection, WithHeadingRow
     protected $errors = [];
     protected $success = [];
     protected $stats = [
+        'ninos' => 0,
+        'madres' => 0,
         'controles_rn' => 0,
         'controles_cred' => 0,
         'tamizajes' => 0,
@@ -43,6 +47,22 @@ class ControlesImport implements ToCollection, WithHeadingRow
 
     protected function processRow($row)
     {
+        // Procesar según el tipo de control
+        $tipoControl = strtolower(trim($row['tipo_control'] ?? ''));
+
+        // Si es tipo NINO, crear/actualizar el niño
+        if ($tipoControl === 'nino' || $tipoControl === 'niño' || $tipoControl === 'nino') {
+            $this->importNino($row);
+            return;
+        }
+
+        // Si es tipo MADRE, crear/actualizar la madre
+        if ($tipoControl === 'madre') {
+            $this->importMadre($row);
+            return;
+        }
+
+        // Para los demás tipos, necesitamos el niño
         // Buscar el niño por ID o por número de documento
         $nino = null;
         
@@ -60,9 +80,6 @@ class ControlesImport implements ToCollection, WithHeadingRow
         }
 
         $ninoId = $nino->id_niño;
-
-        // Procesar según el tipo de control
-        $tipoControl = strtolower(trim($row['tipo_control'] ?? ''));
 
         switch ($tipoControl) {
             case 'crn':
@@ -107,6 +124,116 @@ class ControlesImport implements ToCollection, WithHeadingRow
             
             default:
                 $this->errors[] = "Tipo de control desconocido: " . ($row['tipo_control'] ?? 'N/A');
+        }
+    }
+
+    protected function importNino($row)
+    {
+        // Buscar el niño por ID o por número de documento
+        $nino = null;
+        
+        if (!empty($row['id_nino'])) {
+            $nino = Nino::where('id_niño', $row['id_nino'])->first();
+        } elseif (!empty($row['numero_documento']) && !empty($row['tipo_documento'])) {
+            $nino = Nino::where('numero_doc', $row['numero_documento'])
+                       ->where('tipo_doc', $row['tipo_documento'])
+                       ->first();
+        }
+
+        // Mapear tipo de documento
+        $tipoDocMap = [
+            'DNI' => 'DNI', 'dni' => 'DNI', '1' => 'DNI',
+            'CE' => 'CE', 'ce' => 'CE', '2' => 'CE',
+            'PASS' => 'PASS', 'pass' => 'PASS', '3' => 'PASS',
+            'DIE' => 'DIE', 'die' => 'DIE', '4' => 'DIE',
+            'S/ DOCUMENTO' => 'S/ DOCUMENTO', 'sin documento' => 'S/ DOCUMENTO', '5' => 'S/ DOCUMENTO',
+            'CNV' => 'CNV', 'cnv' => 'CNV', '6' => 'CNV',
+        ];
+        $tipoDoc = $tipoDocMap[$row['tipo_documento'] ?? ''] ?? 'S/ DOCUMENTO';
+
+        $fechaNacimiento = $this->parseDate($row['fecha_nacimiento'] ?? null);
+        if (!$fechaNacimiento) {
+            $this->errors[] = "Fecha de nacimiento requerida para crear/actualizar niño";
+            return;
+        }
+
+        // Calcular edad
+        $hoy = Carbon::now();
+        $edadMeses = $fechaNacimiento->diffInMonths($hoy);
+        $edadDias = $fechaNacimiento->diffInDays($hoy);
+
+        $data = [
+            'establecimiento' => $row['establecimiento'] ?? null,
+            'tipo_doc' => $tipoDoc,
+            'numero_doc' => $row['numero_documento'] ?? null,
+            'apellidos_nombres' => $row['apellidos_nombres'] ?? $row['nombre'] ?? null,
+            'fecha_nacimiento' => $fechaNacimiento->format('Y-m-d'),
+            'genero' => strtoupper($row['genero'] ?? $row['sexo'] ?? 'M'),
+            'edad_meses' => $edadMeses,
+            'edad_dias' => $edadDias,
+        ];
+
+        if ($nino) {
+            // Actualizar niño existente
+            $nino->update($data);
+            $this->success[] = "Niño actualizado: " . ($data['apellidos_nombres'] ?? 'N/A');
+        } else {
+            // Crear nuevo niño
+            $nino = Nino::create($data);
+            $this->stats['ninos']++;
+            $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+        }
+
+        // Si hay datos extras en la misma fila, importarlos
+        if (!empty($row['red']) || !empty($row['microred']) || !empty($row['distrito'])) {
+            $this->importDatosExtra($nino->id_niño, $row);
+        }
+    }
+
+    protected function importMadre($row)
+    {
+        // Buscar el niño primero (necesario para asociar la madre)
+        $nino = null;
+        
+        if (!empty($row['id_nino'])) {
+            $nino = Nino::where('id_niño', $row['id_nino'])->first();
+        } elseif (!empty($row['numero_documento_nino']) && !empty($row['tipo_documento_nino'])) {
+            $nino = Nino::where('numero_doc', $row['numero_documento_nino'])
+                       ->where('tipo_doc', $row['tipo_documento_nino'])
+                       ->first();
+        }
+
+        if (!$nino) {
+            $this->errors[] = "No se encontró niño para asociar la madre. ID: " . ($row['id_nino'] ?? 'N/A');
+            return;
+        }
+
+        $ninoId = $nino->id_niño;
+
+        // Buscar madre existente por DNI
+        $madre = null;
+        if (!empty($row['dni_madre'])) {
+            $madre = Madre::where('dni', $row['dni_madre'])->first();
+        }
+
+        $data = [
+            'id_niño' => $ninoId,
+            'dni' => $row['dni_madre'] ?? null,
+            'apellidos_nombres' => $row['apellidos_nombres_madre'] ?? $row['nombre_madre'] ?? 'Sin especificar',
+            'celular' => $row['celular_madre'] ?? null,
+            'domicilio' => $row['domicilio_madre'] ?? null,
+            'referencia_direccion' => $row['referencia_direccion'] ?? null,
+        ];
+
+        if ($madre) {
+            // Actualizar madre existente
+            $madre->update($data);
+            $this->success[] = "Madre actualizada para niño ID: {$ninoId}";
+        } else {
+            // Crear nueva madre
+            Madre::create($data);
+            $this->stats['madres']++;
+            $this->success[] = "Madre creada para niño ID: {$ninoId}";
         }
     }
 
@@ -279,25 +406,54 @@ class ControlesImport implements ToCollection, WithHeadingRow
             return;
         }
 
-        // Mapear grupo de visita a código de una letra (A, B, C, D)
+        // Mapear período de visita
+        $periodo = $row['periodo'] ?? $row['grupo_visita'] ?? null;
+        $periodoMap = [
+            'A' => '28 días', '28D' => '28 días', '28 DÍAS' => '28 días', '28 DIAS' => '28 días', '28 días' => '28 días',
+            'B' => '2-5 meses', '2-5M' => '2-5 meses', '2-5 MESES' => '2-5 meses', '2-5 MES' => '2-5 meses', '2-5 meses' => '2-5 meses',
+            'C' => '6-8 meses', '6-8M' => '6-8 meses', '6-8 MESES' => '6-8 meses', '6-8 MES' => '6-8 meses', '6-8 meses' => '6-8 meses',
+            'D' => '9-11 meses', '9-11M' => '9-11 meses', '9-11 MESES' => '9-11 meses', '9-11 MES' => '9-11 meses', '9-11 meses' => '9-11 meses',
+        ];
+        $periodoFinal = $periodoMap[strtolower($periodo ?? '')] ?? '28 días';
+
+        // Mapear grupo de visita a código de una letra (A, B, C, D) para compatibilidad
         $grupoVisita = strtoupper(trim($row['grupo_visita'] ?? 'A'));
         $grupoMap = [
-            'A' => 'A', '28D' => 'A', '28 DÍAS' => 'A', '28 DIAS' => 'A',
-            'B' => 'B', '2-5M' => 'B', '2-5 MESES' => 'B', '2-5 MES' => 'B',
-            'C' => 'C', '6-8M' => 'C', '6-8 MESES' => 'C', '6-8 MES' => 'C',
-            'D' => 'D', '9-11M' => 'D', '9-11 MESES' => 'D', '9-11 MES' => 'D',
+            'A' => 'A', '28D' => 'A', '28 DÍAS' => 'A', '28 DIAS' => 'A', '28 días' => 'A',
+            'B' => 'B', '2-5M' => 'B', '2-5 MESES' => 'B', '2-5 MES' => 'B', '2-5 meses' => 'B',
+            'C' => 'C', '6-8M' => 'C', '6-8 MESES' => 'C', '6-8 MES' => 'C', '6-8 meses' => 'C',
+            'D' => 'D', '9-11M' => 'D', '9-11 MESES' => 'D', '9-11 MES' => 'D', '9-11 meses' => 'D',
         ];
         $grupoVisitaCodigo = $grupoMap[$grupoVisita] ?? 'A';
 
-        VisitaDomiciliaria::create([
+        // Verificar si ya existe una visita para este período
+        $existe = VisitaDomiciliaria::where('id_niño', $ninoId)
+                                   ->where('periodo', $periodoFinal)
+                                   ->exists();
+
+        if ($existe && empty($row['sobrescribir'])) {
+            $this->errors[] = "Visita {$periodoFinal} ya existe para niño ID: {$ninoId}";
+            return;
+        }
+
+        $data = [
             'id_niño' => $ninoId,
+            'periodo' => $periodoFinal,
             'grupo_visita' => $grupoVisitaCodigo,
             'fecha_visita' => $fechaVisita->format('Y-m-d'),
             'numero_visitas' => (int)($row['numero_visita'] ?? $row['numero_visitas'] ?? 1),
-        ]);
+        ];
+
+        if ($existe) {
+            VisitaDomiciliaria::where('id_niño', $ninoId)
+                             ->where('periodo', $periodoFinal)
+                             ->update($data);
+        } else {
+            VisitaDomiciliaria::create($data);
+        }
 
         $this->stats['visitas']++;
-        $this->success[] = "Visita importada para niño ID: {$ninoId}";
+        $this->success[] = "Visita {$periodoFinal} importada para niño ID: {$ninoId}";
     }
 
     protected function importDatosExtra($ninoId, $row)
@@ -392,7 +548,7 @@ class ControlesImport implements ToCollection, WithHeadingRow
             return null;
         }
 
-        $nino = Nino::find($ninoId);
+        $nino = Nino::where('id_niño', $ninoId)->first();
         if (!$nino || !$nino->fecha_nacimiento) {
             return null;
         }
