@@ -80,16 +80,75 @@ class UsuarioController extends Controller
             'rechazadas' => Solicitud::where('estado', 'rechazada')->count(),
         ];
 
-        // Si es una petición AJAX o API, devolver JSON
+        // Si es una petición AJAX o API, devolver JSON con datos mapeados
         if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+            // Mapear códigos a nombres
+            $tiposDoc = [
+                1 => 'DNI',
+                2 => 'CE',
+                3 => 'PASS',
+                4 => 'DIE',
+                5 => 'S/ DOCUMENTO',
+                6 => 'CNV'
+            ];
+
+            $redes = [
+                1 => 'AGUAYTIA',
+                2 => 'ATALAYA',
+                3 => 'BAP-CURARAY',
+                4 => 'CORONEL PORTILLO',
+                5 => 'ESSALUD',
+                6 => 'FEDERICO BASADRE - YARINACOCHA',
+                7 => 'HOSPITAL AMAZONICO - YARINACOCHA',
+                8 => 'HOSPITAL REGIONAL DE PUCALLPA',
+                9 => 'NO PERTENECE A NINGUNA RED'
+            ];
+
+            // Convertir a array para asegurar serialización correcta
+            $usuariosArray = $usuarios->map(function($usuario) use ($tiposDoc, $redes) {
+                // Obtener la solicitud relacionada con el usuario
+                $solicitud = $usuario->solicitud;
+                
+                // Si no hay solicitud directa, buscar por user_id en solicitudes
+                if (!$solicitud) {
+                    $solicitud = \App\Models\Solicitud::where('user_id', $usuario->id)->first();
+                }
+                
+                return [
+                    'id' => $usuario->id,
+                    'name' => $usuario->name,
+                    'email' => $usuario->email,
+                    'role' => $usuario->role,
+                    // Datos de la solicitud
+                    'tipo_documento' => $solicitud ? ($tiposDoc[$solicitud->id_tipo_documento] ?? 'N/A') : null,
+                    'id_tipo_documento' => $solicitud ? ($solicitud->id_tipo_documento ?? null) : null,
+                    'numero_documento' => $solicitud ? ($solicitud->numero_documento ?? null) : null,
+                    'red' => $solicitud ? ($redes[$solicitud->codigo_red] ?? 'N/A') : null,
+                    'codigo_red' => $solicitud ? ($solicitud->codigo_red ?? null) : null,
+                    'microred' => $solicitud ? ($solicitud->codigo_microred ?? null) : null,
+                    'codigo_microred' => $solicitud ? ($solicitud->codigo_microred ?? null) : null,
+                    'establecimiento' => $solicitud ? ($solicitud->id_establecimiento ?? null) : null,
+                    'id_establecimiento' => $solicitud ? ($solicitud->id_establecimiento ?? null) : null,
+                    'correo' => $solicitud ? ($solicitud->correo ?? null) : null,
+                    'cargo' => $solicitud ? ($solicitud->cargo ?? null) : null,
+                    'celular' => $solicitud ? ($solicitud->celular ?? null) : null,
+                    'motivo' => $solicitud ? ($solicitud->motivo ?? null) : null,
+                    'solicitud_id' => $solicitud ? ($solicitud->id ?? null) : null,
+                    'created_at' => $usuario->created_at ? $usuario->created_at->toDateTimeString() : null,
+                    'updated_at' => $usuario->updated_at ? $usuario->updated_at->toDateTimeString() : null,
+                ];
+            })->toArray();
+
             return response()->json([
                 'success' => true,
-                'data' => $usuarios->items(),
+                'data' => $usuariosArray,
                 'pagination' => [
                     'current_page' => $usuarios->currentPage(),
                     'last_page' => $usuarios->lastPage(),
                     'per_page' => $usuarios->perPage(),
                     'total' => $usuarios->total(),
+                    'from' => $usuarios->firstItem(),
+                    'to' => $usuarios->lastItem(),
                 ],
                 'estadisticas' => $estadisticas
             ]);
@@ -143,8 +202,30 @@ class UsuarioController extends Controller
             'total_coordinadores' => User::whereIn('role', ['coordinador_microred', 'coordinador_red'])->count(),
         ];
 
+        // Mapear códigos a nombres
+        $tiposDoc = [
+            1 => 'DNI',
+            2 => 'CE',
+            3 => 'PASS',
+            4 => 'DIE',
+            5 => 'S/ DOCUMENTO',
+            6 => 'CNV'
+        ];
+
+        $redes = [
+            1 => 'AGUAYTIA',
+            2 => 'ATALAYA',
+            3 => 'BAP-CURARAY',
+            4 => 'CORONEL PORTILLO',
+            5 => 'ESSALUD',
+            6 => 'FEDERICO BASADRE - YARINACOCHA',
+            7 => 'HOSPITAL AMAZONICO - YARINACOCHA',
+            8 => 'HOSPITAL REGIONAL DE PUCALLPA',
+            9 => 'NO PERTENECE A NINGUNA RED'
+        ];
+
         // Convertir a array para asegurar serialización correcta
-        $usuariosArray = $usuarios->map(function($usuario) {
+        $usuariosArray = $usuarios->map(function($usuario) use ($tiposDoc, $redes) {
                 // Obtener la solicitud relacionada con el usuario
                 $solicitud = $usuario->solicitud;
                 
@@ -158,8 +239,21 @@ class UsuarioController extends Controller
                     'name' => $usuario->name,
                     'email' => $usuario->email,
                     'role' => $usuario->role,
-                    'celular' => $solicitud ? ($solicitud->celular ?? null) : null,
+                    // Datos de la solicitud
+                    'tipo_documento' => $solicitud ? ($tiposDoc[$solicitud->id_tipo_documento] ?? 'N/A') : null,
+                    'id_tipo_documento' => $solicitud ? ($solicitud->id_tipo_documento ?? null) : null,
+                    'numero_documento' => $solicitud ? ($solicitud->numero_documento ?? null) : null,
+                    'red' => $solicitud ? ($redes[$solicitud->codigo_red] ?? 'N/A') : null,
+                    'codigo_red' => $solicitud ? ($solicitud->codigo_red ?? null) : null,
+                    'microred' => $solicitud ? ($solicitud->codigo_microred ?? null) : null,
+                    'codigo_microred' => $solicitud ? ($solicitud->codigo_microred ?? null) : null,
+                    'establecimiento' => $solicitud ? ($solicitud->id_establecimiento ?? null) : null,
+                    'id_establecimiento' => $solicitud ? ($solicitud->id_establecimiento ?? null) : null,
+                    'correo' => $solicitud ? ($solicitud->correo ?? null) : null,
                     'cargo' => $solicitud ? ($solicitud->cargo ?? null) : null,
+                    'celular' => $solicitud ? ($solicitud->celular ?? null) : null,
+                    'motivo' => $solicitud ? ($solicitud->motivo ?? null) : null,
+                    'solicitud_id' => $solicitud ? ($solicitud->id ?? null) : null,
                     'created_at' => $usuario->created_at ? $usuario->created_at->toDateTimeString() : null,
                     'updated_at' => $usuario->updated_at ? $usuario->updated_at->toDateTimeString() : null,
                 ];
@@ -246,6 +340,17 @@ class UsuarioController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'nullable|string|min:6',
             'role' => 'required|in:admin,jefe_red,coordinador_microred,usuario,jefe_microred,coordinador_red',
+            // Campos de solicitud (opcionales)
+            'solicitud_id' => 'nullable|integer|exists:solicitudes,id',
+            'id_tipo_documento' => 'nullable|integer|between:1,6',
+            'numero_documento' => 'nullable|string|max:20',
+            'codigo_red' => 'nullable|integer|between:1,9',
+            'codigo_microred' => 'nullable|string|max:255',
+            'id_establecimiento' => 'nullable|string|max:255',
+            'motivo' => 'nullable|string|max:255',
+            'cargo' => 'nullable|string|max:255',
+            'celular' => 'nullable|string|max:20',
+            'correo' => 'nullable|email|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -265,6 +370,23 @@ class UsuarioController extends Controller
         }
 
         $usuario->save();
+
+        // Actualizar solicitud si se proporciona solicitud_id
+        if ($request->filled('solicitud_id')) {
+            $solicitud = Solicitud::find($request->solicitud_id);
+            if ($solicitud && $solicitud->user_id == $usuario->id) {
+                $solicitud->id_tipo_documento = $request->input('id_tipo_documento', $solicitud->id_tipo_documento);
+                $solicitud->numero_documento = $request->input('numero_documento', $solicitud->numero_documento);
+                $solicitud->codigo_red = $request->input('codigo_red', $solicitud->codigo_red);
+                $solicitud->codigo_microred = $request->input('codigo_microred', $solicitud->codigo_microred);
+                $solicitud->id_establecimiento = $request->input('id_establecimiento', $solicitud->id_establecimiento);
+                $solicitud->motivo = $request->input('motivo', $solicitud->motivo);
+                $solicitud->cargo = $request->input('cargo', $solicitud->cargo);
+                $solicitud->celular = $request->input('celular', $solicitud->celular);
+                $solicitud->correo = $request->input('correo', $solicitud->correo);
+                $solicitud->save();
+            }
+        }
 
         return response()->json([
             'success' => true,

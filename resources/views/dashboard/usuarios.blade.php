@@ -149,11 +149,16 @@
                         <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                           <thead>
                             <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
-                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Nombre</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Tipo Doc.</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">N° Documento</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Red</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Microred</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Establecimiento</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Correo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Cargo</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Celular</th>
+                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Motivo</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rol/Permiso</th>
-                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Creación</th>
-                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Última Actualización</th>
                                 <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
                               </tr>
                             </thead>
@@ -162,7 +167,7 @@
                             </tbody>
                             <tfoot id="footerUsuarios" style="background: #f8fafc; border-top: 2px solid #e2e8f0;">
                               <tr>
-                                <td colspan="6" style="padding: 16px 24px;">
+                                <td colspan="11" style="padding: 16px 24px;">
                                   <div style="display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569;">
                                     <div style="display: flex; align-items: center; gap: 16px;">
                                       <span style="font-weight: 600; color: #1e293b;">Total de usuarios:</span>
@@ -1228,8 +1233,10 @@
         return response.json();
       })
       .then(data => {
+        console.log('Datos recibidos de la API:', data);
         if (data.success && data.data) {
           usuariosActuales = data.data;
+          console.log('Usuarios actuales:', usuariosActuales);
           paginacionUsuarios = data.pagination;
           renderizarTablaUsuarios(usuariosActuales);
           renderizarPaginacionUsuarios(paginacionUsuarios);
@@ -1239,7 +1246,7 @@
           console.error('Error al cargar usuarios:', data.message);
           const tbody = document.getElementById('tablaUsuariosBody');
           if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+            tbody.innerHTML = `<tr><td colspan="11" class="px-6 py-4 text-center text-red-500">
               <div class="flex flex-col items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -1257,7 +1264,7 @@
         console.error('Error:', error);
         const tbody = document.getElementById('tablaUsuariosBody');
         if (tbody) {
-          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">
+          tbody.innerHTML = `<tr><td colspan="11" class="px-6 py-4 text-center text-red-500">
             <div class="flex flex-col items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -1278,7 +1285,7 @@
       if (!tbody) return;
 
       if (usuarios.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">No hay usuarios registrados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="px-6 py-4 text-center text-slate-500">No hay usuarios registrados</td></tr>';
         return;
       }
 
@@ -1290,18 +1297,46 @@
         'coordinador_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de MicroRed</span>'
       };
 
+      // Función helper para obtener nombre de establecimiento
+      function obtenerNombreEstablecimiento(codigoRed, codigoMicrored, idEstablecimiento) {
+        if (!idEstablecimiento) return 'N/A';
+        try {
+          if (typeof data !== 'undefined' && data[codigoRed] && data[codigoRed][codigoMicrored]) {
+            const establecimiento = data[codigoRed][codigoMicrored].find(e => e.value === idEstablecimiento);
+            if (establecimiento) return establecimiento.text;
+          }
+        } catch (e) {
+          console.error('Error al obtener nombre de establecimiento:', e);
+        }
+        return idEstablecimiento.replace(/^EST_/, '').replace(/_/g, ' ') || idEstablecimiento;
+      }
+
+      console.log('Renderizando tabla con', usuarios.length, 'usuarios');
       tbody.innerHTML = usuarios.map(usuario => {
-        const fechaCreacion = new Date(usuario.created_at).toLocaleDateString('es-PE');
-        const fechaActualizacion = new Date(usuario.updated_at).toLocaleDateString('es-PE');
+        console.log('Procesando usuario:', usuario);
         const rolBadge = rolesBadge[usuario.role] || rolesBadge['usuario'];
+        const tipoDoc = usuario.tipo_documento || 'N/A';
+        const numDoc = usuario.numero_documento || 'N/A';
+        const red = usuario.red || 'N/A';
+        const microred = usuario.microred || 'N/A';
+        const establecimiento = usuario.establecimiento ? obtenerNombreEstablecimiento(usuario.codigo_red, usuario.codigo_microred, usuario.establecimiento) : 'N/A';
+        const correo = usuario.correo || usuario.email || 'N/A';
+        const cargo = usuario.cargo || 'N/A';
+        const celular = usuario.celular || 'N/A';
+        const motivo = usuario.motivo || 'N/A';
 
         return `
           <tr class="hover:bg-slate-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">${usuario.name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${usuario.email}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${tipoDoc}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${numDoc}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${red}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${microred}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900" title="${usuario.establecimiento || ''}">${establecimiento}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${correo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${cargo}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${celular}</td>
+            <td class="px-6 py-4 text-sm text-slate-900" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${motivo}">${motivo}</td>
             <td class="px-6 py-4 whitespace-nowrap">${rolBadge}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaCreacion}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fechaActualizacion}</td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-2.5">
                 <button onclick="abrirModalEditarUsuario(${usuario.id})" 
@@ -1736,8 +1771,23 @@
           formData.password = nuevaPassword.trim();
         }
 
-        // Actualizar usuario
-        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioId, {
+        // Obtener datos de solicitud si existen
+        const solicitudId = document.getElementById('usuarioIdEditar').getAttribute('data-solicitud-id');
+        if (solicitudId) {
+          formData.solicitud_id = solicitudId;
+          formData.id_tipo_documento = document.getElementById('tipoDocumentoSolicitud').value;
+          formData.numero_documento = document.getElementById('numeroDocumentoSolicitud').value.trim();
+          formData.codigo_red = document.getElementById('codigoRedSolicitud').value;
+          formData.codigo_microred = document.getElementById('codigoMicroredSolicitud').value;
+          formData.id_establecimiento = document.getElementById('idEstablecimientoSolicitud').value;
+          formData.motivo = document.getElementById('motivoSolicitud').value.trim();
+          formData.cargo = document.getElementById('cargoSolicitud').value.trim();
+          formData.celular = document.getElementById('celularSolicitud').value.trim();
+          formData.correo = document.getElementById('correoSolicitud').value.trim();
+        }
+
+        // Actualizar usuario (y solicitud si existe)
+        const response = await fetch('/api/usuarios/' + usuarioId, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1783,89 +1833,23 @@
         }
 
         if (data.success) {
-          // Actualizar solicitud si existe
-          let solicitudActualizada = false;
-          let errorSolicitud = null;
-          
-          const seccionSolicitud = document.getElementById('seccionSolicitud');
-          if (seccionSolicitud) {
-            const solicitudId = document.getElementById('usuarioIdEditar').getAttribute('data-solicitud-id');
-            if (solicitudId) {
-              // Validar que todos los campos de solicitud estén completos
-              const tipoDoc = document.getElementById('tipoDocumentoSolicitud').value;
-              const numDoc = document.getElementById('numeroDocumentoSolicitud').value.trim();
-              const codRed = document.getElementById('codigoRedSolicitud').value;
-              const codMicrored = document.getElementById('codigoMicroredSolicitud').value;
-              const idEst = document.getElementById('idEstablecimientoSolicitud').value;
-              const motivo = document.getElementById('motivoSolicitud').value.trim();
-              const cargo = document.getElementById('cargoSolicitud').value.trim();
-              const celular = document.getElementById('celularSolicitud').value.trim();
-              const correo = document.getElementById('correoSolicitud').value.trim();
-
-              if (!tipoDoc || !numDoc || !codRed || !codMicrored || !idEst || !motivo || !cargo || !celular || !correo) {
-                errorSolicitud = 'Por favor, complete todos los campos de la solicitud';
-              } else {
-                const solicitudData = {
-                  id_tipo_documento: parseInt(tipoDoc),
-                  numero_documento: numDoc,
-                  codigo_red: parseInt(codRed),
-                  codigo_microred: codMicrored,
-                  id_establecimiento: idEst,
-                  motivo: motivo,
-                  cargo: cargo,
-                  celular: celular,
-                  correo: correo,
-                };
-
-                try {
-                  const solicitudResponse = await fetch(`/api/solicitudes/${solicitudId}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'X-Requested-With': 'XMLHttpRequest',
-                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                      'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(solicitudData)
-                  });
-
-                  const solicitudDataResponse = await solicitudResponse.json();
-                  
-                  if (solicitudResponse.ok && solicitudDataResponse.success) {
-                    solicitudActualizada = true;
-                  } else {
-                    errorSolicitud = solicitudDataResponse.message || 'Error al actualizar la solicitud';
-                    console.error('Error al actualizar solicitud:', solicitudDataResponse);
-                  }
-                } catch (error) {
-                  errorSolicitud = 'Error de conexión al actualizar la solicitud';
-                  console.error('Error al actualizar solicitud:', error);
-                }
-              }
-            }
-          }
-
           // Cerrar el modal
           closeModalEditarUsuario();
 
           // Mostrar mensaje de éxito
-          let mensajeExito = 'Usuario actualizado exitosamente';
-          let mensajeDetalle = 'Los cambios del usuario han sido guardados correctamente.';
-          
-          if (solicitudActualizada) {
-            mensajeExito = 'Usuario y solicitud actualizados exitosamente';
-            mensajeDetalle = 'Los cambios del usuario y los datos de la solicitud han sido guardados correctamente.';
-          } else if (errorSolicitud) {
-            mensajeExito = 'Usuario actualizado con advertencia';
-            mensajeDetalle = `Usuario actualizado correctamente, pero hubo un error al actualizar la solicitud: ${errorSolicitud}`;
-          }
+          const solicitudId = document.getElementById('usuarioIdEditar').getAttribute('data-solicitud-id');
+          const mensajeExito = solicitudId ? 'Usuario y solicitud actualizados exitosamente' : 'Usuario actualizado exitosamente';
+          const mensajeDetalle = solicitudId 
+            ? 'Los cambios del usuario y los datos de la solicitud han sido guardados correctamente.'
+            : 'Los cambios del usuario han sido guardados correctamente.';
           
           const successMessage = document.createElement('div');
-          successMessage.className = solicitudActualizada ? 'mensaje-exito animate-slide-in' : 'mensaje-error animate-slide-in';
-          successMessage.style.cssText = `position: fixed; top: 1rem; right: 1rem; background: ${solicitudActualizada ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f59e0b, #d97706)'}; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;`;
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
           successMessage.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
-              ${solicitudActualizada ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' : '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'}
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
             <div style="flex: 1;">
               <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">${mensajeExito}</div>

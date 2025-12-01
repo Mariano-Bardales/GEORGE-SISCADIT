@@ -1045,13 +1045,28 @@
             <a 
               href="{{ route('importar-controles.ejemplo') }}" 
               class="modal-importar-btn modal-importar-btn-secondary"
+              title="Descargar ejemplo básico"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" x2="12" y1="15" y2="3"></line>
               </svg>
-              Ejemplo
+              Ejemplo Básico
+            </a>
+
+            <a 
+              href="{{ route('importar-controles.ejemplo-completo') }}" 
+              class="modal-importar-btn modal-importar-btn-secondary"
+              title="Descargar ejemplo completo con un niño y todos sus controles"
+              style="background: linear-gradient(135deg, #10b981, #059669);"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" x2="12" y1="15" y2="3"></line>
+              </svg>
+              Ejemplo Completo
             </a>
           </div>
         </form>
@@ -4664,12 +4679,30 @@
               }
             })
             .then(response => {
-              return response.json().then(data => {
-                return { ok: response.ok, data: data };
-              });
+              // Verificar si la respuesta es JSON
+              const contentType = response.headers.get("content-type");
+              if (contentType && contentType.includes("application/json")) {
+                return response.json().then(data => {
+                  return { ok: response.ok, status: response.status, data: data };
+                });
+              } else {
+                // Si no es JSON, intentar leer como texto
+                return response.text().then(text => {
+                  console.error('Respuesta no JSON recibida:', text);
+                  return { 
+                    ok: false, 
+                    status: response.status, 
+                    data: { 
+                      success: false, 
+                      message: 'Error inesperado del servidor. Por favor, verifique la consola para más detalles.' 
+                    } 
+                  };
+                });
+              }
             })
             .then(result => {
-              if (result.ok && result.data.success) {
+              console.log('Resultado del registro:', result);
+              if (result.ok && result.data && result.data.success) {
                 // Mostrar mensaje de éxito
                 alert('¡Niño registrado exitosamente!');
                 // Cerrar el modal
@@ -4681,17 +4714,39 @@
                 }, 500);
               } else {
                 // Manejar errores de validación u otros errores
-                let errorMessage = result.data.message || 'No se pudo registrar el niño';
-                if (result.data.errors) {
-                  const errorList = Object.values(result.data.errors).flat().join('\n');
-                  errorMessage = errorMessage + '\n\n' + errorList;
+                let errorMessage = 'No se pudo registrar el niño';
+                
+                if (result.data) {
+                  if (result.data.message) {
+                    errorMessage = result.data.message;
+                  }
+                  
+                  if (result.data.errors) {
+                    const errorList = Object.entries(result.data.errors)
+                      .map(([field, messages]) => {
+                        const fieldName = field.replace(/_/g, ' ');
+                        return `${fieldName}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+                      })
+                      .join('\n');
+                    errorMessage = errorMessage + '\n\nErrores de validación:\n' + errorList;
+                  }
+                  
+                  // Si hay un error de excepción, mostrarlo
+                  if (result.data.exception) {
+                    console.error('Excepción del servidor:', result.data.exception);
+                    errorMessage = errorMessage + '\n\nDetalle técnico: ' + result.data.exception;
+                  }
+                } else {
+                  errorMessage = `Error HTTP ${result.status || 'desconocido'}. Por favor, verifique la consola para más detalles.`;
                 }
+                
+                console.error('Error al registrar:', result);
                 alert('Error: ' + errorMessage);
               }
             })
             .catch(error => {
-              console.error('Error:', error);
-              alert('Error al registrar el niño. Por favor, inténtelo nuevamente.');
+              console.error('Error en la petición:', error);
+              alert('Error al registrar el niño. Por favor, verifique la consola del navegador (F12) para más detalles e inténtelo nuevamente.');
             });
           }
         });

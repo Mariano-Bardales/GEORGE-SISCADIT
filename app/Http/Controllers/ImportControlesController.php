@@ -95,6 +95,14 @@ class ImportControlesController extends Controller
     }
 
     /**
+     * Descargar ejemplo completo de un niño con todos los controles
+     */
+    public function downloadEjemploCompleto()
+    {
+        return Excel::download(new \App\Exports\EjemploNinoCompletoExport(), 'ejemplo_nino_completo.xlsx');
+    }
+
+    /**
      * Descargar archivo de ejemplo con datos reales
      */
     public function downloadEjemplo()

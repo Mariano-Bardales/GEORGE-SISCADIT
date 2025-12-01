@@ -25,8 +25,6 @@ class Nino extends Model
         'apellidos_nombres',
         'fecha_nacimiento',
         'genero',
-        'edad_meses',
-        'edad_dias',
     ];
 
     protected $casts = [

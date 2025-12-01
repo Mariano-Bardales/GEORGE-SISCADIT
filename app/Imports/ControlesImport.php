@@ -256,14 +256,39 @@ class ControlesImport implements ToCollection, WithHeadingRow
         }
 
         $fecha = $this->parseDate($row['fecha'] ?? null);
+        if (!$fecha) {
+            $this->errors[] = "Fecha requerida para control RN {$numeroControl} del niño ID: {$ninoId}";
+            return;
+        }
+        
+        // Calcular edad usando función MySQL o cálculo directo
         $edad = $this->calculateAge($ninoId, $fecha);
+        
+        // Determinar estado automáticamente basándose en rangos
+        $rangosRN = [
+            1 => ['min' => 2, 'max' => 6],
+            2 => ['min' => 7, 'max' => 13],
+            3 => ['min' => 14, 'max' => 20],
+            4 => ['min' => 21, 'max' => 28],
+        ];
+        
+        $rango = $rangosRN[$numeroControl] ?? ['min' => 0, 'max' => 28];
+        $estado = 'SEGUIMIENTO'; // Por defecto
+        
+        if ($edad !== null) {
+            if ($edad >= $rango['min'] && $edad <= $rango['max']) {
+                $estado = 'CUMPLE';
+            } elseif ($edad > $rango['max']) {
+                $estado = 'NO CUMPLE';
+            }
+        }
 
         $data = [
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
             'fecha' => $fecha,
             'edad' => $edad,
-            'estado' => $row['estado'] ?? 'Completo',
+            'estado' => $estado, // Estado calculado automáticamente
             'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
             'talla' => !empty($row['talla']) ? (float)$row['talla'] : null,
             'perimetro_cefalico' => !empty($row['perimetro_cefalico']) || !empty($row['pc']) ? (float)($row['perimetro_cefalico'] ?? $row['pc']) : null,
@@ -300,14 +325,46 @@ class ControlesImport implements ToCollection, WithHeadingRow
         }
 
         $fecha = $this->parseDate($row['fecha'] ?? null);
+        if (!$fecha) {
+            $this->errors[] = "Fecha requerida para control CRED {$numeroControl} del niño ID: {$ninoId}";
+            return;
+        }
+        
+        // Calcular edad usando función MySQL o cálculo directo
         $edad = $this->calculateAge($ninoId, $fecha);
+        
+        // Determinar estado automáticamente basándose en rangos CRED
+        $rangosCRED = [
+            1 => ['min' => 29, 'max' => 59],
+            2 => ['min' => 60, 'max' => 89],
+            3 => ['min' => 90, 'max' => 119],
+            4 => ['min' => 120, 'max' => 149],
+            5 => ['min' => 150, 'max' => 179],
+            6 => ['min' => 180, 'max' => 209],
+            7 => ['min' => 210, 'max' => 239],
+            8 => ['min' => 240, 'max' => 269],
+            9 => ['min' => 270, 'max' => 299],
+            10 => ['min' => 300, 'max' => 329],
+            11 => ['min' => 330, 'max' => 359],
+        ];
+        
+        $rango = $rangosCRED[$numeroControl] ?? ['min' => 0, 'max' => 365];
+        $estado = 'SEGUIMIENTO'; // Por defecto
+        
+        if ($edad !== null) {
+            if ($edad >= $rango['min'] && $edad <= $rango['max']) {
+                $estado = 'CUMPLE';
+            } elseif ($edad > $rango['max']) {
+                $estado = 'NO CUMPLE';
+            }
+        }
 
         $data = [
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
             'fecha' => $fecha,
             'edad' => $edad,
-            'estado' => $row['estado'] ?? 'Completo',
+            'estado' => $estado, // Estado calculado automáticamente
             'estado_cred_once' => $row['estado_cred_once'] ?? null,
             'estado_cred_final' => $row['estado_cred_final'] ?? null,
             'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
@@ -339,8 +396,17 @@ class ControlesImport implements ToCollection, WithHeadingRow
         $nino = Nino::find($ninoId);
         $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
         $fecha29Dias = $fechaNacimiento->copy()->addDays(29);
-        $fechaTamizaje = $this->parseDate($row['fecha_tamizaje'] ?? null) ?? $fechaNacimiento->copy()->addDays(rand(1, 29));
+        $fechaTamizaje = $this->parseDate($row['fecha_tamizaje'] ?? null);
+        
+        if (!$fechaTamizaje) {
+            $this->errors[] = "Fecha de tamizaje requerida para niño ID: {$ninoId}";
+            return;
+        }
+        
         $edadTamizaje = $fechaNacimiento->diffInDays($fechaTamizaje);
+        
+        // Determinar si cumple: debe realizarse antes de los 29 días
+        $cumpleTamizaje = ($edadTamizaje >= 0 && $edadTamizaje <= 29) ? 'SI' : 'NO';
 
         $data = [
             'id_niño' => $ninoId,
@@ -349,7 +415,7 @@ class ControlesImport implements ToCollection, WithHeadingRow
             'edad_tam_neo' => $edadTamizaje,
             'galen_fecha_tam_feo' => $this->parseDate($row['galen_fecha'] ?? null)?->format('Y-m-d') ?? $fechaTamizaje->copy()->addDays(5)->format('Y-m-d'),
             'galen_dias_tam_feo' => $row['galen_dias'] ?? rand(30, 35),
-            'cumple_tam_neo' => $row['cumple_tamizaje'] ?? 'SI',
+            'cumple_tam_neo' => $cumpleTamizaje, // Calculado automáticamente
         ];
 
         if ($existe) {
@@ -374,18 +440,31 @@ class ControlesImport implements ToCollection, WithHeadingRow
         $nino = Nino::find($ninoId);
         $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
         
-        $fechaBCG = $this->parseDate($row['fecha_bcg'] ?? null) ?? $fechaNacimiento->copy()->addDays(rand(0, 7));
-        $fechaHVB = $this->parseDate($row['fecha_hvb'] ?? null) ?? $fechaNacimiento->copy()->addDays(rand(0, 7));
+        $fechaBCG = $this->parseDate($row['fecha_bcg'] ?? null);
+        $fechaHVB = $this->parseDate($row['fecha_hvb'] ?? null);
+        
+        if (!$fechaBCG || !$fechaHVB) {
+            $this->errors[] = "Fechas de vacunas BCG y HVB requeridas para niño ID: {$ninoId}";
+            return;
+        }
+        
+        $edadBCG = $fechaNacimiento->diffInDays($fechaBCG);
+        $edadHVB = $fechaNacimiento->diffInDays($fechaHVB);
+        
+        // Determinar estado: deben aplicarse en los primeros 2 días
+        $estadoBCG = ($edadBCG >= 0 && $edadBCG <= 2) ? 'SI' : 'NO';
+        $estadoHVB = ($edadHVB >= 0 && $edadHVB <= 2) ? 'SI' : 'NO';
+        $cumpleVacunas = ($estadoBCG === 'SI' && $estadoHVB === 'SI') ? 'SI' : 'NO';
 
         $data = [
             'id_niño' => $ninoId,
             'fecha_bcg' => $fechaBCG->format('Y-m-d'),
-            'edad_bcg' => $fechaNacimiento->diffInDays($fechaBCG),
-            'estado_bcg' => $row['estado_bcg'] ?? 'SI',
+            'edad_bcg' => $edadBCG,
+            'estado_bcg' => $estadoBCG, // Calculado automáticamente
             'fecha_hvb' => $fechaHVB->format('Y-m-d'),
-            'edad_hvb' => $fechaNacimiento->diffInDays($fechaHVB),
-            'estado_hvb' => $row['estado_hvb'] ?? 'SI',
-            'cumple_BCG_HVB' => $row['cumple_vacunas'] ?? 'SI',
+            'edad_hvb' => $edadHVB,
+            'estado_hvb' => $estadoHVB, // Calculado automáticamente
+            'cumple_BCG_HVB' => $cumpleVacunas, // Calculado automáticamente
         ];
 
         if ($existe) {
@@ -426,19 +505,42 @@ class ControlesImport implements ToCollection, WithHeadingRow
         ];
         $grupoVisitaCodigo = $grupoMap[$grupoVisita] ?? 'A';
 
+        // Calcular edad en días al momento de la visita
+        $nino = Nino::find($ninoId);
+        $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+        $edadVisita = $fechaNacimiento->diffInDays($fechaVisita);
+        
+        // Determinar estado basándose en rangos de visitas
+        $rangosVisitas = [
+            'A' => ['min' => 28, 'max' => 28],      // 28 días exactos
+            'B' => ['min' => 60, 'max' => 150],     // 2-5 meses
+            'C' => ['min' => 180, 'max' => 240],    // 6-8 meses
+            'D' => ['min' => 270, 'max' => 330],   // 9-11 meses
+        ];
+        
+        $rango = $rangosVisitas[$grupoVisitaCodigo] ?? ['min' => 0, 'max' => 365];
+        $estadoVisita = 'SEGUIMIENTO'; // Por defecto
+        
+        if ($edadVisita !== null) {
+            if ($edadVisita >= $rango['min'] && $edadVisita <= $rango['max']) {
+                $estadoVisita = 'CUMPLE';
+            } elseif ($edadVisita > $rango['max']) {
+                $estadoVisita = 'NO CUMPLE';
+            }
+        }
+
         // Verificar si ya existe una visita para este período
         $existe = VisitaDomiciliaria::where('id_niño', $ninoId)
-                                   ->where('periodo', $periodoFinal)
+                                   ->where('grupo_visita', $grupoVisitaCodigo)
                                    ->exists();
 
         if ($existe && empty($row['sobrescribir'])) {
-            $this->errors[] = "Visita {$periodoFinal} ya existe para niño ID: {$ninoId}";
+            $this->errors[] = "Visita grupo {$grupoVisitaCodigo} ya existe para niño ID: {$ninoId}";
             return;
         }
 
         $data = [
             'id_niño' => $ninoId,
-            'periodo' => $periodoFinal,
             'grupo_visita' => $grupoVisitaCodigo,
             'fecha_visita' => $fechaVisita->format('Y-m-d'),
             'numero_visitas' => (int)($row['numero_visita'] ?? $row['numero_visitas'] ?? 1),
@@ -446,7 +548,7 @@ class ControlesImport implements ToCollection, WithHeadingRow
 
         if ($existe) {
             VisitaDomiciliaria::where('id_niño', $ninoId)
-                             ->where('periodo', $periodoFinal)
+                             ->where('grupo_visita', $grupoVisitaCodigo)
                              ->update($data);
         } else {
             VisitaDomiciliaria::create($data);

@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth'])->group(function () {
         Route::post('/importar-controles', [ImportControlesController::class, 'import'])->name('importar-controles.import');
         Route::get('/importar-controles/ejemplo', [ImportControlesController::class, 'downloadEjemplo'])->name('importar-controles.ejemplo');
+        Route::get('/importar-controles/ejemplo-completo', [ImportControlesController::class, 'downloadEjemploCompleto'])->name('importar-controles.ejemplo-completo');
     });
     
     // Solicitudes (solo admin) - CRUD completo
@@ -126,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Usuarios API
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('api.usuarios');
+        Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('api.usuarios.update');
         
         // RENIEC API
         Route::get('/consultar-reniec', [UsuarioController::class, 'consultarReniec'])->name('api.consultar-reniec');

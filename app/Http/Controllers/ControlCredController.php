@@ -311,12 +311,6 @@ class ControlCredController extends Controller
             ];
             $tipoDoc = $tipoDocMap[$request->Id_Tipo_Documento] ?? 'S/ DOCUMENTO';
 
-            // Calculate age from fecha_nacimiento
-            $fechaNacimiento = Carbon::parse($request->Fecha_Nacimiento);
-            $now = Carbon::now();
-            $edadMeses = $fechaNacimiento->diffInMonths($now);
-            $edadDias = $fechaNacimiento->diffInDays($now);
-
             // Obtener el nombre del establecimiento
             $nombreEstablecimiento = $request->Nombre_Establecimiento;
             
@@ -332,8 +326,6 @@ class ControlCredController extends Controller
                 'apellidos_nombres' => $request->Apellidos_Nombres,
                 'fecha_nacimiento' => $request->Fecha_Nacimiento,
                 'genero' => $request->Genero,
-                'edad_meses' => $edadMeses,
-                'edad_dias' => $edadDias,
             ]);
             
             // Obtener el ID del niño creado
@@ -411,10 +403,18 @@ class ControlCredController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             
+            // Log del error para debugging
+            \Log::error('Error al registrar niño', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error al registrar el niño: ' . $e->getMessage()
+                    'message' => 'Error al registrar el niño: ' . $e->getMessage(),
+                    'exception' => config('app.debug') ? $e->getTraceAsString() : null
                 ], 500);
             }
             
