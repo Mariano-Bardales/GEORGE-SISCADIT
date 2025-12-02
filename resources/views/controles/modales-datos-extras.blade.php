@@ -1,8 +1,8 @@
-<!-- Modal para Ver Datos Extras -->
+<!-- Modal para Ver/Editar Datos Extras -->
 <div id="datosExtrasModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 overflow-y-auto" onclick="closeDatosExtrasModal(event)">
   <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full mx-4 my-8 transform transition-all" onclick="event.stopPropagation()">
     <div class="flex items-center justify-between mb-6">
-      <h3 class="text-2xl font-bold text-slate-800">Datos Extras</h3>
+      <h3 class="text-2xl font-bold text-slate-800" id="datosExtrasModalTitulo">Datos Extras</h3>
       <button onclick="closeDatosExtrasModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -22,15 +22,15 @@
         </h4>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-slate-600 mb-1">Red <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Red</label>
             <p id="datosExtras-red" class="text-sm text-slate-900 font-medium">-</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-600 mb-1">MicroRed <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-slate-600 mb-1">MicroRed</label>
             <p id="datosExtras-microred" class="text-sm text-slate-900 font-medium">-</p>
           </div>
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-slate-600 mb-1">Establecimiento <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-slate-600 mb-1">Establecimiento</label>
             <p id="datosExtras-establecimiento" class="text-sm text-slate-900 font-medium">-</p>
           </div>
         </div>
@@ -100,8 +100,11 @@
         </div>
       </div>
     </div>
-    <div class="flex justify-end mt-6 pt-6 border-t border-slate-200">
-      <button onclick="closeDatosExtrasModal()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-lg hover:shadow-xl">
+    
+    <!-- Botones del Modal -->
+    <div class="flex justify-end items-center gap-3 mt-6 pt-6 border-t border-slate-200">
+      <!-- Botón Cerrar -->
+      <button type="button" onclick="closeDatosExtrasModal()" class="btn-cerrar-datos-extras">
         Cerrar
       </button>
     </div>

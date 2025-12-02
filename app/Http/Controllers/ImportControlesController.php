@@ -3,22 +3,30 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Imports\ControlesImport;
-use App\Exports\TemplateControlesExport;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Imports\ImportMultiHojas;
+use App\Imports\ImportMultiHojasCSV;
 use App\Models\Nino;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
+use App\Models\DatosExtra;
+use App\Models\Madre;
+use App\Models\ControlRn;
+use App\Models\ControlMenor1;
+use App\Models\TamizajeNeonatal;
+use App\Models\VacunaRn;
+use App\Models\RecienNacido;
+use App\Models\VisitaDomiciliaria;
 
 class ImportControlesController extends Controller
 {
     /**
-     * Procesar archivo Excel subido
+     * Procesar archivo Excel subido (formato múltiples hojas)
      */
     public function import(Request $request)
     {
         $request->validate([
             'archivo_excel' => 'required|mimes:xlsx,xls,csv|max:10240', // Max 10MB
+            'tipo_archivo' => 'nullable|in:excel,csv', // Tipo de archivo
         ], [
             'archivo_excel.required' => 'Debe seleccionar un archivo Excel o CSV',
             'archivo_excel.mimes' => 'El archivo debe ser de tipo Excel (.xlsx, .xls) o CSV (.csv)',
@@ -40,30 +48,144 @@ class ImportControlesController extends Controller
                     ->with('import_error', 'El archivo excede el tamaño máximo permitido de 10MB.');
             }
 
-            $import = new ControlesImport();
+            // Detectar tipo de archivo
+            $extension = strtolower($file->getClientOriginalExtension());
+            $tipoArchivo = $request->input('tipo_archivo', $extension === 'csv' ? 'csv' : 'excel');
             
-            // Importar el archivo
-            Excel::import($import, $file);
-
-            $stats = $import->getStats();
-            $success = $import->getSuccess();
-            $errors = $import->getErrors();
+            // Guardar archivo temporalmente
+            $tempPath = $file->getRealPath();
+            if (!$tempPath) {
+                $tempPath = $file->store('temp', 'local');
+                $tempPath = storage_path('app/' . $tempPath);
+            }
+            
+            // Usar transacción de base de datos para asegurar que todo se guarde o nada
+            DB::beginTransaction();
+            
+            try {
+                // Si es CSV, usar el importador CSV (funciona con PHP 8)
+                if ($tipoArchivo === 'csv' || $extension === 'csv') {
+                    $import = new ImportMultiHojasCSV();
+                    $import->import($tempPath);
+                } else {
+                    // Intentar con Excel (puede fallar en PHP 8)
+                    $import = new ImportMultiHojas();
+                    $import->import($tempPath);
+                }
+                
+                // Obtener estadísticas y resultados
+                $stats = $import->getStats();
+                $success = $import->getSuccess();
+                $errors = $import->getErrors();
+                
+                // Verificar que se haya guardado algo
+                $totalGuardados = ($stats['ninos'] ?? 0) + 
+                                 ($stats['controles_cred'] ?? 0) + 
+                                 ($stats['controles_rn'] ?? 0) + 
+                                 ($stats['madres'] ?? 0) + 
+                                 ($stats['datos_extra'] ?? 0);
+                
+                if ($totalGuardados === 0 && empty($errors)) {
+                    DB::rollBack();
+                    return redirect()->route('controles-cred')
+                        ->with('import_error', 'No se importaron datos. Verifique que el archivo tenga el formato correcto y datos válidos.');
+                }
+                
+                // Si hay errores críticos, hacer rollback
+                $erroresCriticos = array_filter($errors, function($error) {
+                    return stripos($error, 'error fatal') !== false || 
+                           stripos($error, 'no se puede conectar') !== false ||
+                           stripos($error, 'tabla no existe') !== false;
+                });
+                
+                if (!empty($erroresCriticos)) {
+                    DB::rollBack();
+                    return redirect()->route('controles-cred')
+                        ->with('import_error', 'Error crítico en la importación: ' . implode(', ', $erroresCriticos));
+                }
+                
+                // Confirmar la transacción - TODOS los datos se guardan ahora
+                DB::commit();
+                
+                Log::info('Importación completada exitosamente', [
+                    'stats' => $stats,
+                    'total_guardados' => $totalGuardados,
+                    'errores' => count($errors)
+                ]);
+                
+            } catch (\Exception $e) {
+                // Revertir todos los cambios si hay algún error
+                DB::rollBack();
+                
+                // Limpiar archivo temporal
+                if ($file->getRealPath() !== $tempPath && file_exists($tempPath)) {
+                    @unlink($tempPath);
+                }
+                
+                $errorMessage = $e->getMessage();
+                
+                // Si es un error de PHPExcel con PHP 8, sugerir usar CSV
+                if (strpos($errorMessage, 'syntax error') !== false || strpos($errorMessage, 'unexpected token') !== false) {
+                    $errorMessage = "Error de compatibilidad: PHPExcel no es compatible con PHP 8. " .
+                                   "SOLUCIÓN: Por favor, convierta su archivo Excel a CSV y vuelva a intentar. " .
+                                   "O use PHP 7.4. Error técnico: " . $e->getMessage();
+                }
+                
+                Log::error('Error en importación', [
+                    'error' => $errorMessage,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return redirect()->route('controles-cred')
+                    ->with('import_error', 'Error al importar el archivo: ' . $errorMessage);
+            }
+            
+            // Limpiar archivo temporal si fue creado
+            if ($file->getRealPath() !== $tempPath && file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
 
             $mensaje = "✅ Importación completada exitosamente!\n\n";
             $mensaje .= "📊 Estadísticas:\n";
             if (isset($stats['ninos']) && $stats['ninos'] > 0) {
-                $mensaje .= "- Niños creados/actualizados: {$stats['ninos']}\n";
+                $mensaje .= "- Niños creados: {$stats['ninos']}\n";
+            }
+            if (isset($stats['actualizados_ninos']) && $stats['actualizados_ninos'] > 0) {
+                $mensaje .= "- Niños actualizados: {$stats['actualizados_ninos']}\n";
             }
             if (isset($stats['madres']) && $stats['madres'] > 0) {
-                $mensaje .= "- Madres creadas/actualizadas: {$stats['madres']}\n";
+                $mensaje .= "- Madres creadas: {$stats['madres']}\n";
             }
-            $mensaje .= "- Controles RN: {$stats['controles_rn']}\n";
-            $mensaje .= "- Controles CRED: {$stats['controles_cred']}\n";
-            $mensaje .= "- Tamizajes: {$stats['tamizajes']}\n";
-            $mensaje .= "- Vacunas: {$stats['vacunas']}\n";
-            $mensaje .= "- Visitas: {$stats['visitas']}\n";
-            $mensaje .= "- Datos Extra: {$stats['datos_extra']}\n";
-            $mensaje .= "- Recién Nacido: {$stats['recien_nacido']}\n";
+            if (isset($stats['actualizados_madres']) && $stats['actualizados_madres'] > 0) {
+                $mensaje .= "- Madres actualizadas: {$stats['actualizados_madres']}\n";
+            }
+            if (isset($stats['datos_extra']) && $stats['datos_extra'] > 0) {
+                $mensaje .= "- Datos extra creados: {$stats['datos_extra']}\n";
+            }
+            if (isset($stats['actualizados_extra']) && $stats['actualizados_extra'] > 0) {
+                $mensaje .= "- Datos extra actualizados: {$stats['actualizados_extra']}\n";
+            }
+            if (isset($stats['controles_rn']) && $stats['controles_rn'] > 0) {
+                $mensaje .= "- Controles RN creados: {$stats['controles_rn']}\n";
+            }
+            if (isset($stats['actualizados_controles']) && $stats['actualizados_controles'] > 0) {
+                $mensaje .= "- Controles RN actualizados: {$stats['actualizados_controles']}\n";
+            }
+            if (isset($stats['controles_cred']) && $stats['controles_cred'] > 0) {
+                $mensaje .= "- Controles CRED: {$stats['controles_cred']}\n";
+            }
+            if (isset($stats['tamizajes']) && $stats['tamizajes'] > 0) {
+                $mensaje .= "- Tamizajes: {$stats['tamizajes']}\n";
+            }
+            if (isset($stats['vacunas']) && $stats['vacunas'] > 0) {
+                $mensaje .= "- Vacunas: {$stats['vacunas']}\n";
+            }
+            if (isset($stats['visitas']) && $stats['visitas'] > 0) {
+                $mensaje .= "- Visitas: {$stats['visitas']}\n";
+            }
+            if (isset($stats['recien_nacido']) && $stats['recien_nacido'] > 0) {
+                $mensaje .= "- Recién Nacido: {$stats['recien_nacido']}\n";
+            }
 
             if (!empty($errors)) {
                 $mensaje .= "\n⚠️ Errores: " . count($errors) . "\n";
@@ -75,262 +197,198 @@ class ImportControlesController extends Controller
                 }
             }
 
+            // Obtener datos detallados de los niños importados
+            $ninosImportadosIds = method_exists($import, 'getNinosImportados') ? $import->getNinosImportados() : [];
+            $ninosDetallados = $this->obtenerDatosDetalladosNinos($ninosImportadosIds);
+            
+            // Verificar que los datos se guardaron correctamente en la BD
+            $verificacionBD = $this->verificarDatosEnBaseDatos($ninosImportadosIds, $stats);
+            
+            Log::info('Importación completada - Verificación BD', [
+                'ninos_importados' => count($ninosImportadosIds),
+                'verificacion_bd' => $verificacionBD
+            ]);
+
             return redirect()->route('controles-cred')
                 ->with('import_success', $mensaje)
                 ->with('stats', $stats)
-                ->with('errors', $errors);
+                ->with('errors', $errors)
+                ->with('ninos_detallados', $ninosDetallados)
+                ->with('verificacion_bd', $verificacionBD);
 
         } catch (\Exception $e) {
             return redirect()->route('controles-cred')
                 ->with('import_error', 'Error al importar el archivo: ' . $e->getMessage());
         }
     }
-
+    
     /**
-     * Descargar template Excel
+     * Verificar que los datos se guardaron correctamente en la base de datos
      */
-    public function downloadTemplate()
+    private function verificarDatosEnBaseDatos(array $ninosIds, array $stats)
     {
-        return Excel::download(new TemplateControlesExport(), 'template_controles.xlsx');
-    }
-
-    /**
-     * Descargar ejemplo completo de un niño con todos los controles
-     */
-    public function downloadEjemploCompleto()
-    {
-        return Excel::download(new \App\Exports\EjemploNinoCompletoExport(), 'ejemplo_nino_completo.xlsx');
-    }
-
-    /**
-     * Descargar archivo de ejemplo con datos reales
-     */
-    public function downloadEjemplo()
-    {
-        $ejemploPath = storage_path('app/ejemplo_controles.csv');
+        $verificacion = [
+            'ninos_en_bd' => 0,
+            'controles_cred_en_bd' => 0,
+            'controles_rn_en_bd' => 0,
+            'madres_en_bd' => 0,
+            'datos_extra_en_bd' => 0,
+            'total_verificado' => true
+        ];
         
-        // Siempre regenerar el archivo con datos actuales
-        $this->crearArchivoEjemploCompleto($ejemploPath);
-
-        if (!file_exists($ejemploPath)) {
-            return redirect()->route('controles-cred')
-                ->with('import_error', 'No se pudo generar el archivo de ejemplo.');
+        if (empty($ninosIds)) {
+            return $verificacion;
         }
-
-        return response()->download($ejemploPath, 'ejemplo_controles.csv', [
-            'Content-Type' => 'text/csv; charset=utf-8',
-            'Content-Disposition' => 'attachment; filename="ejemplo_controles.csv"',
-        ]);
+        
+        // Verificar que los niños existen en la BD
+        $ninosEnBD = Nino::whereIn('id_niño', $ninosIds)->count();
+        $verificacion['ninos_en_bd'] = $ninosEnBD;
+        
+        // Verificar controles CRED
+        $controlesCredEnBD = ControlMenor1::whereIn('id_niño', $ninosIds)->count();
+        $verificacion['controles_cred_en_bd'] = $controlesCredEnBD;
+        
+        // Verificar controles RN
+        $controlesRnEnBD = ControlRn::whereIn('id_niño', $ninosIds)->count();
+        $verificacion['controles_rn_en_bd'] = $controlesRnEnBD;
+        
+        // Verificar madres
+        $madresEnBD = Madre::whereIn('id_niño', $ninosIds)->count();
+        $verificacion['madres_en_bd'] = $madresEnBD;
+        
+        // Verificar datos extra
+        $datosExtraEnBD = DatosExtra::whereIn('id_niño', $ninosIds)->count();
+        $verificacion['datos_extra_en_bd'] = $datosExtraEnBD;
+        
+        // Verificar que los datos coinciden con las estadísticas
+        $esperadoControlesCred = ($stats['controles_cred'] ?? 0) + ($stats['actualizados_controles_cred'] ?? 0);
+        if ($esperadoControlesCred > 0 && $controlesCredEnBD < $esperadoControlesCred) {
+            $verificacion['total_verificado'] = false;
+        }
+        
+        return $verificacion;
     }
-
+    
     /**
-     * Crear archivo de ejemplo completo con datos reales
+     * Obtener datos detallados de los niños importados
      */
-    protected function crearArchivoEjemploCompleto($path)
+    private function obtenerDatosDetalladosNinos(array $ninosIds)
     {
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        if (empty($ninosIds)) {
+            return [];
         }
-
-        $ninos = Nino::take(4)->get();
-
-        if ($ninos->isEmpty()) {
-            // Si no hay niños, crear ejemplo básico
-            $this->crearArchivoEjemploBasico($path);
-            return;
+        
+        $ninosDetallados = [];
+        
+        foreach ($ninosIds as $ninoId) {
+            $nino = Nino::where('id_niño', $ninoId)->first();
+            if (!$nino) {
+                continue;
+            }
+            
+            // Obtener datos extra
+            $datosExtra = DatosExtra::where('id_niño', $ninoId)->first();
+            
+            // Obtener datos de la madre
+            $madre = Madre::where('id_niño', $ninoId)->first();
+            
+            // Obtener controles RN
+            $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
+            
+            // Obtener controles CRED
+            $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
+            
+            // Obtener tamizaje neonatal
+            $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+            
+            // Obtener vacunas RN
+            $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
+            
+            // Obtener CNV (Recién Nacido)
+            $cnv = RecienNacido::where('id_niño', $ninoId)->first();
+            
+            // Obtener visitas domiciliarias
+            $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+            
+            $ninosDetallados[] = [
+                'nino' => [
+                    'id_niño' => $nino->id_niño,
+                    'apellidos_nombres' => $nino->apellidos_nombres,
+                    'numero_doc' => $nino->numero_doc,
+                    'tipo_doc' => $nino->tipo_doc,
+                    'fecha_nacimiento' => $nino->fecha_nacimiento,
+                    'genero' => $nino->genero,
+                    'establecimiento' => $nino->establecimiento,
+                ],
+                'datos_extra' => $datosExtra ? [
+                    'red' => $datosExtra->red,
+                    'microred' => $datosExtra->microred,
+                    'eess_nacimiento' => $datosExtra->eess_nacimiento,
+                    'distrito' => $datosExtra->distrito,
+                    'provincia' => $datosExtra->provincia,
+                    'departamento' => $datosExtra->departamento,
+                    'seguro' => $datosExtra->seguro,
+                    'programa' => $datosExtra->programa,
+                ] : null,
+                'madre' => $madre ? [
+                    'dni' => $madre->dni,
+                    'apellidos_nombres' => $madre->apellidos_nombres,
+                    'celular' => $madre->celular,
+                    'domicilio' => $madre->domicilio,
+                    'referencia_direccion' => $madre->referencia_direccion,
+                ] : null,
+                'controles_rn' => $controlesRn->map(function($control) {
+                    return [
+                        'numero_control' => $control->numero_control,
+                        'fecha' => $control->fecha,
+                        'edad' => $control->edad,
+                        'estado' => $control->estado,
+                        'peso' => $control->peso,
+                        'talla' => $control->talla,
+                        'perimetro_cefalico' => $control->perimetro_cefalico,
+                    ];
+                }),
+                'controles_cred' => $controlesCred->map(function($control) {
+                    return [
+                        'numero_control' => $control->numero_control,
+                        'fecha' => $control->fecha,
+                        'edad' => $control->edad,
+                        'estado' => $control->estado,
+                        'peso' => $control->peso,
+                        'talla' => $control->talla,
+                        'perimetro_cefalico' => $control->perimetro_cefalico,
+                    ];
+                }),
+                'tamizaje' => $tamizaje ? [
+                    'fecha_tam_neo' => $tamizaje->fecha_tam_neo,
+                    'edad_tam_neo' => $tamizaje->edad_tam_neo,
+                    'cumple_tam_neo' => $tamizaje->cumple_tam_neo,
+                ] : null,
+                'vacunas' => $vacunas ? [
+                    'fecha_bcg' => $vacunas->fecha_bcg,
+                    'edad_bcg' => $vacunas->edad_bcg,
+                    'estado_bcg' => $vacunas->estado_bcg,
+                    'fecha_hvb' => $vacunas->fecha_hvb,
+                    'edad_hvb' => $vacunas->edad_hvb,
+                    'estado_hvb' => $vacunas->estado_hvb,
+                    'cumple_BCG_HVB' => $vacunas->cumple_BCG_HVB,
+                ] : null,
+                'cnv' => $cnv ? [
+                    'peso' => $cnv->peso,
+                    'edad_gestacional' => $cnv->edad_gestacional,
+                    'clasificacion' => $cnv->clasificacion,
+                ] : null,
+                'visitas' => $visitas->map(function($visita) {
+                    return [
+                        'grupo_visita' => $visita->grupo_visita,
+                        'fecha_visita' => $visita->fecha_visita,
+                        'numero_visitas' => $visita->numero_visitas,
+                    ];
+                }),
+            ];
         }
-
-        $fp = fopen($path, 'w');
         
-        // Encabezados
-        fputcsv($fp, [
-            'ID_NINO', 'TIPO_CONTROL', 'NUMERO_CONTROL', 'FECHA', 'ESTADO',
-            'ESTADO_CRED_ONCE', 'ESTADO_CRED_FINAL', 'PESO', 'TALLA', 'PERIMETRO_CEFALICO',
-            'FECHA_BCG', 'ESTADO_BCG', 'FECHA_HVB', 'ESTADO_HVB', 'FECHA_TAMIZAJE', 
-            'FECHA_VISITA', 'PERIODO', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'PROVINCIA', 'DEPARTAMENTO', 'SEGURO', 'PROGRAMA',
-            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION',
-            'NUMERO_DOCUMENTO', 'TIPO_DOCUMENTO', 'APELLIDOS_NOMBRES', 'FECHA_NACIMIENTO', 'GENERO', 'ESTABLECIMIENTO',
-            'DNI_MADRE', 'APELLIDOS_NOMBRES_MADRE', 'CELULAR_MADRE', 'DOMICILIO_MADRE', 'REFERENCIA_DIRECCION',
-            'SOBRESCRIBIR'
-        ]);
-
-        foreach ($ninos as $nino) {
-            $ninoId = $nino->id_niño;
-            $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-            $hoy = Carbon::now();
-            $edadDias = $fechaNacimiento->diffInDays($hoy);
-
-            // Recién nacido (0-28 días)
-            if ($edadDias <= 28) {
-                // CRN 1 (2-6 días) con datos antropométricos
-                if ($edadDias >= 2) {
-                    $fecha = $fechaNacimiento->copy()->addDays(rand(2, min(6, $edadDias)));
-                    $peso = 3200 + rand(-200, 200);
-                    $talla = 50.0 + rand(-5, 5) / 10;
-                    $pc = 35.0 + rand(-3, 3) / 10;
-                    fputcsv($fp, [$ninoId, 'CRN', 1, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                }
-                // CRN 2 (7-13 días)
-                if ($edadDias >= 7) {
-                    $fecha = $fechaNacimiento->copy()->addDays(rand(7, min(13, $edadDias)));
-                    $peso = 3300 + rand(-200, 200);
-                    $talla = 51.0 + rand(-5, 5) / 10;
-                    $pc = 35.5 + rand(-3, 3) / 10;
-                    fputcsv($fp, [$ninoId, 'CRN', 2, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                }
-                // CRN 3 (14-20 días)
-                if ($edadDias >= 14) {
-                    $fecha = $fechaNacimiento->copy()->addDays(rand(14, min(20, $edadDias)));
-                    $peso = 3400 + rand(-200, 200);
-                    $talla = 52.0 + rand(-5, 5) / 10;
-                    $pc = 36.0 + rand(-3, 3) / 10;
-                    fputcsv($fp, [$ninoId, 'CRN', 3, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                }
-                // CRN 4 (21-28 días)
-                if ($edadDias >= 21) {
-                    $fecha = $fechaNacimiento->copy()->addDays(rand(21, min(28, $edadDias)));
-                    $peso = 3500 + rand(-200, 200);
-                    $talla = 53.0 + rand(-5, 5) / 10;
-                    $pc = 36.5 + rand(-3, 3) / 10;
-                    fputcsv($fp, [$ninoId, 'CRN', 4, $fecha->format('Y-m-d'), 'Completo', '', '', $peso, $talla, $pc, '', '', '', '', '', '', '', '', '', '', '', '', '']);
-                }
-
-                // Vacunas (1-2 días)
-                $fechaBCG = $fechaNacimiento->copy()->addDays(rand(1, min(2, $edadDias)));
-                $fechaHVB = $fechaNacimiento->copy()->addDays(rand(1, min(2, $edadDias)));
-                fputcsv($fp, [$ninoId, 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '', '', '']);
-
-                // Tamizaje (1-29 días)
-                $fechaTamizaje = $fechaNacimiento->copy()->addDays(rand(1, min(29, $edadDias)));
-                fputcsv($fp, [$ninoId, 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '', '', '', '']);
-
-                // Recién Nacido (CNV)
-                $pesoRN = 3500 + rand(-500, 500);
-                $edadGestacional = 38 + rand(-2, 2);
-                $clasificacion = rand(0, 1) === 0 ? 'Normal' : 'Bajo Peso al Nacer y/o Prematuro';
-                fputcsv($fp, [$ninoId, 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $pesoRN, $edadGestacional, $clasificacion, '']);
-            }
-
-            // Menor de 1 año (29-359 días) - Usando los mismos rangos que el ApiController
-            if ($edadDias >= 29 && $edadDias <= 359) {
-                $rangos = [
-                    1 => ['min' => 29, 'max' => 59],
-                    2 => ['min' => 60, 'max' => 89],
-                    3 => ['min' => 90, 'max' => 119],
-                    4 => ['min' => 120, 'max' => 149],
-                    5 => ['min' => 150, 'max' => 179],
-                    6 => ['min' => 180, 'max' => 209],
-                    7 => ['min' => 210, 'max' => 239],
-                    8 => ['min' => 240, 'max' => 269],
-                    9 => ['min' => 270, 'max' => 299],
-                    10 => ['min' => 300, 'max' => 329],
-                    11 => ['min' => 330, 'max' => 359],
-                ];
-
-                foreach ($rangos as $numControl => $rango) {
-                    if ($edadDias >= $rango['min']) {
-                        // Calcular fecha dentro del rango válido
-                        $diasDesdeNacimiento = rand($rango['min'], min($rango['max'], $edadDias));
-                        $fechaControl = $fechaNacimiento->copy()->addDays($diasDesdeNacimiento);
-                        $edadControl = $fechaNacimiento->diffInDays($fechaControl);
-                        
-                        // Determinar estado según si cumple con el rango
-                        $estado = ($edadControl >= $rango['min'] && $edadControl <= $rango['max']) ? 'cumple' : 'no_cumple';
-                        
-                        // Generar datos antropométricos realistas según la edad en meses
-                        $meses = floor($edadControl / 30);
-                        $pesoBase = 3200 + ($meses * 600); // Incremento de ~600g por mes
-                        $tallaBase = 50 + ($meses * 2.2); // Incremento de ~2.2cm por mes
-                        $pcBase = 35 + ($meses * 0.6); // Incremento de ~0.6cm por mes
-                        
-                        // Asegurar valores mínimos y máximos realistas
-                        $peso = max(2500, min(12000, $pesoBase + rand(-300, 300)));
-                        $talla = max(45, min(85, round($tallaBase + rand(-1.5, 1.5), 1)));
-                        $pc = max(32, min(48, round($pcBase + rand(-0.8, 0.8), 1)));
-                        
-                        // Estados CRED según la edad
-                        $estadoCredOnce = $meses >= 11 ? 'Adecuado' : 'Normal';
-                        $estadoCredFinal = 'Normal';
-                        
-                        fputcsv($fp, [
-                            $ninoId, 'CRED', $numControl, $fechaControl->format('Y-m-d'), $estado, 
-                            $estadoCredOnce, $estadoCredFinal, 
-                            $peso, $talla, $pc,
-                            '', '', '', '', '', '', '', '', '', '', '', '', ''
-                        ]);
-                    }
-                }
-            }
-
-            // Visitas domiciliarias (si el niño tiene más de 28 días)
-            if ($edadDias >= 28) {
-                $fechaVisita28 = $fechaNacimiento->copy()->addDays(28);
-                fputcsv($fp, [$ninoId, 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita28->format('Y-m-d'), 'A', '', '', '', '', '', '', '']);
-            }
-            if ($edadDias >= 60) {
-                $fechaVisita2_5 = $fechaNacimiento->copy()->addDays(rand(60, min(150, $edadDias)));
-                fputcsv($fp, [$ninoId, 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita2_5->format('Y-m-d'), 'B', '', '', '', '', '', '', '']);
-            }
-
-            // Datos extra (para todos)
-            fputcsv($fp, [$ninoId, 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '', '', '', '']);
-        }
-
-        fclose($fp);
-    }
-
-    /**
-     * Crear archivo de ejemplo básico si no hay niños
-     */
-    protected function crearArchivoEjemploBasico($path)
-    {
-        $fp = fopen($path, 'w');
-        
-        // Encabezados
-        fputcsv($fp, [
-            'ID_NINO', 'TIPO_CONTROL', 'NUMERO_CONTROL', 'FECHA', 'ESTADO',
-            'ESTADO_CRED_ONCE', 'ESTADO_CRED_FINAL', 'PESO', 'TALLA', 'PERIMETRO_CEFALICO',
-            'FECHA_BCG', 'ESTADO_BCG', 'FECHA_HVB', 'ESTADO_HVB', 'FECHA_TAMIZAJE', 
-            'FECHA_VISITA', 'PERIODO', 'GRUPO_VISITA', 'RED', 'MICRORED', 'DISTRITO', 'PROVINCIA', 'DEPARTAMENTO', 'SEGURO', 'PROGRAMA',
-            'PESO_RN', 'EDAD_GESTACIONAL', 'CLASIFICACION',
-            'NUMERO_DOCUMENTO', 'TIPO_DOCUMENTO', 'APELLIDOS_NOMBRES', 'FECHA_NACIMIENTO', 'GENERO', 'ESTABLECIMIENTO',
-            'DNI_MADRE', 'APELLIDOS_NOMBRES_MADRE', 'CELULAR_MADRE', 'DOMICILIO_MADRE', 'REFERENCIA_DIRECCION',
-            'SOBRESCRIBIR'
-        ]);
-
-        // Datos de ejemplo básicos con valores realistas
-        $hoy = Carbon::now();
-        $fechaNacimientoEjemplo = $hoy->copy()->subDays(45);
-        
-        // CRN 1 (2-6 días después del nacimiento) con datos antropométricos
-        $fechaCRN1 = $fechaNacimientoEjemplo->copy()->addDays(4);
-        fputcsv($fp, ['1', 'CRN', '1', $fechaCRN1->format('Y-m-d'), 'Completo', '', '', '3200', '50.5', '35.2', '', '', '', '', '', '', '', '', '', '', '', '', '']);
-        
-        // CRED 1 (29-59 días) - dentro del rango válido
-        $fechaCRED1 = $fechaNacimientoEjemplo->copy()->addDays(45);
-        fputcsv($fp, ['1', 'CRED', '1', $fechaCRED1->format('Y-m-d'), 'Completo', 'Normal', 'Normal', '3800', '53.2', '36.8', '', '', '', '', '', '', '', '', '', '', '', '', '']);
-        
-        // Vacunas (1-2 días después del nacimiento)
-        $fechaBCG = $fechaNacimientoEjemplo->copy()->addDays(1);
-        $fechaHVB = $fechaNacimientoEjemplo->copy()->addDays(1);
-        fputcsv($fp, ['1', 'VACUNA', '', '', '', '', '', '', '', '', $fechaBCG->format('Y-m-d'), 'SI', $fechaHVB->format('Y-m-d'), 'SI', '', '', '', '', '', '', '', '', '']);
-        
-        // Tamizaje (1-29 días después del nacimiento)
-        $fechaTamizaje = $fechaNacimientoEjemplo->copy()->addDays(5);
-        fputcsv($fp, ['1', 'TAMIZAJE', '', '', '', '', '', '', '', '', '', '', '', $fechaTamizaje->format('Y-m-d'), '', '', '', '', '', '', '', '', '']);
-        
-        // Visita domiciliaria
-        $fechaVisita = $fechaNacimientoEjemplo->copy()->addDays(28);
-        fputcsv($fp, ['1', 'VISITA', '', '', '', '', '', '', '', '', '', '', '', '', $fechaVisita->format('Y-m-d'), 'A', '', '', '', '', '', '', '']);
-        
-        // Recién Nacido (CNV)
-        fputcsv($fp, ['1', 'RECIEN_NACIDO', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '3500', '38', 'Normal', '']);
-        
-        // Datos extra
-        fputcsv($fp, ['1', 'DATOS_EXTRA', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Red de Salud Lima Norte', 'Microred 01', 'San Juan de Lurigancho', '', '', '', '']);
-
-        fclose($fp);
+        return $ninosDetallados;
     }
 }
 

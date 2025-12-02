@@ -48,8 +48,17 @@ class ApiController extends Controller
         $ninos = Nino::all();
         
         foreach ($ninos as $nino) {
-            $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-            $edadDias = $fechaNacimiento->diffInDays($hoy);
+            // Validar que el niño tenga fecha de nacimiento
+            if (!$nino->fecha_nacimiento) {
+                continue; // Saltar este niño si no tiene fecha de nacimiento
+            }
+            
+            try {
+                $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                $edadDias = $fechaNacimiento->diffInDays($hoy);
+            } catch (\Exception $e) {
+                continue; // Saltar este niño si hay error al parsear la fecha
+            }
             
             // Alertas de controles recién nacido
             if ($edadDias <= 28) {
@@ -145,154 +154,13 @@ class ApiController extends Controller
         $masculino = Nino::where('genero', 'M')->count();
         $femenino = Nino::where('genero', 'F')->count();
 
-        // Calcular calidad de datos basado en registros completos y controles fuera de rango
-        $totalNinos = Nino::count();
-        $ninosConDatosCompletos = 0;
-        $ninosConErrores = 0;
-        $hoy = Carbon::now();
-
-        if ($totalNinos > 0) {
-            $ninos = Nino::with(['datosExtra', 'madre'])->get();
-            
-            foreach ($ninos as $nino) {
-                if (!$nino->fecha_nacimiento) {
-                    $ninosConErrores++;
-                    continue;
-                }
-                
-                $tieneErrores = false;
-                
-                // Verificar datos básicos del niño
-                if (empty($nino->apellidos_nombres) || empty($nino->fecha_nacimiento) || empty($nino->genero)) {
-                    $tieneErrores = true;
-                }
-                
-                // Verificar datos extras
-                if (!$nino->datosExtra || empty($nino->datosExtra->red) || empty($nino->datosExtra->microred)) {
-                    $tieneErrores = true;
-                }
-                
-                // Verificar datos de la madre
-                if (!$nino->madre || empty($nino->madre->apellidos_nombres)) {
-                    $tieneErrores = true;
-                }
-                
-                // Verificar controles fuera de rango (solo si los datos básicos están completos)
-                if (!$tieneErrores) {
-                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-                    $edadDias = $fechaNacimiento->diffInDays($hoy);
-                    $ninoId = $this->getNinoId($nino);
-                    
-                    // Verificar controles CRED mensual fuera de rango o faltantes
-                    if ($edadDias >= 29 && $edadDias <= 359) {
-                        $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
-                        $rangosCred = [
-                            1 => ['min' => 29, 'max' => 59], 2 => ['min' => 60, 'max' => 89], 3 => ['min' => 90, 'max' => 119],
-                            4 => ['min' => 120, 'max' => 149], 5 => ['min' => 150, 'max' => 179], 6 => ['min' => 180, 'max' => 209],
-                            7 => ['min' => 210, 'max' => 239], 8 => ['min' => 240, 'max' => 269], 9 => ['min' => 270, 'max' => 299],
-                            10 => ['min' => 300, 'max' => 329], 11 => ['min' => 330, 'max' => 359]
-                        ];
-                        
-                        foreach ($rangosCred as $numControl => $rango) {
-                            $control = $controlesCred->firstWhere('numero_control', $numControl);
-                            
-                            if ($control && $control->fecha) {
-                                // Verificar si el control está fuera de rango
-                                $fechaControl = Carbon::parse($control->fecha);
-                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                
-                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
-                                    $tieneErrores = true;
-                                    break; // Ya tiene un error, no necesitamos seguir verificando
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                // Ya pasó el rango y no hay control registrado - es un error
-                                $tieneErrores = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Verificar controles RN fuera de rango o faltantes
-                    if ($edadDias <= 28) {
-                        $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
-                        $rangosRN = [
-                            1 => ['min' => 2, 'max' => 6],
-                            2 => ['min' => 7, 'max' => 13],
-                            3 => ['min' => 14, 'max' => 20],
-                            4 => ['min' => 21, 'max' => 28]
-                        ];
-                        
-                        foreach ($rangosRN as $numControl => $rango) {
-                            $control = $controlesRn->firstWhere('numero_control', $numControl);
-                            
-                            if ($control && $control->fecha) {
-                                // Verificar si el control está fuera de rango
-                                $fechaControl = Carbon::parse($control->fecha);
-                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                
-                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
-                                    $tieneErrores = true;
-                                    break;
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                // Ya pasó el rango y no hay control registrado - es un error
-                                $tieneErrores = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Verificar visitas domiciliarias fuera de rango o faltantes
-                    if ($edadDias <= 365) {
-                        $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
-                        $rangosVisitas = [
-                            '28 días' => ['min' => 28, 'max' => 35],
-                            '2-5 meses' => ['min' => 60, 'max' => 150],
-                            '6-8 meses' => ['min' => 180, 'max' => 240],
-                            '9-11 meses' => ['min' => 270, 'max' => 330]
-                        ];
-                        
-                        foreach ($rangosVisitas as $periodo => $rango) {
-                            $visita = $visitas->firstWhere('periodo', $periodo);
-                            
-                            if ($visita && $visita->fecha_visita) {
-                                // Verificar si la visita está fuera de rango
-                                $fechaVisita = Carbon::parse($visita->fecha_visita);
-                                $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
-                                
-                                if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
-                                    $tieneErrores = true;
-                                    break;
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                // Ya pasó el rango y no hay visita registrada - es un error
-                                $tieneErrores = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if ($tieneErrores) {
-                    $ninosConErrores++;
-                } else {
-                    $ninosConDatosCompletos++;
-                }
-            }
-        }
-
         return response()->json([
             'success' => true,
             'data' => [
                 'genero' => [
                     'masculino' => $masculino,
                     'femenino' => $femenino,
-                ],
-                'calidad_datos' => [
-                    'perfectos' => $ninosConDatosCompletos,
-                    'con_errores' => $ninosConErrores,
-                ],
+                ]
             ]
         ]);
     }
@@ -531,6 +399,9 @@ class ApiController extends Controller
                 'fecha' => $request->fecha_control,
                 'edad' => $edadDias,
                 'estado' => $estado,
+                'peso' => $request->peso ?? null,
+                'talla' => $request->talla ?? null,
+                'perimetro_cefalico' => $request->perimetro_cefalico ?? null,
             ]);
 
             return response()->json([
@@ -585,6 +456,9 @@ class ApiController extends Controller
                 'fecha' => $request->fecha_control,
                 'edad' => $edadDias,
                 'estado' => $estado,
+                'peso' => $request->peso ?? $control->peso,
+                'talla' => $request->talla ?? $control->talla,
+                'perimetro_cefalico' => $request->perimetro_cefalico ?? $control->perimetro_cefalico,
             ]);
 
             return response()->json([
@@ -634,20 +508,75 @@ class ApiController extends Controller
                 }
                 $controles = $query->orderBy('numero_control', 'asc')->get();
                 
+                // Mapear controles reales al formato esperado por la vista
+                $controlesFormateados = $controles->map(function($control) use ($nino) {
+                    // Recalcular estado basándose en la edad del control y el rango permitido
+                    $estadoRecalculado = $control->estado; // Por defecto, usar el estado guardado
+                    
+                    if ($control->edad !== null && $nino->fecha_nacimiento) {
+                        // Rangos CRED mensual
+                        $rangosCRED = [
+                            1 => ['min' => 29, 'max' => 59],
+                            2 => ['min' => 60, 'max' => 89],
+                            3 => ['min' => 90, 'max' => 119],
+                            4 => ['min' => 120, 'max' => 149],
+                            5 => ['min' => 150, 'max' => 179],
+                            6 => ['min' => 180, 'max' => 209],
+                            7 => ['min' => 210, 'max' => 239],
+                            8 => ['min' => 240, 'max' => 269],
+                            9 => ['min' => 270, 'max' => 299],
+                            10 => ['min' => 300, 'max' => 329],
+                            11 => ['min' => 330, 'max' => 359],
+                        ];
+                        
+                        $numeroControl = $control->numero_control;
+                        $rango = $rangosCRED[$numeroControl] ?? ['min' => 0, 'max' => 365];
+                        $edadDias = (int)$control->edad;
+                        
+                        // Si hay control registrado, verificar si está dentro del rango
+                        if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
+                            $estadoRecalculado = 'CUMPLE';
+                        } elseif ($edadDias > $rango['max']) {
+                            // Control registrado pero fuera del rango
+                            $estadoRecalculado = 'NO CUMPLE';
+                        } else {
+                            // Control registrado pero antes del rango mínimo (raro, pero posible)
+                            $estadoRecalculado = 'NO CUMPLE';
+                        }
+                        
+                        // Actualizar el estado en la base de datos si es diferente
+                        if ($control->estado !== $estadoRecalculado) {
+                            $control->estado = $estadoRecalculado;
+                            $control->save();
+                        }
+                    }
+                    
+                    return [
+                        'id' => $control->id,
+                        'id_niño' => $control->id_niño,
+                        'numero_control' => $control->numero_control,
+                        'fecha' => $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null,
+                        'edad' => $control->edad,
+                        'estado' => $estadoRecalculado, // Usar el estado recalculado
+                        'peso' => $control->peso,
+                        'talla' => $control->talla,
+                        'perimetro_cefalico' => $control->perimetro_cefalico,
+                        'estado_cred_once' => $control->estado_cred_once,
+                        'estado_cred_final' => $control->estado_cred_final,
+                        'es_ejemplo' => false, // Marcar como dato real de la base de datos
+                    ];
+                });
+                
                 // Solo generar datos de ejemplo si NO hay controles reales
                 // Los controles reales siempre tienen prioridad
-                if ($controles->isEmpty()) {
-                    $controles = $this->generarDatosEjemploCredMensual($nino, $ninoIdReal);
-                } else {
-                    // Los controles reales ya tienen el formato correcto del modelo
-                    // No necesitamos mapearlos, solo asegurarnos de que se devuelvan correctamente
-                    // El modelo Eloquent ya devuelve objetos con todas las propiedades
+                if ($controlesFormateados->isEmpty()) {
+                    $controlesFormateados = $this->generarDatosEjemploCredMensual($nino, $ninoIdReal);
                 }
                 
                 return response()->json([
                     'success' => true, 
                     'data' => [
-                        'controles' => $controles,
+                        'controles' => $controlesFormateados,
                         'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null
                     ]
                 ]);
@@ -662,8 +591,25 @@ class ApiController extends Controller
                 ], 500);
             }
         } else {
+            // Si no hay nino_id, devolver todos los controles formateados
             $controles = ControlMenor1::all();
-            return response()->json(['success' => true, 'data' => ['controles' => $controles]]);
+            $controlesFormateados = $controles->map(function($control) {
+                return [
+                    'id' => $control->id,
+                    'id_niño' => $control->id_niño,
+                    'numero_control' => $control->numero_control,
+                    'fecha' => $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null,
+                    'edad' => $control->edad,
+                    'estado' => $control->estado,
+                    'peso' => $control->peso,
+                    'talla' => $control->talla,
+                    'perimetro_cefalico' => $control->perimetro_cefalico,
+                    'estado_cred_once' => $control->estado_cred_once,
+                    'estado_cred_final' => $control->estado_cred_final,
+                    'es_ejemplo' => false,
+                ];
+            });
+            return response()->json(['success' => true, 'data' => ['controles' => $controlesFormateados]]);
         }
     }
     
@@ -715,12 +661,14 @@ class ApiController extends Controller
                 $talla = round($rango['talla_base'] + $variacionTalla, 1);
                 $perimetroCefalico = round($rango['pc_base'] + $variacionPC, 1);
                 
-                // Determinar estado: si la edad actual está dentro del rango, es "cumple", si ya pasó es "cumple", si aún no llega es "pendiente"
-                $estado = 'cumple';
-                if ($edadDias < $rango['min']) {
-                    $estado = 'pendiente';
-                } elseif ($edadDias > $rango['max']) {
-                    $estado = 'cumple'; // Ya cumplió
+                // Determinar estado basándose en la edad del control (diasDesdeNacimiento) y el rango permitido
+                $estado = 'SEGUIMIENTO'; // Por defecto
+                if ($diasDesdeNacimiento >= $rango['min'] && $diasDesdeNacimiento <= $rango['max']) {
+                    $estado = 'CUMPLE';
+                } elseif ($diasDesdeNacimiento > $rango['max']) {
+                    $estado = 'NO CUMPLE'; // Control fuera del rango
+                } elseif ($diasDesdeNacimiento < $rango['min']) {
+                    $estado = 'SEGUIMIENTO'; // Aún no llega al rango
                 }
                 
                 $controlesEjemplo->push([
@@ -990,15 +938,15 @@ class ApiController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nino_id' => 'required|integer',
-            'peso_nacer' => 'nullable|numeric|min:0',
-            'edad_gestacional' => 'nullable|numeric|min:20|max:45',
-            'clasificacion' => 'nullable|string|in:Normal,Bajo Peso al Nacer y/o Prematuro',
+            'peso_nacer' => 'required|numeric|min:0',
+            'edad_gestacional' => 'required|numeric|min:20|max:45',
+            'clasificacion' => 'required|string|in:Normal,Bajo Peso al Nacer y/o Prematuro',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error de validación',
+                'message' => 'Error de validación: Todos los campos del CNV son requeridos (Peso al Nacer, Edad Gestacional, Clasificación)',
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -1007,16 +955,11 @@ class ApiController extends Controller
             $nino = $this->findNino($request->nino_id);
             $ninoIdReal = $this->getNinoId($nino);
             
-            $dataToUpdate = [];
-            if ($request->has('peso_nacer') && $request->peso_nacer !== null && $request->peso_nacer !== '') {
-                $dataToUpdate['peso'] = $request->peso_nacer;
-            }
-            if ($request->has('edad_gestacional') && $request->edad_gestacional !== null && $request->edad_gestacional !== '') {
-                $dataToUpdate['edad_gestacional'] = $request->edad_gestacional;
-            }
-            if ($request->has('clasificacion') && $request->clasificacion !== null && $request->clasificacion !== '') {
-                $dataToUpdate['clasificacion'] = $request->clasificacion;
-            }
+            $dataToUpdate = [
+                'peso' => $request->peso_nacer,
+                'edad_gestacional' => $request->edad_gestacional,
+                'clasificacion' => $request->clasificacion,
+            ];
             
             $cnv = RecienNacido::updateOrCreate(
                 ['id_niño' => $ninoIdReal],
@@ -1260,194 +1203,6 @@ class ApiController extends Controller
         }
     }
 
-    public function topEstablecimientos()
-    {
-        // Obtener datos reales de establecimientos desde la base de datos
-        $establecimientosData = DB::table('niños')
-            ->select('establecimiento', DB::raw('COUNT(*) as total_ninos'))
-            ->whereNotNull('establecimiento')
-            ->where('establecimiento', '!=', '')
-            ->groupBy('establecimiento')
-            ->get();
-
-        $establecimientosStats = [];
-        
-        foreach ($establecimientosData as $est) {
-            $establecimiento = $est->establecimiento;
-            $totalNinos = $est->total_ninos;
-            
-            // Contar controles por establecimiento
-            $ninosIds = Nino::where('establecimiento', $establecimiento)
-                ->get()
-                ->map(function($nino) {
-                    return $this->getNinoId($nino);
-                })
-                ->toArray();
-            $totalControlesRn = ControlRn::whereIn('id_niño', $ninosIds)->count();
-            $totalControlesCred = ControlMenor1::whereIn('id_niño', $ninosIds)->count();
-            $totalControles = $totalControlesRn + $totalControlesCred;
-            
-            // Calcular calidad de datos (porcentaje de niños con datos completos Y controles que cumplen)
-            $ninosCompletos = 0;
-            $ninos = Nino::where('establecimiento', $establecimiento)
-                ->with(['datosExtra', 'madre'])
-                ->get();
-            
-            $hoy = Carbon::now();
-            
-            foreach ($ninos as $nino) {
-                $completo = true;
-                
-                // Verificar datos básicos
-                if (empty($nino->apellidos_nombres) || empty($nino->fecha_nacimiento) || empty($nino->genero)) {
-                    $completo = false;
-                }
-                if (!$nino->datosExtra || empty($nino->datosExtra->red)) {
-                    $completo = false;
-                }
-                if (!$nino->madre || empty($nino->madre->apellidos_nombres)) {
-                    $completo = false;
-                }
-                
-                // Si los datos básicos están completos, verificar controles que cumplen
-                if ($completo && $nino->fecha_nacimiento) {
-                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-                    $edadDias = $fechaNacimiento->diffInDays($hoy);
-                    $ninoId = $this->getNinoId($nino);
-                    
-                    // Verificar controles CRED mensual fuera de rango o faltantes
-                    if ($edadDias >= 29 && $edadDias <= 359) {
-                        $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
-                        $rangosCred = [
-                            1 => ['min' => 29, 'max' => 59], 2 => ['min' => 60, 'max' => 89], 3 => ['min' => 90, 'max' => 119],
-                            4 => ['min' => 120, 'max' => 149], 5 => ['min' => 150, 'max' => 179], 6 => ['min' => 180, 'max' => 209],
-                            7 => ['min' => 210, 'max' => 239], 8 => ['min' => 240, 'max' => 269], 9 => ['min' => 270, 'max' => 299],
-                            10 => ['min' => 300, 'max' => 329], 11 => ['min' => 330, 'max' => 359]
-                        ];
-                        
-                        foreach ($rangosCred as $numControl => $rango) {
-                            $control = $controlesCred->firstWhere('numero_control', $numControl);
-                            
-                            if ($control && $control->fecha) {
-                                $fechaControl = Carbon::parse($control->fecha);
-                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                
-                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
-                                    $completo = false;
-                                    break;
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                $completo = false;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Verificar controles RN fuera de rango o faltantes
-                    if ($completo && $edadDias <= 28) {
-                        $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
-                        $rangosRN = [
-                            1 => ['min' => 2, 'max' => 6],
-                            2 => ['min' => 7, 'max' => 13],
-                            3 => ['min' => 14, 'max' => 20],
-                            4 => ['min' => 21, 'max' => 28]
-                        ];
-                        
-                        foreach ($rangosRN as $numControl => $rango) {
-                            $control = $controlesRn->firstWhere('numero_control', $numControl);
-                            
-                            if ($control && $control->fecha) {
-                                $fechaControl = Carbon::parse($control->fecha);
-                                $edadDiasControl = $fechaNacimiento->diffInDays($fechaControl);
-                                
-                                if ($edadDiasControl < $rango['min'] || $edadDiasControl > $rango['max']) {
-                                    $completo = false;
-                                    break;
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                $completo = false;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    // Verificar visitas domiciliarias fuera de rango o faltantes
-                    if ($completo && $edadDias <= 365) {
-                        $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
-                        $rangosVisitas = [
-                            '28 días' => ['min' => 28, 'max' => 35],
-                            '2-5 meses' => ['min' => 60, 'max' => 150],
-                            '6-8 meses' => ['min' => 180, 'max' => 240],
-                            '9-11 meses' => ['min' => 270, 'max' => 330]
-                        ];
-                        
-                        foreach ($rangosVisitas as $periodo => $rango) {
-                            $visita = $visitas->firstWhere('periodo', $periodo);
-                            
-                            if ($visita && $visita->fecha_visita) {
-                                $fechaVisita = Carbon::parse($visita->fecha_visita);
-                                $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
-                                
-                                if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
-                                    $completo = false;
-                                    break;
-                                }
-                            } elseif ($edadDias > $rango['max']) {
-                                $completo = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if ($completo) {
-                    $ninosCompletos++;
-                }
-            }
-            
-            $calidadPorcentaje = $totalNinos > 0 ? round(($ninosCompletos / $totalNinos) * 100, 1) : 0;
-            
-            $establecimientosStats[] = [
-                'establecimiento' => $establecimiento,
-                'total_controles' => $totalControles,
-                'total_ninos' => $totalNinos,
-                'calidad_porcentaje' => $calidadPorcentaje,
-            ];
-        }
-        
-        // Ordenar por calidad y total de controles
-        usort($establecimientosStats, function($a, $b) {
-            if ($a['calidad_porcentaje'] == $b['calidad_porcentaje']) {
-                return $b['total_controles'] - $a['total_controles'];
-            }
-            return $b['calidad_porcentaje'] - $a['calidad_porcentaje'];
-        });
-        
-        // Top 5 establecimientos con mejor calidad
-        $topEstablecimientos = array_slice($establecimientosStats, 0, 5);
-        
-        // Establecimientos que necesitan mejora (calidad < 70%)
-        $necesitanMejora = array_filter($establecimientosStats, function($est) {
-            return $est['calidad_porcentaje'] < 70 && $est['total_ninos'] > 0;
-        });
-        
-        // Ordenar por calidad (menor primero) y tomar los primeros 5
-        usort($necesitanMejora, function($a, $b) {
-            if ($a['calidad_porcentaje'] == $b['calidad_porcentaje']) {
-                return $a['total_controles'] - $b['total_controles'];
-            }
-            return $a['calidad_porcentaje'] - $b['calidad_porcentaje'];
-        });
-        $necesitanMejora = array_slice($necesitanMejora, 0, 5);
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'top_establecimientos' => $topEstablecimientos,
-                'necesitan_mejora' => array_values($necesitanMejora),
-            ]
-        ]);
-    }
 
     public function totalAlertas()
     {
@@ -1520,21 +1275,77 @@ class ApiController extends Controller
                 }
             }
             
-            // Alertas de tamizaje (1-29 días)
-            if ($edadDias >= 1 && $edadDias <= 29) {
+            // Alertas de tamizaje (0-29 días) - SOLO TAMIZAJE NEONATAL ES REQUERIDO
+            if ($edadDias >= 0 && $edadDias <= 29) {
                 $ninoId = $this->getNinoId($nino);
                 $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
-                if (!$tamizaje) {
+                // Solo verificar tamizaje neonatal (fecha_tam_neo), sisgalen es opcional
+                if (!$tamizaje || !$tamizaje->fecha_tam_neo) {
                     $total++;
                 }
             }
             
-            // Alertas de vacunas (0-30 días)
-            if ($edadDias <= 30) {
+            // Alertas de vacunas (0-2 días) - AMBAS VACUNAS SON REQUERIDAS
+            if ($edadDias >= 0 && $edadDias <= 2) {
                 $ninoId = $this->getNinoId($nino);
                 $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
-                if (!$vacunas || !$vacunas->fecha_bcg || !$vacunas->fecha_hvb) {
+                // Verificar que tenga AMBAS vacunas (BCG y HVB)
+                $tieneBCG = $vacunas && $vacunas->fecha_bcg && 
+                           strtoupper(trim($vacunas->estado_bcg ?? '')) === 'SI';
+                $tieneHVB = $vacunas && $vacunas->fecha_hvb && 
+                           strtoupper(trim($vacunas->estado_hvb ?? '')) === 'SI';
+                
+                // Si falta UNA o AMBAS vacunas, generar alerta
+                if (!$tieneBCG || !$tieneHVB) {
                     $total++;
+                }
+            }
+            
+            // Alertas de CNV (Carné de Nacido Vivo) - TODOS LOS DATOS SON REQUERIDOS
+            $ninoId = $this->getNinoId($nino);
+            $cnv = RecienNacido::where('id_niño', $ninoId)->first();
+            if (!$cnv || empty($cnv->peso) || empty($cnv->edad_gestacional) || empty($cnv->clasificacion)) {
+                $total++;
+            }
+            
+            // Alertas de visitas domiciliarias - MÍNIMO 2 DE 4 REQUERIDAS
+            if ($edadDias >= 28) {
+                $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+                
+                $visitasCumplen = 0;
+                $rangosVisitas = [
+                    'A' => ['min' => 28, 'max' => 28],
+                    'B' => ['min' => 60, 'max' => 150],
+                    'C' => ['min' => 180, 'max' => 240],
+                    'D' => ['min' => 270, 'max' => 330],
+                ];
+                
+                foreach ($visitas as $visita) {
+                    if ($visita->fecha_visita) {
+                        $fechaVisita = Carbon::parse($visita->fecha_visita);
+                        $edadVisita = $fechaNacimiento->diffInDays($fechaVisita);
+                        $grupoVisita = strtoupper(trim($visita->grupo_visita ?? 'A'));
+                        $rango = $rangosVisitas[$grupoVisita] ?? ['min' => 0, 'max' => 365];
+                        
+                        if ($edadVisita >= $rango['min'] && $edadVisita <= $rango['max']) {
+                            $visitasCumplen++;
+                        }
+                    }
+                }
+                
+                // Si tiene menos de 2 visitas cumplidas y ya pasó el tiempo para tenerlas, generar alerta
+                if ($visitasCumplen < 2) {
+                    // Verificar si ya debería tener al menos 2 visitas según su edad
+                    $visitasEsperadas = 0;
+                    if ($edadDias >= 28) $visitasEsperadas++; // Visita A
+                    if ($edadDias >= 150) $visitasEsperadas++; // Visita B
+                    if ($edadDias >= 240) $visitasEsperadas++; // Visita C
+                    if ($edadDias >= 330) $visitasEsperadas++; // Visita D
+                    
+                    // Si debería tener al menos 2 visitas pero no las tiene, generar alerta
+                    if ($visitasEsperadas >= 2 && $visitasCumplen < 2) {
+                        $total++;
+                    }
                 }
             }
         }
@@ -1703,92 +1514,155 @@ class ApiController extends Controller
                 }
             }
             
-            // Alertas de visitas domiciliarias (0-365 días)
-            if ($edadDias <= 365) {
-                $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
-                $visitasRegistradasMap = [];
-                foreach ($visitas as $visita) {
-                    $visitasRegistradasMap[$visita->periodo] = $visita;
-                }
+            // Alertas de CNV (Carné de Nacido Vivo) - TODOS LOS DATOS SON REQUERIDOS
+            $cnv = RecienNacido::where('id_niño', $ninoId)->first();
+            if (!$cnv || empty($cnv->peso) || empty($cnv->edad_gestacional) || empty($cnv->clasificacion)) {
+                $camposFaltantes = [];
+                if (!$cnv || empty($cnv->peso)) $camposFaltantes[] = 'Peso al Nacer';
+                if (!$cnv || empty($cnv->edad_gestacional)) $camposFaltantes[] = 'Edad Gestacional';
+                if (!$cnv || empty($cnv->clasificacion)) $camposFaltantes[] = 'Clasificación';
                 
-                $rangosVisitas = [
-                    '28 días' => ['min' => 28, 'max' => 35],
-                    '2-5 meses' => ['min' => 60, 'max' => 150],
-                    '6-8 meses' => ['min' => 180, 'max' => 240],
-                    '9-11 meses' => ['min' => 270, 'max' => 330]
+                $mensaje = "El CNV (Carné de Nacido Vivo) está incompleto. Faltan los siguientes datos: " . implode(', ', $camposFaltantes);
+                
+                $alertas[] = [
+                    'tipo' => 'cnv',
+                    'nino_id' => $ninoId,
+                    'nino_nombre' => $nino->apellidos_nombres,
+                    'nino_dni' => $nino->numero_doc,
+                    'establecimiento' => $nino->establecimiento,
+                    'control' => 'CNV (Carné de Nacido Vivo)',
+                    'edad_dias' => $edadDias,
+                    'prioridad' => 'alta',
+                    'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                    'mensaje' => $mensaje,
+                    'campos_faltantes' => $camposFaltantes,
                 ];
-                
+            }
+            
+            // Alertas de visitas domiciliarias - MÍNIMO 2 DE 4 REQUERIDAS
+            if ($edadDias >= 28) {
+                $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
                 $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
                 
-                foreach ($rangosVisitas as $periodo => $rango) {
-                    $visita = isset($visitasRegistradasMap[$periodo]) ? $visitasRegistradasMap[$periodo] : null;
+                $rangosVisitas = [
+                    'A' => ['min' => 28, 'max' => 28, 'nombre' => 'Visita A (28 días)'],
+                    'B' => ['min' => 60, 'max' => 150, 'nombre' => 'Visita B (2-5 meses)'],
+                    'C' => ['min' => 180, 'max' => 240, 'nombre' => 'Visita C (6-8 meses)'],
+                    'D' => ['min' => 270, 'max' => 330, 'nombre' => 'Visita D (9-11 meses)']
+                ];
+                
+                $visitasCumplen = 0;
+                $visitasPorGrupo = [];
+                
+                foreach ($visitas as $visita) {
+                    $grupoVisita = strtoupper(trim($visita->grupo_visita ?? 'A'));
+                    if (!isset($visitasPorGrupo[$grupoVisita])) {
+                        $visitasPorGrupo[$grupoVisita] = [];
+                    }
+                    $visitasPorGrupo[$grupoVisita][] = $visita;
+                }
+                
+                // Evaluar cada grupo de visita
+                foreach ($rangosVisitas as $grupo => $rango) {
+                    $visitasGrupo = $visitasPorGrupo[$grupo] ?? [];
+                    $tieneVisitaCumplida = false;
                     
-                    if ($visita && $visita->fecha_visita) {
-                        // Verificar si la visita está fuera de rango
-                        $fechaVisita = Carbon::parse($visita->fecha_visita);
-                        $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
-                        
-                        if ($edadDiasVisita < $rango['min'] || $edadDiasVisita > $rango['max']) {
-                            // Visita fuera de rango
-                            $diasFuera = $edadDiasVisita > $rango['max'] ? ($edadDiasVisita - $rango['max']) : ($rango['min'] - $edadDiasVisita);
-                            $mensaje = $edadDiasVisita > $rango['max']
-                                ? "La visita {$periodo} fue realizada a los {$edadDiasVisita} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) fuera del límite máximo."
-                                : "La visita {$periodo} fue realizada a los {$edadDiasVisita} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) antes del límite mínimo.";
+                    foreach ($visitasGrupo as $visita) {
+                        if ($visita->fecha_visita) {
+                            $fechaVisita = Carbon::parse($visita->fecha_visita);
+                            $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
                             
-                            $alertas[] = [
-                                'tipo' => 'visita',
-                                'nino_id' => $ninoId,
-                                'nino_nombre' => $nino->apellidos_nombres,
-                                'nino_dni' => $nino->numero_doc,
-                                'establecimiento' => $nino->establecimiento,
-                                'control' => "Visita {$periodo}",
-                                'periodo' => $periodo,
-                                'edad_dias' => $edadDias,
-                                'edad_dias_visita' => $edadDiasVisita,
-                                'rango_min' => $rango['min'],
-                                'rango_max' => $rango['max'],
-                                'rango_dias' => $rango['min'] . '-' . $rango['max'],
-                                'prioridad' => 'alta',
-                                'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
-                                'fecha_visita' => $visita->fecha_visita->format('Y-m-d'),
-                                'mensaje' => $mensaje,
-                                'dias_fuera' => $diasFuera,
-                            ];
+                            if ($edadDiasVisita >= $rango['min'] && $edadDiasVisita <= $rango['max']) {
+                                $tieneVisitaCumplida = true;
+                                $visitasCumplen++;
+                                break; // Solo cuenta una visita cumplida por grupo
+                            } elseif ($edadDiasVisita > $rango['max']) {
+                                // Visita fuera de rango (tarde)
+                                $diasFuera = $edadDiasVisita - $rango['max'];
+                                $alertas[] = [
+                                    'tipo' => 'visita',
+                                    'nino_id' => $ninoId,
+                                    'nino_nombre' => $nino->apellidos_nombres,
+                                    'nino_dni' => $nino->numero_doc,
+                                    'establecimiento' => $nino->establecimiento,
+                                    'control' => $rango['nombre'],
+                                    'grupo' => $grupo,
+                                    'edad_dias' => $edadDias,
+                                    'edad_dias_visita' => $edadDiasVisita,
+                                    'rango_min' => $rango['min'],
+                                    'rango_max' => $rango['max'],
+                                    'rango_dias' => $rango['min'] . '-' . $rango['max'],
+                                    'prioridad' => 'alta',
+                                    'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                                    'fecha_visita' => $visita->fecha_visita->format('Y-m-d'),
+                                    'mensaje' => "La {$rango['nombre']} fue realizada a los {$edadDiasVisita} días, fuera del rango permitido ({$rango['min']}-{$rango['max']} días). Está {$diasFuera} día(s) fuera del límite máximo.",
+                                    'dias_fuera' => $diasFuera,
+                                ];
+                            }
                         }
-                    } else if ($edadDias > $rango['max']) {
-                        // Visita faltante y ya pasó el rango
+                    }
+                    
+                    // Si no tiene visita cumplida y ya pasó el rango, generar alerta
+                    if (!$tieneVisitaCumplida && $edadDias > $rango['max']) {
                         $diasFuera = $edadDias - $rango['max'];
-                        $mensaje = "El niño tiene {$edadDias} días y la visita {$periodo} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo.";
-                        
                         $alertas[] = [
                             'tipo' => 'visita',
                             'nino_id' => $ninoId,
                             'nino_nombre' => $nino->apellidos_nombres,
                             'nino_dni' => $nino->numero_doc,
                             'establecimiento' => $nino->establecimiento,
-                            'control' => "Visita {$periodo}",
-                            'periodo' => $periodo,
+                            'control' => $rango['nombre'],
+                            'grupo' => $grupo,
                             'edad_dias' => $edadDias,
                             'rango_min' => $rango['min'],
                             'rango_max' => $rango['max'],
                             'rango_dias' => $rango['min'] . '-' . $rango['max'],
                             'prioridad' => 'alta',
                             'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
-                            'mensaje' => $mensaje,
+                            'mensaje' => "El niño tiene {$edadDias} días y la {$rango['nombre']} debió realizarse entre los {$rango['min']} y {$rango['max']} días. Ya pasaron {$diasFuera} día(s) del límite máximo.",
                             'dias_fuera' => $diasFuera,
+                        ];
+                    }
+                }
+                
+                // Si tiene menos de 2 visitas cumplidas y ya debería tenerlas, generar alerta general
+                if ($visitasCumplen < 2) {
+                    $visitasEsperadas = 0;
+                    if ($edadDias >= 28) $visitasEsperadas++; // Visita A
+                    if ($edadDias >= 150) $visitasEsperadas++; // Visita B
+                    if ($edadDias >= 240) $visitasEsperadas++; // Visita C
+                    if ($edadDias >= 330) $visitasEsperadas++; // Visita D
+                    
+                    // Si debería tener al menos 2 visitas pero no las tiene, generar alerta general
+                    if ($visitasEsperadas >= 2 && $visitasCumplen < 2) {
+                        $faltan = 2 - $visitasCumplen;
+                        $alertas[] = [
+                            'tipo' => 'visita_general',
+                            'nino_id' => $ninoId,
+                            'nino_nombre' => $nino->apellidos_nombres,
+                            'nino_dni' => $nino->numero_doc,
+                            'establecimiento' => $nino->establecimiento,
+                            'control' => 'Visitas Domiciliarias',
+                            'edad_dias' => $edadDias,
+                            'visitas_cumplen' => $visitasCumplen,
+                            'visitas_requeridas' => 2,
+                            'prioridad' => 'alta',
+                            'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                            'mensaje' => "El niño tiene {$edadDias} días y debe tener mínimo 2 visitas domiciliarias cumplidas. Actualmente tiene {$visitasCumplen} visita(s) cumplida(s). Faltan {$faltan} visita(s).",
                         ];
                     }
                 }
             }
             
-            // Alertas de tamizaje (1-29 días)
-            if ($edadDias >= 1 && $edadDias <= 29) {
+            // Alertas de tamizaje (0-29 días) - SOLO TAMIZAJE NEONATAL ES REQUERIDO
+            if ($edadDias >= 0 && $edadDias <= 29) {
                 $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
-                if (!$tamizaje) {
+                // Solo verificar tamizaje neonatal (fecha_tam_neo), sisgalen es opcional
+                if (!$tamizaje || !$tamizaje->fecha_tam_neo) {
                     $diasFuera = $edadDias > 29 ? ($edadDias - 29) : 0;
                     $mensaje = $edadDias > 29 
-                        ? "El niño tiene {$edadDias} días y el tamizaje neonatal debió realizarse entre los 1 y 29 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
-                        : "El niño tiene {$edadDias} días y debe realizarse el tamizaje neonatal entre los 1 y 29 días de vida.";
+                        ? "El niño tiene {$edadDias} días y el tamizaje neonatal debió realizarse entre los 0 y 29 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe realizarse el tamizaje neonatal entre los 0 y 29 días de vida.";
                     
                     $alertas[] = [
                         'tipo' => 'tamizaje',
@@ -1798,9 +1672,9 @@ class ApiController extends Controller
                         'establecimiento' => $nino->establecimiento,
                         'control' => 'Tamizaje Neonatal',
                         'edad_dias' => $edadDias,
-                        'rango_min' => 1,
+                        'rango_min' => 0,
                         'rango_max' => 29,
-                        'rango_dias' => '1-29',
+                        'rango_dias' => '0-29',
                         'prioridad' => $edadDias > 29 ? 'alta' : 'media',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
@@ -1809,14 +1683,21 @@ class ApiController extends Controller
                 }
             }
             
-            // Alertas de vacunas (0-30 días)
-            if ($edadDias <= 30) {
+            // Alertas de vacunas (0-2 días) - AMBAS VACUNAS SON REQUERIDAS
+            if ($edadDias >= 0 && $edadDias <= 2) {
                 $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
-                if (!$vacunas || !$vacunas->fecha_bcg) {
-                    $diasFuera = $edadDias > 7 ? ($edadDias - 7) : 0;
-                    $mensaje = $edadDias > 7 
-                        ? "El niño tiene {$edadDias} días y la vacuna BCG debió aplicarse entre los 0 y 7 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
-                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna BCG entre los 0 y 7 días de vida.";
+                // Verificar que tenga AMBAS vacunas (BCG y HVB)
+                $tieneBCG = $vacunas && $vacunas->fecha_bcg && 
+                           strtoupper(trim($vacunas->estado_bcg ?? '')) === 'SI';
+                $tieneHVB = $vacunas && $vacunas->fecha_hvb && 
+                           strtoupper(trim($vacunas->estado_hvb ?? '')) === 'SI';
+                
+                // Si falta BCG, generar alerta
+                if (!$tieneBCG) {
+                    $diasFuera = $edadDias > 2 ? ($edadDias - 2) : 0;
+                    $mensaje = $edadDias > 2 
+                        ? "El niño tiene {$edadDias} días y la vacuna BCG debió aplicarse entre los 0 y 2 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna BCG entre los 0 y 2 días de vida.";
                     
                     $alertas[] = [
                         'tipo' => 'vacuna',
@@ -1827,19 +1708,21 @@ class ApiController extends Controller
                         'control' => 'Vacuna BCG',
                         'edad_dias' => $edadDias,
                         'rango_min' => 0,
-                        'rango_max' => 7,
-                        'rango_dias' => '0-7',
-                        'prioridad' => $edadDias > 7 ? 'alta' : 'media',
+                        'rango_max' => 2,
+                        'rango_dias' => '0-2',
+                        'prioridad' => $edadDias > 2 ? 'alta' : 'media',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
                         'dias_fuera' => $diasFuera,
                     ];
                 }
-                if (!$vacunas || !$vacunas->fecha_hvb) {
-                    $diasFuera = $edadDias > 1 ? ($edadDias - 1) : 0;
-                    $mensaje = $edadDias > 1 
-                        ? "El niño tiene {$edadDias} días y la vacuna HVB debió aplicarse entre los 0 y 1 día. Ya pasaron {$diasFuera} día(s) del límite máximo."
-                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna HVB entre los 0 y 1 día de vida.";
+                
+                // Si falta HVB, generar alerta
+                if (!$tieneHVB) {
+                    $diasFuera = $edadDias > 2 ? ($edadDias - 2) : 0;
+                    $mensaje = $edadDias > 2 
+                        ? "El niño tiene {$edadDias} días y la vacuna HVB debió aplicarse entre los 0 y 2 días. Ya pasaron {$diasFuera} día(s) del límite máximo."
+                        : "El niño tiene {$edadDias} días y debe aplicarse la vacuna HVB entre los 0 y 2 días de vida.";
                     
                     $alertas[] = [
                         'tipo' => 'vacuna',
@@ -1850,9 +1733,9 @@ class ApiController extends Controller
                         'control' => 'Vacuna HVB',
                         'edad_dias' => $edadDias,
                         'rango_min' => 0,
-                        'rango_max' => 1,
-                        'rango_dias' => '0-1',
-                        'prioridad' => $edadDias > 1 ? 'alta' : 'media',
+                        'rango_max' => 2,
+                        'rango_dias' => '0-2',
+                        'prioridad' => $edadDias > 2 ? 'alta' : 'media',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
                         'dias_fuera' => $diasFuera,
@@ -1910,8 +1793,10 @@ class ApiController extends Controller
             $madre = $nino->madre;
 
             // Preparar respuesta
+            $ninoIdReal = $this->getNinoId($nino);
             $data = [
-                'id' => $nino->id,
+                'id' => $ninoIdReal,
+                'id_niño' => $ninoIdReal,
                 'establecimiento' => $nino->establecimiento,
                 'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null,
                 'codigo_red' => $datosExtra ? $datosExtra->red : null,
@@ -1942,8 +1827,68 @@ class ApiController extends Controller
     }
 
     /**
+     * Actualizar datos extras (solo para ADMIN)
+     */
+    /**
      * Obtener todos los controles de un niño (endpoint consolidado)
      */
+    /**
+     * Eliminar un niño y todos sus datos relacionados (solo admin)
+     */
+    public function eliminarNino($id)
+    {
+        // Verificar que el usuario sea admin
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción. Solo los administradores pueden eliminar niños.'
+            ], 403);
+        }
+
+        try {
+            $nino = $this->findNino($id);
+            $ninoIdReal = $this->getNinoId($nino);
+            $nombreNino = $nino->apellidos_nombres ?? 'N/A';
+
+            // Iniciar transacción
+            DB::beginTransaction();
+
+            // Eliminar todos los datos relacionados
+            ControlMenor1::where('id_niño', $ninoIdReal)->delete();
+            ControlRn::where('id_niño', $ninoIdReal)->delete();
+            TamizajeNeonatal::where('id_niño', $ninoIdReal)->delete();
+            VacunaRn::where('id_niño', $ninoIdReal)->delete();
+            RecienNacido::where('id_niño', $ninoIdReal)->delete();
+            VisitaDomiciliaria::where('id_niño', $ninoIdReal)->delete();
+            DatosExtra::where('id_niño', $ninoIdReal)->delete();
+            Madre::where('id_niño', $ninoIdReal)->delete();
+
+            // Finalmente, eliminar el niño
+            $nino->delete();
+
+            // Confirmar transacción
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "El niño '{$nombreNino}' y todos sus datos relacionados han sido eliminados exitosamente."
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el niño especificado.'
+            ], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el niño: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function obtenerTodosControles($ninoId)
     {
         try {
@@ -1978,20 +1923,70 @@ class ApiController extends Controller
             });
             
             // Formatear controles CRED mensual
-            $controlesCredFormateados = $controlesCred->map(function($control) {
+            $controlesCredFormateados = $controlesCred->map(function($control) use ($nino) {
+                $fecha = $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null;
+                
+                // Recalcular estado basándose en la edad del control y el rango permitido
+                $estadoRecalculado = $control->estado; // Por defecto, usar el estado guardado
+                
+                if ($control->edad !== null && $nino->fecha_nacimiento) {
+                    // Rangos CRED mensual
+                    $rangosCRED = [
+                        1 => ['min' => 29, 'max' => 59],
+                        2 => ['min' => 60, 'max' => 89],
+                        3 => ['min' => 90, 'max' => 119],
+                        4 => ['min' => 120, 'max' => 149],
+                        5 => ['min' => 150, 'max' => 179],
+                        6 => ['min' => 180, 'max' => 209],
+                        7 => ['min' => 210, 'max' => 239],
+                        8 => ['min' => 240, 'max' => 269],
+                        9 => ['min' => 270, 'max' => 299],
+                        10 => ['min' => 300, 'max' => 329],
+                        11 => ['min' => 330, 'max' => 359],
+                    ];
+                    
+                    $numeroControl = $control->numero_control;
+                    $rango = $rangosCRED[$numeroControl] ?? ['min' => 0, 'max' => 365];
+                    $edadDias = (int)$control->edad;
+                    
+                    // Calcular edad actual del niño
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $hoy = Carbon::now();
+                    $edadActualDias = $fechaNacimiento->diffInDays($hoy);
+                    
+                    // Si hay control registrado, verificar si está dentro del rango
+                    if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
+                        $estadoRecalculado = 'CUMPLE';
+                    } elseif ($edadDias > $rango['max']) {
+                        // Control registrado pero fuera del rango
+                        $estadoRecalculado = 'NO CUMPLE';
+                    } else {
+                        // Control registrado pero antes del rango mínimo (raro, pero posible)
+                        $estadoRecalculado = 'NO CUMPLE';
+                    }
+                    
+                    // Actualizar el estado en la base de datos si es diferente
+                    if ($control->estado !== $estadoRecalculado) {
+                        $control->estado = $estadoRecalculado;
+                        $control->save();
+                    }
+                }
+                
                 return [
                     'id' => $control->id_cred ?? $control->id,
                     'id_niño' => $control->id_niño,
-                    'mes' => $control->numero_control,
                     'numero_control' => $control->numero_control,
-                    'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
-                    'fecha_control' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'mes' => $control->numero_control,
+                    'fecha' => $fecha,
+                    'fecha_control' => $fecha,
                     'edad' => $control->edad,
                     'edad_dias' => $control->edad,
-                    'estado' => $control->estado,
+                    'estado' => $estadoRecalculado, // Usar el estado recalculado
                     'peso' => $control->peso ?? null,
                     'talla' => $control->talla ?? null,
                     'perimetro_cefalico' => $control->perimetro_cefalico ?? null,
+                    'estado_cred_once' => $control->estado_cred_once ?? null,
+                    'estado_cred_final' => $control->estado_cred_final ?? null,
                     'es_ejemplo' => false,
                 ];
             });

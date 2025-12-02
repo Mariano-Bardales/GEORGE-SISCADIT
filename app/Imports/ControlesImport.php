@@ -11,14 +11,11 @@ use App\Models\VacunaRn;
 use App\Models\VisitaDomiciliaria;
 use App\Models\DatosExtra;
 use App\Models\RecienNacido;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class ControlesImport implements ToCollection, WithHeadingRow
+class ControlesImport
 {
     protected $errors = [];
     protected $success = [];
@@ -588,28 +585,41 @@ class ControlesImport implements ToCollection, WithHeadingRow
     {
         $existe = RecienNacido::where('id_niño', $ninoId)->exists();
 
-        // Validar clasificación (solo Normal o Bajo Peso al Nacer y/o Prematuro)
-        $clasificacion = $row['clasificacion'] ?? null;
-        $clasificacionesValidas = ['Normal', 'Bajo Peso al Nacer y/o Prematuro'];
-        if ($clasificacion && !in_array($clasificacion, $clasificacionesValidas)) {
-            $this->errors[] = "Clasificación inválida para niño ID: {$ninoId}. Debe ser 'Normal' o 'Bajo Peso al Nacer y/o Prematuro'";
-            return;
-        }
-
         // Convertir peso de gramos a kg si viene en gramos (valores > 10 probablemente son gramos)
-        // Puede venir como 'peso' o 'peso_rn'
-        $peso = $row['peso_rn'] ?? $row['peso'] ?? null;
+        // Puede venir como 'peso' o 'peso_rn' o 'peso_nacer'
+        $peso = $row['peso_nacer'] ?? $row['peso_rn'] ?? $row['peso'] ?? null;
         if ($peso && is_numeric($peso) && $peso > 10) {
             $peso = (float)$peso / 1000; // Convertir gramos a kg
         } elseif ($peso && is_numeric($peso)) {
             $peso = (float)$peso;
         }
+        
+        $edadGestacional = $row['edad_gestacional'] ?? null;
+        $clasificacion = $row['clasificacion'] ?? null;
+        
+        // Validar que todos los campos estén presentes
+        $camposFaltantes = [];
+        if (empty($peso)) $camposFaltantes[] = 'Peso al Nacer';
+        if (empty($edadGestacional)) $camposFaltantes[] = 'Edad Gestacional';
+        if (empty($clasificacion)) $camposFaltantes[] = 'Clasificación';
+        
+        if (!empty($camposFaltantes)) {
+            $this->errors[] = "CNV incompleto para niño ID: {$ninoId}. Faltan: " . implode(', ', $camposFaltantes);
+            return;
+        }
+
+        // Validar clasificación (solo Normal o Bajo Peso al Nacer y/o Prematuro)
+        $clasificacionesValidas = ['Normal', 'Bajo Peso al Nacer y/o Prematuro'];
+        if (!in_array($clasificacion, $clasificacionesValidas)) {
+            $this->errors[] = "Clasificación inválida para niño ID: {$ninoId}. Debe ser 'Normal' o 'Bajo Peso al Nacer y/o Prematuro'";
+            return;
+        }
 
         $data = [
             'id_niño' => $ninoId,
             'peso' => $peso,
-            'edad_gestacional' => !empty($row['edad_gestacional']) ? (int)$row['edad_gestacional'] : null,
-            'clasificacion' => $clasificacion ?? 'Normal',
+            'edad_gestacional' => (int)$edadGestacional,
+            'clasificacion' => $clasificacion,
         ];
 
         if ($existe) {
@@ -619,7 +629,7 @@ class ControlesImport implements ToCollection, WithHeadingRow
         }
 
         $this->stats['recien_nacido']++;
-        $this->success[] = "Datos recién nacido importados para niño ID: {$ninoId}";
+        $this->success[] = "CNV importado para niño ID: {$ninoId}";
     }
 
     protected function parseDate($value)

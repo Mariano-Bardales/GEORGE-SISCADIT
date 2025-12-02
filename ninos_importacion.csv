@@ -1,0 +1,6 @@
+id_nino,establecimiento,tipo_doc,numero_doc,apellidos_nombres,fecha_nacimiento,genero
+1,"Hospital Regional de Pucallpa",DNI,10000001,"García López Juan Carlos",2024-12-01,M
+2,"Centro de Salud Callería",DNI,10000002,"Pérez Martínez Ana María",2024-12-05,F
+3,"Posta de Salud Yarinacocha",DNI,10000003,"Rodríguez Silva Pedro",2024-12-10,M
+4,"Centro de Salud Manantay",DNI,10000004,"Torres Flores María Elena",2024-12-15,F
+5,"Hospital Amazónico",DNI,10000005,"Vargas Ríos Luis Alberto",2024-12-20,M

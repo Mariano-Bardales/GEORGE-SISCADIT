@@ -92,60 +92,8 @@
                 </div>
               </div>
             </div>
-            <!-- Top Establecimientos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="p-2 bg-green-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-award w-6 h-6 text-green-600">
-                      <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
-                      <circle cx="12" cy="8" r="6"></circle>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-bold text-slate-800">Top Establecimientos con Mejores Registros</h3>
-                    <p class="text-sm text-slate-500">Establecimientos con mejor calidad de datos</p>
-                  </div>
-                </div>
-                <div class="space-y-4" id="topEstablecimientosContainer">
-                  <div class="text-center py-8 text-slate-500">
-                    <div class="spinner" style="margin: 0 auto; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 1rem;">Cargando top establecimientos...</p>
-                  </div>
-                </div>
-              </div>
-              <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="p-2 bg-amber-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-building w-6 h-6 text-amber-600">
-                      <rect width="16" height="20" x="4" y="2" rx="2" ry="2"></rect>
-                      <path d="M9 22v-4h6v4"></path>
-                      <path d="M8 6h.01"></path>
-                      <path d="M16 6h.01"></path>
-                      <path d="M12 6h.01"></path>
-                      <path d="M12 10h.01"></path>
-                      <path d="M12 14h.01"></path>
-                      <path d="M16 10h.01"></path>
-                      <path d="M16 14h.01"></path>
-                      <path d="M8 10h.01"></path>
-                      <path d="M8 14h.01"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-bold text-slate-800">Establecimientos que Necesitan Mejora</h3>
-                    <p class="text-sm text-slate-500">Establecimientos con baja calidad de datos</p>
-                  </div>
-                </div>
-                <div class="space-y-4" id="necesitanMejoraContainer">
-                  <div class="text-center py-8 text-slate-500">
-                    <div class="spinner" style="margin: 0 auto; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-                    <p style="margin-top: 1rem;">Cargando establecimientos que necesitan mejora...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Gráficos: Género y Calidad de Datos -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <!-- Gráfico: Distribución por Género -->
+            <div class="grid grid-cols-1 lg:grid-cols-1 gap-6 mt-6">
               <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div class="flex items-center gap-3 mb-6">
                   <div class="p-2 bg-purple-50 rounded-lg">
@@ -163,23 +111,6 @@
                 </div>
                 <div style="position: relative; height: 300px;">
                   <canvas id="chartGenero"></canvas>
-                </div>
-              </div>
-              <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div class="flex items-center gap-3 mb-6">
-                  <div class="p-2 bg-indigo-50 rounded-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pie-chart w-6 h-6 text-indigo-600">
-                      <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
-                      <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 class="text-lg font-bold text-slate-800">Calidad de Datos</h3>
-                    <p class="text-sm text-slate-500">Datos perfectos vs Datos con errores</p>
-                  </div>
-                </div>
-                <div style="position: relative; height: 300px;">
-                  <canvas id="chartCalidadDatos"></canvas>
                 </div>
               </div>
             </div>
@@ -269,7 +200,6 @@
       controlesCred: '{{ route("api.controles-cred-mensual") }}',
       tamizaje: '{{ route("api.tamizaje") }}',
       vacunas: '{{ route("api.vacunas") }}',
-      topEstablecimientos: '{{ route("api.dashboard.top-establecimientos") }}'
     };
   </script>
   <script src="{{ asset('JS/dashbord.js') }}"></script>

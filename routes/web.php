@@ -59,8 +59,6 @@ Route::middleware(['auth'])->group(function () {
     // Importar controles desde Excel (solo admin)
     Route::middleware(['auth'])->group(function () {
         Route::post('/importar-controles', [ImportControlesController::class, 'import'])->name('importar-controles.import');
-        Route::get('/importar-controles/ejemplo', [ImportControlesController::class, 'downloadEjemplo'])->name('importar-controles.ejemplo');
-        Route::get('/importar-controles/ejemplo-completo', [ImportControlesController::class, 'downloadEjemploCompleto'])->name('importar-controles.ejemplo-completo');
     });
     
     // Solicitudes (solo admin) - CRUD completo
@@ -85,11 +83,11 @@ Route::middleware(['auth'])->group(function () {
     // API Routes
     Route::prefix('api')->group(function () {
         Route::get('/dashboard/stats', [ApiController::class, 'dashboardStats'])->name('api.dashboard.stats');
-        Route::get('/dashboard/top-establecimientos', [ApiController::class, 'topEstablecimientos'])->name('api.dashboard.top-establecimientos');
         Route::get('/reportes/estadisticas', [ApiController::class, 'reportesEstadisticas'])->name('api.reportes.estadisticas');
         Route::get('/ninos', [ApiController::class, 'ninos'])->name('api.ninos');
         Route::get('/nino/datos-extras', [ApiController::class, 'datosExtras'])->name('api.nino.datos-extras');
         Route::get('/nino/{id}/controles', [ApiController::class, 'obtenerTodosControles'])->name('api.nino.controles');
+        Route::delete('/nino/{id}', [ApiController::class, 'eliminarNino'])->name('api.nino.eliminar');
         
         // Controles Recién Nacido
         Route::get('/controles-recien-nacido', [ApiController::class, 'controlesRecienNacido'])->name('api.controles-recien-nacido');
@@ -128,6 +126,7 @@ Route::middleware(['auth'])->group(function () {
         // Usuarios API
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('api.usuarios');
         Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('api.usuarios.update');
+        Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('api.usuarios.destroy');
         
         // RENIEC API
         Route::get('/consultar-reniec', [UsuarioController::class, 'consultarReniec'])->name('api.consultar-reniec');

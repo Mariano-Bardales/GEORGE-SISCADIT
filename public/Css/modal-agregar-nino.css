@@ -257,6 +257,65 @@
     outline: none;
   }
   
+  /* Input de fecha mejorado */
+  #agregarNinoModal input[type="date"] {
+    padding-right: 3rem;
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    z-index: 1;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+  }
+  
+  #agregarNinoModal input[type="date"]:hover {
+    border-color: #818cf8;
+    background: #f8fafc;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.1);
+  }
+  
+  #agregarNinoModal input[type="date"]:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    background: #ffffff;
+    transform: translateY(0);
+    outline: none;
+  }
+  
+  #agregarNinoModal input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+    position: absolute;
+    right: 0.5rem;
+    width: 2rem;
+    height: 100%;
+    z-index: 2;
+    background: transparent;
+  }
+  
+  #agregarNinoModal input[type="date"]::-webkit-inner-spin-button,
+  #agregarNinoModal input[type="date"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  /* Para Firefox */
+  #agregarNinoModal input[type="date"] {
+    -moz-appearance: textfield;
+  }
+  
+  /* Input con error */
+  #agregarNinoModal input.border-red-500 {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  #agregarNinoModal input.border-red-500:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+  
   #agregarNinoModal input::placeholder {
     color: #94a3b8;
   }

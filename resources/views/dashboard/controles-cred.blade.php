@@ -15,7 +15,10 @@
   <link rel="stylesheet" href="{{ asset('Css/modal-ver-controles.css') }}">
   <link rel="stylesheet" href="{{ asset('Css/modal-registro-controles.css') }}">
   <link rel="stylesheet" href="{{ asset('Css/modal-importar-controles.css') }}">
+  <link rel="stylesheet" href="{{ asset('Css/modal-datos-extras.css') }}">
+  <link rel="stylesheet" href="{{ asset('Css/modal-advertencia-agregar-nino.css') }}">
   @stack('styles')
+  <link rel="stylesheet" href="{{ asset('Css/modal-eliminar-nino.css') }}">
 </head>
 
 <body>
@@ -185,15 +188,63 @@
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Número de Documento <span class="text-red-500">*</span></label>
-                                    <input type="text" name="Numero_Documento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Número de documento" required>
+                                    <input 
+                                      type="text" 
+                                      name="Numero_Documento" 
+                                      id="numeroDocumentoInput"
+                                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                      placeholder="Ej: 12345678" 
+                                      maxlength="8"
+                                      pattern="[0-9]{8}"
+                                      inputmode="numeric"
+                                      required
+                                      oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8)"
+                                    >
+                                    <p class="text-xs text-slate-500 mt-1">Máximo 8 dígitos numéricos</p>
                                   </div>
                                   <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Apellidos y Nombres <span class="text-red-500">*</span></label>
                                     <input type="text" name="Apellidos_Nombres" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Apellidos y Nombres" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Fecha de Nacimiento <span class="text-red-500">*</span></label>
-                                    <input type="date" name="Fecha_Nacimiento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                                      <span class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600">
+                                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                        Fecha de Nacimiento <span class="text-red-500">*</span>
+                                      </span>
+                                    </label>
+                                    <div class="relative">
+                                      <input 
+                                        type="date" 
+                                        name="Fecha_Nacimiento" 
+                                        id="fechaNacimientoInput"
+                                        class="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer bg-white hover:border-indigo-400 hover:bg-indigo-50/30" 
+                                        required
+                                        max="{{ date('Y-m-d') }}"
+                                        style="font-size: 0.9375rem; color: #1e293b; z-index: 1; position: relative;"
+                                      >
+                                      <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none z-10">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500">
+                                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                          <line x1="16" y1="2" x2="16" y2="6"></line>
+                                          <line x1="8" y1="2" x2="8" y2="6"></line>
+                                          <line x1="3" y1="10" x2="21" y2="10"></line>
+                                        </svg>
+                                      </div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                      </svg>
+                                      Seleccione la fecha de nacimiento del niño (no puede ser una fecha futura)
+                                    </p>
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Género <span class="text-red-500">*</span></label>
@@ -310,7 +361,18 @@
                                 <div class="space-y-4">
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">DNI</label>
-                                    <input type="text" name="DNI_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="DNI de la madre">
+                                    <input 
+                                      type="text" 
+                                      name="DNI_Madre" 
+                                      id="dniMadreInput"
+                                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                      placeholder="Ej: 12345678" 
+                                      maxlength="8"
+                                      pattern="[0-9]{8}"
+                                      inputmode="numeric"
+                                      oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8)"
+                                    >
+                                    <p class="text-xs text-slate-500 mt-1">Máximo 8 dígitos numéricos</p>
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Apellidos y Nombres</label>
@@ -318,7 +380,18 @@
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Celular</label>
-                                    <input type="text" name="Celular_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Celular">
+                                    <input 
+                                      type="tel" 
+                                      name="Celular_Madre" 
+                                      id="celularMadreInput"
+                                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                                      placeholder="Ej: 987654321" 
+                                      maxlength="9"
+                                      pattern="[0-9]{9}"
+                                      inputmode="numeric"
+                                      oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)"
+                                    >
+                                    <p class="text-xs text-slate-500 mt-1">Máximo 9 dígitos numéricos</p>
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Domicilio</label>
@@ -341,6 +414,73 @@
                             </button>
                           </div>
                         </form>
+                      </div>
+                    </div>
+                    
+                    <!-- Modal de Advertencias/Errores para Agregar Niño -->
+                    <div id="modalAdvertenciaAgregarNino" class="modal-advertencia-nino-overlay" onclick="closeModalAdvertenciaAgregarNino(event)">
+                      <div class="modal-advertencia-nino-container" onclick="event.stopPropagation()">
+                        <div class="modal-advertencia-nino-header">
+                          <div class="modal-advertencia-nino-header-content">
+                            <div class="modal-advertencia-nino-icon" id="modalAdvertenciaIcon">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                                <path d="M12 9v4"></path>
+                                <path d="M12 17h.01"></path>
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 class="modal-advertencia-nino-title" id="modalAdvertenciaTitulo">Advertencia</h3>
+                              <p class="modal-advertencia-nino-subtitle" id="modalAdvertenciaSubtitulo">Revise la información antes de continuar</p>
+                            </div>
+                          </div>
+                          <button onclick="closeModalAdvertenciaAgregarNino()" class="modal-advertencia-nino-close">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </div>
+                        
+                        <div class="modal-advertencia-nino-content">
+                          <div class="modal-advertencia-nino-icon-large" id="modalAdvertenciaIconLarge">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                              <path d="M12 9v4"></path>
+                              <path d="M12 17h.01"></path>
+                            </svg>
+                          </div>
+                          <div class="modal-advertencia-nino-message" id="modalAdvertenciaMensaje">
+                            <!-- El mensaje se insertará aquí -->
+                          </div>
+                          
+                          <!-- Lista de campos faltantes (si aplica) -->
+                          <ul class="modal-advertencia-nino-list" id="modalAdvertenciaLista" style="display: none;">
+                            <!-- Los campos faltantes se insertarán aquí -->
+                          </ul>
+                        </div>
+                        
+                        <div class="modal-advertencia-nino-footer">
+                          <button type="button" onclick="closeModalAdvertenciaAgregarNino()" class="modal-advertencia-nino-btn modal-advertencia-nino-btn-cancel">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Cerrar
+                          </button>
+                          <button 
+                            type="button" 
+                            id="btnConfirmarAdvertenciaAgregarNino" 
+                            onclick="confirmarAdvertenciaAgregarNino()" 
+                            class="modal-advertencia-nino-btn modal-advertencia-nino-btn-confirm"
+                            style="display: none;"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Continuar
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -967,6 +1107,136 @@
               <pre class="modal-importar-message-text">{{ session('import_success') }}</pre>
             </div>
           </div>
+          
+          <!-- Resumen Detallado de Niños Importados -->
+          @if(session('ninos_detallados') && count(session('ninos_detallados')) > 0)
+            <div class="mt-6 bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" x2="8" y1="13" y2="13"></line>
+                    <line x1="16" x2="8" y1="17" y2="17"></line>
+                  </svg>
+                  Resumen Detallado de Datos Importados
+                </h3>
+                <p class="text-sm text-indigo-100 mt-1">Datos generales, datos extra, madre y controles</p>
+              </div>
+              
+              <div class="p-6 space-y-6 max-h-96 overflow-y-auto">
+                @foreach(session('ninos_detallados') as $index => $ninoData)
+                  <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                    <!-- Datos del Niño -->
+                    <div class="mb-4">
+                      <h4 class="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold">{{ $index + 1 }}</span>
+                        {{ $ninoData['nino']['apellidos_nombres'] ?? 'N/A' }}
+                      </h4>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                        <div><span class="text-slate-600">ID:</span> <span class="font-medium">{{ $ninoData['nino']['id_niño'] }}</span></div>
+                        <div><span class="text-slate-600">Documento:</span> <span class="font-medium">{{ $ninoData['nino']['numero_doc'] ?? 'N/A' }}</span></div>
+                        <div><span class="text-slate-600">Nacimiento:</span> <span class="font-medium">{{ $ninoData['nino']['fecha_nacimiento'] ?? 'N/A' }}</span></div>
+                        <div><span class="text-slate-600">Género:</span> <span class="font-medium">{{ $ninoData['nino']['genero'] ?? 'N/A' }}</span></div>
+                      </div>
+                    </div>
+                    
+                    <!-- Datos Extra -->
+                    @if($ninoData['datos_extra'])
+                      <div class="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                        <h5 class="font-semibold text-blue-800 text-sm mb-2">📋 Datos Extra</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                          <div><span class="text-blue-600">Red:</span> <span class="font-medium">{{ $ninoData['datos_extra']['red'] ?? '-' }}</span></div>
+                          <div><span class="text-blue-600">MicroRed:</span> <span class="font-medium">{{ $ninoData['datos_extra']['microred'] ?? '-' }}</span></div>
+                          <div><span class="text-blue-600">Distrito:</span> <span class="font-medium">{{ $ninoData['datos_extra']['distrito'] ?? '-' }}</span></div>
+                          <div><span class="text-blue-600">Seguro:</span> <span class="font-medium">{{ $ninoData['datos_extra']['seguro'] ?? '-' }}</span></div>
+                        </div>
+                      </div>
+                    @endif
+                    
+                    <!-- Datos de la Madre -->
+                    @if($ninoData['madre'])
+                      <div class="mb-3 p-3 bg-pink-50 rounded border border-pink-200">
+                        <h5 class="font-semibold text-pink-800 text-sm mb-2">👩 Madre</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                          <div><span class="text-pink-600">DNI:</span> <span class="font-medium">{{ $ninoData['madre']['dni'] ?? '-' }}</span></div>
+                          <div><span class="text-pink-600">Nombre:</span> <span class="font-medium">{{ $ninoData['madre']['apellidos_nombres'] ?? '-' }}</span></div>
+                          <div><span class="text-pink-600">Celular:</span> <span class="font-medium">{{ $ninoData['madre']['celular'] ?? '-' }}</span></div>
+                        </div>
+                      </div>
+                    @endif
+                    
+                    <!-- Controles -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <!-- Controles RN -->
+                      @if(count($ninoData['controles_rn']) > 0)
+                        <div class="p-3 bg-green-50 rounded border border-green-200">
+                          <h5 class="font-semibold text-green-800 text-sm mb-2">👶 Controles RN ({{ count($ninoData['controles_rn']) }})</h5>
+                          <div class="space-y-1 text-xs">
+                            @foreach($ninoData['controles_rn'] as $control)
+                              <div class="flex justify-between">
+                                <span>Control {{ $control['numero_control'] }}:</span>
+                                <span class="font-medium">{{ $control['fecha'] ?? '-' }} ({{ $control['edad'] ?? '-' }} días) - <span class="text-green-700">{{ $control['estado'] ?? '-' }}</span></span>
+                              </div>
+                            @endforeach
+                          </div>
+                        </div>
+                      @endif
+                      
+                      <!-- Controles CRED -->
+                      @if(count($ninoData['controles_cred']) > 0)
+                        <div class="p-3 bg-purple-50 rounded border border-purple-200">
+                          <h5 class="font-semibold text-purple-800 text-sm mb-2">📊 Controles CRED ({{ count($ninoData['controles_cred']) }})</h5>
+                          <div class="space-y-1 text-xs">
+                            @foreach($ninoData['controles_cred'] as $control)
+                              <div class="flex justify-between">
+                                <span>Control {{ $control['numero_control'] }}:</span>
+                                <span class="font-medium">{{ $control['fecha'] ?? '-' }} ({{ $control['edad'] ?? '-' }} días) - <span class="text-purple-700">{{ $control['estado'] ?? '-' }}</span></span>
+                              </div>
+                            @endforeach
+                          </div>
+                        </div>
+                      @endif
+                    </div>
+                    
+                    <!-- Otros Controles -->
+                    <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                      @if($ninoData['tamizaje'])
+                        <div class="p-2 bg-yellow-50 rounded border border-yellow-200">
+                          <span class="text-yellow-700 font-semibold">Tamizaje:</span>
+                          <div class="text-yellow-800">{{ $ninoData['tamizaje']['fecha_tam_neo'] ?? '-' }}</div>
+                          <div class="text-yellow-600 text-xs">{{ $ninoData['tamizaje']['cumple_tam_neo'] ?? '-' }}</div>
+                        </div>
+                      @endif
+                      
+                      @if($ninoData['vacunas'])
+                        <div class="p-2 bg-orange-50 rounded border border-orange-200">
+                          <span class="text-orange-700 font-semibold">Vacunas:</span>
+                          <div class="text-orange-800 text-xs">BCG: {{ $ninoData['vacunas']['fecha_bcg'] ?? '-' }}</div>
+                          <div class="text-orange-800 text-xs">HVB: {{ $ninoData['vacunas']['fecha_hvb'] ?? '-' }}</div>
+                        </div>
+                      @endif
+                      
+                      @if($ninoData['cnv'])
+                        <div class="p-2 bg-teal-50 rounded border border-teal-200">
+                          <span class="text-teal-700 font-semibold">CNV:</span>
+                          <div class="text-teal-800 text-xs">Peso: {{ $ninoData['cnv']['peso'] ?? '-' }}g</div>
+                          <div class="text-teal-800 text-xs">EG: {{ $ninoData['cnv']['edad_gestacional'] ?? '-' }} sem</div>
+                        </div>
+                      @endif
+                      
+                      @if(count($ninoData['visitas']) > 0)
+                        <div class="p-2 bg-cyan-50 rounded border border-cyan-200">
+                          <span class="text-cyan-700 font-semibold">Visitas:</span>
+                          <div class="text-cyan-800 text-xs">{{ count($ninoData['visitas']) }} registradas</div>
+                        </div>
+                      @endif
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          @endif
         @endif
 
         @if(session('import_error'))
@@ -1041,69 +1311,8 @@
               </svg>
               Importar Controles
             </button>
-
-            <a 
-              href="{{ route('importar-controles.ejemplo') }}" 
-              class="modal-importar-btn modal-importar-btn-secondary"
-              title="Descargar ejemplo básico"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" x2="12" y1="15" y2="3"></line>
-              </svg>
-              Ejemplo Básico
-            </a>
-
-            <a 
-              href="{{ route('importar-controles.ejemplo-completo') }}" 
-              class="modal-importar-btn modal-importar-btn-secondary"
-              title="Descargar ejemplo completo con un niño y todos sus controles"
-              style="background: linear-gradient(135deg, #10b981, #059669);"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" x2="12" y1="15" y2="3"></line>
-              </svg>
-              Ejemplo Completo
-            </a>
           </div>
         </form>
-
-        <!-- Información del formato -->
-        <div class="modal-importar-info">
-          <div class="modal-importar-info-content">
-            <div class="modal-importar-info-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-            </div>
-            <div class="modal-importar-info-text">
-              <h4 class="modal-importar-info-title">📋 Formato requerido</h4>
-              <div class="modal-importar-info-grid">
-                <div class="modal-importar-info-section">
-                  <p class="modal-importar-info-section-title">Tipos de control:</p>
-                  <ul class="modal-importar-info-list">
-                    <li>• NINO, MADRE, CRED, CRN</li>
-                    <li>• VACUNA, TAMIZAJE, VISITA</li>
-                    <li>• DATOS_EXTRA, RECIEN_NACIDO</li>
-                  </ul>
-                </div>
-                <div class="modal-importar-info-section">
-                  <p class="modal-importar-info-section-title">Columnas clave:</p>
-                  <ul class="modal-importar-info-list">
-                    <li>• ID_NINO, TIPO_CONTROL</li>
-                    <li>• NUMERO_CONTROL, FECHA</li>
-                    <li>• Datos del niño y madre</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -1395,7 +1604,7 @@
               <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${generoClass} text-white font-semibold text-sm" style="background-color: ${generoColor} !important;">${genero}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <button class="btn-cred-secondary" onclick="openDatosExtrasModal('${nombre.replace(/'/g, "\\'")}', '${documento.replace(/'/g, "\\'")}')" title="Ver datos extras">
+              <button class="btn-cred-secondary" onclick="openDatosExtrasModal(${ninoId}, '${nombre.replace(/'/g, "\\'")}', '${documento.replace(/'/g, "\\'")}')" title="Ver datos extras">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <path d="M12 16v-4"></path>
@@ -1551,19 +1760,39 @@
           }
         }
         
-        // Recargar la tabla después de importar
+        // Recargar la tabla después de importar para mostrar los datos guardados
+        console.log('✅ Datos guardados en BD, recargando tabla...');
+        
+        // Forzar recarga de la tabla para mostrar los datos importados
         if (typeof window.cargarNinos === 'function') {
           console.log('🔄 Recargando tabla después de importación exitosa...');
+          
+          // Recargar inmediatamente
+          window.cargarNinos(1);
+          
+          // Recargar nuevamente después de un breve delay para asegurar que se muestren todos los datos
           setTimeout(() => {
+            console.log('🔄 Segunda recarga para asegurar que todos los datos se muestren...');
             window.cargarNinos(1);
-          }, 800);
+          }, 1500);
         } else {
-          console.warn('⚠️ cargarNinos no está disponible, recargando página...');
-          // Recargar la página después de 2 segundos para mostrar el mensaje
+          console.warn('⚠️ cargarNinos no está disponible, recargando página completa...');
+          // Recargar la página después de 2 segundos para mostrar el mensaje y los datos
           setTimeout(() => {
             window.location.reload();
           }, 2000);
         }
+        
+        // Mostrar mensaje de confirmación de guardado en BD
+        @if(session('verificacion_bd'))
+          const verificacion = @json(session('verificacion_bd'));
+          if (verificacion && verificacion.total_verificado) {
+            console.log('✅ Verificación BD:', verificacion);
+            console.log(`✅ ${verificacion.ninos_en_bd} niños en BD`);
+            console.log(`✅ ${verificacion.controles_cred_en_bd} controles CRED en BD`);
+            console.log(`✅ ${verificacion.controles_rn_en_bd} controles RN en BD`);
+          }
+        @endif
       @endif
       
       @if(session('import_error'))
@@ -1745,9 +1974,26 @@
 
     // ========== FUNCIONES PARA MODAL VER CONTROLES ==========
     // Función para abrir el modal de Datos Extras
-    function openDatosExtrasModal(nombre, documento) {
+    // Variable global para guardar el ID del niño actual
+    let datosExtrasNinoId = null;
+    let datosExtrasDocumento = null;
+    let datosExtrasOriginales = {};
+
+    function openDatosExtrasModal(ninoId, nombre, documento) {
       const modal = document.getElementById('datosExtrasModal');
-      if (!modal) return;
+      if (!modal) {
+        console.error('Modal datosExtrasModal no encontrado');
+        return;
+      }
+
+      datosExtrasDocumento = documento;
+      datosExtrasNinoId = ninoId || null;
+
+      // Mostrar el modal inmediatamente
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      // Asegurar que estemos en modo vista (solo lectura)
 
       // Obtener datos reales desde la base de datos
       fetch('{{ route("api.nino.datos-extras") }}?documento=' + encodeURIComponent(documento), {
@@ -1761,6 +2007,24 @@
       .then(data => {
         if (data.success && data.data) {
           const nino = data.data;
+          
+          // Guardar el ID del niño (usar el que se pasó como parámetro o el de la respuesta)
+          const ninoIdFinal = datosExtrasNinoId || nino.id_niño || nino.id;
+          if (ninoIdFinal) {
+            datosExtrasNinoId = ninoIdFinal;
+          }
+          
+          // Guardar datos originales para poder cancelar
+          datosExtrasOriginales = {
+            red: String(nino.codigo_red || ''),
+            microred: nino.codigo_microred || '',
+            eess_nacimiento: nino.id_establecimiento || '',
+            distrito: nino.distrito || '',
+            provincia: nino.provincia || '',
+            departamento: nino.departamento || '',
+            seguro: nino.seguro || '',
+            programa: nino.programa || ''
+          };
 
           // Función para obtener el nombre de la red desde el código
           function obtenerNombreRed(codigoRed) {
@@ -1812,16 +2076,38 @@
           const microredElement = document.getElementById('datosExtras-microred');
           const establecimientoElement = document.getElementById('datosExtras-establecimiento');
 
-          if (redElement) redElement.textContent = nombreRed;
-          if (microredElement) microredElement.textContent = nombreMicrored;
-          if (establecimientoElement) establecimientoElement.textContent = nombreEstablecimiento;
+          if (redElement) {
+            redElement.textContent = nombreRed;
+          }
+          if (microredElement) {
+            microredElement.textContent = nombreMicrored;
+          }
+          if (establecimientoElement) {
+            establecimientoElement.textContent = nombreEstablecimiento;
+          }
 
           // Llenar los campos del modal con datos reales
-          document.getElementById('datosExtras-distrito').textContent = nino.distrito || '-';
-          document.getElementById('datosExtras-provincia').textContent = nino.provincia || '-';
-          document.getElementById('datosExtras-departamento').textContent = nino.departamento || '-';
-          document.getElementById('datosExtras-seguro').textContent = nino.seguro || '-';
-          document.getElementById('datosExtras-programa').textContent = nino.programa || '-';
+          const distritoEl = document.getElementById('datosExtras-distrito');
+          const provinciaEl = document.getElementById('datosExtras-provincia');
+          const departamentoEl = document.getElementById('datosExtras-departamento');
+          const seguroEl = document.getElementById('datosExtras-seguro');
+          const programaEl = document.getElementById('datosExtras-programa');
+          
+          if (distritoEl) {
+            distritoEl.textContent = nino.distrito || '-';
+          }
+          if (provinciaEl) {
+            provinciaEl.textContent = nino.provincia || '-';
+          }
+          if (departamentoEl) {
+            departamentoEl.textContent = nino.departamento || '-';
+          }
+          if (seguroEl) {
+            seguroEl.textContent = nino.seguro || '-';
+          }
+          if (programaEl) {
+            programaEl.textContent = nino.programa || '-';
+          }
           document.getElementById('datosExtras-dni-madre').textContent = nino.dni_madre || '-';
           document.getElementById('datosExtras-nombre-madre').textContent = nino.apellidos_nombres_madre || '-';
           document.getElementById('datosExtras-celular-madre').textContent = nino.celular_madre || '-';
@@ -4635,50 +4921,184 @@
           const requiredFields = this.querySelectorAll('[required]');
           let isValid = true;
           let missingFields = [];
+          let missingFieldsDetails = [];
+          const fieldLabels = {
+            'Id_Tipo_Documento': 'Tipo de Documento',
+            'Numero_Documento': 'Número de Documento',
+            'Apellidos_Nombres': 'Apellidos y Nombres',
+            'Fecha_Nacimiento': 'Fecha de Nacimiento',
+            'Genero': 'Género',
+            'Codigo_Red': 'Red',
+            'Codigo_Microred': 'MicroRed',
+            'Id_Establecimiento': 'Establecimiento'
+          };
+
+          // Limpiar clases de error previas
+          requiredFields.forEach(field => {
+            field.classList.remove('border-red-500');
+          });
 
           requiredFields.forEach(field => {
-            if (!field.value.trim()) {
+            const fieldName = field.name;
+            let fieldValue = field.value;
+            let fieldLabel = fieldLabels[fieldName] || field.closest('div')?.querySelector('label')?.textContent?.replace(/\*/g, '').trim() || fieldName.replace(/_/g, ' ');
+            
+            // Validar campos específicos
+            if (fieldName === 'Numero_Documento') {
+              fieldValue = fieldValue.replace(/[^0-9]/g, '');
+              if (!fieldValue || fieldValue.length !== 8) {
+                isValid = false;
+                missingFields.push('Número de Documento');
+                missingFieldsDetails.push({
+                  campo: 'Número de Documento',
+                  problema: fieldValue.length === 0 ? 'Campo vacío' : `Debe tener exactamente 8 dígitos (tiene ${fieldValue.length})`,
+                  elemento: field
+                });
+                field.classList.add('border-red-500');
+              } else {
+                field.classList.remove('border-red-500');
+              }
+            } else if (fieldName === 'Fecha_Nacimiento') {
+              if (!fieldValue || fieldValue.trim() === '') {
+                isValid = false;
+                missingFields.push('Fecha de Nacimiento');
+                missingFieldsDetails.push({
+                  campo: 'Fecha de Nacimiento',
+                  problema: 'No se ha seleccionado una fecha',
+                  elemento: field
+                });
+                field.classList.add('border-red-500');
+              } else {
+                field.classList.remove('border-red-500');
+              }
+            } else if (!fieldValue.trim()) {
               isValid = false;
-              const label = field.previousElementSibling?.textContent || field.name;
-              missingFields.push(label.replace(/\*/g, '').trim());
+              missingFields.push(fieldLabel);
+              missingFieldsDetails.push({
+                campo: fieldLabel,
+                problema: 'Campo vacío',
+                elemento: field
+              });
+              field.classList.add('border-red-500');
+            } else {
+              field.classList.remove('border-red-500');
             }
           });
 
           if (!isValid) {
-            alert('Por favor, complete todos los campos requeridos.');
+            // Construir mensaje detallado
+            let mensajeError = 'Para registrar al niño, debe completar TODOS los campos requeridos.\n\n';
+            mensajeError += `Faltan ${missingFields.length} campo(s) por completar:\n\n`;
+            
+            missingFieldsDetails.forEach((detalle, index) => {
+              mensajeError += `${index + 1}. ${detalle.campo}\n   └─ ${detalle.problema}\n\n`;
+            });
+            
+            mensajeError += 'Por favor, complete todos los campos marcados con (*) antes de continuar.';
+            
+            mostrarAdvertenciaAgregarNino(
+              'error',
+              `Faltan ${missingFields.length} Campo(s) Requerido(s)`,
+              mensajeError,
+              missingFieldsDetails.map(d => `${d.campo}: ${d.problema}`)
+            );
+            
+            // Hacer scroll al primer campo con error
+            if (missingFieldsDetails.length > 0 && missingFieldsDetails[0].elemento) {
+              setTimeout(() => {
+                missingFieldsDetails[0].elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                missingFieldsDetails[0].elemento.focus();
+              }, 300);
+            }
+            
             return;
           }
 
-          // Mostrar advertencia antes de registrar
-          const advertencia = '¿Está seguro de que ingresó todos los datos correctamente?\n\n' +
-                             'Por favor, revise la información antes de continuar.\n\n' +
-                             'Algunos campos pueden ser opcionales, pero asegúrese de haber completado la información necesaria.';
-
-          if (confirm(advertencia)) {
-            // Asegurar que el nombre del establecimiento esté actualizado antes de enviar
-            const eessSelect = document.getElementById('modalIdEstablecimiento');
-            const nombreEstablecimientoInput = document.querySelector('input[name="Nombre_Establecimiento"]');
-            
-            if (eessSelect && eessSelect.value && nombreEstablecimientoInput) {
-              const selectedOption = eessSelect.options[eessSelect.selectedIndex];
-              if (selectedOption && selectedOption.textContent) {
-                nombreEstablecimientoInput.value = selectedOption.textContent;
-              }
+          // Validar formato de DNI si está presente
+          const numeroDoc = document.getElementById('numeroDocumentoInput');
+          if (numeroDoc && numeroDoc.value) {
+            const dniValue = numeroDoc.value.replace(/[^0-9]/g, '');
+            if (dniValue.length !== 8) {
+              mostrarAdvertenciaAgregarNino(
+                'error',
+                'Error en Número de Documento',
+                'El número de documento debe tener exactamente 8 dígitos numéricos.',
+                ['Número de Documento']
+              );
+              numeroDoc.focus();
+              numeroDoc.classList.add('border-red-500');
+              return;
             }
+          }
 
-            // Crear FormData
-            const formData = new FormData(this);
+          // Validar formato de DNI de la madre si está presente
+          const dniMadre = document.getElementById('dniMadreInput');
+          if (dniMadre && dniMadre.value) {
+            const dniMadreValue = dniMadre.value.replace(/[^0-9]/g, '');
+            if (dniMadreValue.length !== 8 && dniMadreValue.length > 0) {
+              mostrarAdvertenciaAgregarNino(
+                'error',
+                'Error en DNI de la Madre',
+                'El DNI de la madre debe tener exactamente 8 dígitos numéricos.',
+                ['DNI de la Madre']
+              );
+              dniMadre.focus();
+              dniMadre.classList.add('border-red-500');
+              return;
+            }
+          }
 
-            // Enviar formulario
-            fetch(this.action, {
-              method: 'POST',
-              body: formData,
-              headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          // Validar formato de celular si está presente
+          const celular = document.getElementById('celularMadreInput');
+          if (celular && celular.value) {
+            const celularValue = celular.value.replace(/[^0-9]/g, '');
+            if (celularValue.length !== 9 && celularValue.length > 0) {
+              mostrarAdvertenciaAgregarNino(
+                'error',
+                'Error en Número de Celular',
+                'El número de celular debe tener exactamente 9 dígitos numéricos.',
+                ['Celular']
+              );
+              celular.focus();
+              celular.classList.add('border-red-500');
+              return;
+            }
+          }
+
+          // Mostrar advertencia antes de registrar
+          console.log('📝 Mostrando modal de confirmación...');
+          mostrarAdvertenciaAgregarNino(
+            'advertencia',
+            'Confirmar Registro',
+            '¿Está seguro de que ingresó todos los datos correctamente?\n\nPor favor, revise la información antes de continuar.\n\nAlgunos campos pueden ser opcionales, pero asegúrese de haber completado la información necesaria.',
+            null,
+            function() {
+              // Función de confirmación que se ejecutará cuando el usuario confirme
+              console.log('✅ Usuario confirmó, procediendo con el registro...');
+              // Asegurar que el nombre del establecimiento esté actualizado antes de enviar
+              const eessSelect = document.getElementById('modalIdEstablecimiento');
+              const nombreEstablecimientoInput = document.querySelector('input[name="Nombre_Establecimiento"]');
+              
+              if (eessSelect && eessSelect.value && nombreEstablecimientoInput) {
+                const selectedOption = eessSelect.options[eessSelect.selectedIndex];
+                if (selectedOption && selectedOption.textContent) {
+                  nombreEstablecimientoInput.value = selectedOption.textContent;
+                }
               }
-            })
-            .then(response => {
+
+              // Crear FormData
+              const formData = new FormData(agregarNinoForm);
+
+              // Enviar formulario
+              fetch(agregarNinoForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                  'X-Requested-With': 'XMLHttpRequest',
+                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+              })
+              .then(response => {
               // Verificar si la respuesta es JSON
               const contentType = response.headers.get("content-type");
               if (contentType && contentType.includes("application/json")) {
@@ -4704,17 +5124,24 @@
               console.log('Resultado del registro:', result);
               if (result.ok && result.data && result.data.success) {
                 // Mostrar mensaje de éxito
-                alert('¡Niño registrado exitosamente!');
-                // Cerrar el modal
-                closeAgregarNinoModal();
-                // Recargar la tabla sin recargar toda la página
-                // Esperar un momento para asegurar que los datos se hayan guardado
-                setTimeout(() => {
-                  cargarNinos(1);
-                }, 500);
+                mostrarAdvertenciaAgregarNino(
+                  'success',
+                  '¡Registro Exitoso!',
+                  'El niño ha sido registrado exitosamente en el sistema.',
+                  null,
+                  function() {
+                    closeModalAdvertenciaAgregarNino();
+                    closeAgregarNinoModal();
+                    // Recargar la tabla sin recargar toda la página
+                    setTimeout(() => {
+                      cargarNinos(1);
+                    }, 500);
+                  }
+                );
               } else {
                 // Manejar errores de validación u otros errores
                 let errorMessage = 'No se pudo registrar el niño';
+                let errorFields = [];
                 
                 if (result.data) {
                   if (result.data.message) {
@@ -4722,13 +5149,19 @@
                   }
                   
                   if (result.data.errors) {
+                    errorFields = Object.entries(result.data.errors)
+                      .map(([field, messages]) => {
+                        const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        return fieldName;
+                      });
+                    
                     const errorList = Object.entries(result.data.errors)
                       .map(([field, messages]) => {
                         const fieldName = field.replace(/_/g, ' ');
                         return `${fieldName}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
                       })
                       .join('\n');
-                    errorMessage = errorMessage + '\n\nErrores de validación:\n' + errorList;
+                    errorMessage = errorMessage + '\n\n' + errorList;
                   }
                   
                   // Si hay un error de excepción, mostrarlo
@@ -4741,15 +5174,217 @@
                 }
                 
                 console.error('Error al registrar:', result);
-                alert('Error: ' + errorMessage);
+                mostrarAdvertenciaAgregarNino(
+                  'error',
+                  'Error al Registrar',
+                  errorMessage,
+                  errorFields.length > 0 ? errorFields : null
+                );
               }
             })
-            .catch(error => {
-              console.error('Error en la petición:', error);
-              alert('Error al registrar el niño. Por favor, verifique la consola del navegador (F12) para más detalles e inténtelo nuevamente.');
+              .catch(error => {
+                console.error('Error en la petición:', error);
+                mostrarAdvertenciaAgregarNino(
+                  'error',
+                  'Error de Conexión',
+                  'No se pudo conectar con el servidor. Por favor, verifique su conexión a internet e intente nuevamente.\n\nSi el problema persiste, verifique la consola del navegador (F12) para más detalles.'
+                );
+              });
+            }
+          );
+        });
+      }
+      
+      // Variable para almacenar la función de confirmación (scope global)
+      window.confirmacionCallbackAgregarNino = null;
+      
+      // Función para mostrar advertencias/errores con modal personalizado
+      function mostrarAdvertenciaAgregarNino(tipo, titulo, mensaje, camposFaltantes = null, callbackConfirmacion = null) {
+        const modal = document.getElementById('modalAdvertenciaAgregarNino');
+        const header = modal.querySelector('.modal-advertencia-nino-header');
+        const iconLarge = document.getElementById('modalAdvertenciaIconLarge');
+        const iconHeader = document.getElementById('modalAdvertenciaIcon');
+        const tituloEl = document.getElementById('modalAdvertenciaTitulo');
+        const subtituloEl = document.getElementById('modalAdvertenciaSubtitulo');
+        const mensajeEl = document.getElementById('modalAdvertenciaMensaje');
+        const listaEl = document.getElementById('modalAdvertenciaLista');
+        const btnConfirmar = document.getElementById('btnConfirmarAdvertenciaAgregarNino');
+        const btnCancelar = modal.querySelector('.modal-advertencia-nino-btn-cancel');
+        
+        if (!modal) return;
+        
+        // Remover clases anteriores
+        header.classList.remove('advertencia', 'error', 'success');
+        iconLarge.classList.remove('advertencia', 'error', 'success');
+        mensajeEl.classList.remove('advertencia', 'error', 'success');
+        
+        // Aplicar clases según el tipo
+        header.classList.add(tipo);
+        iconLarge.classList.add(tipo);
+        mensajeEl.classList.add(tipo);
+        
+        // Configurar iconos según el tipo
+        let iconSVG = '';
+        if (tipo === 'error') {
+          iconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          `;
+        } else if (tipo === 'success') {
+          iconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          `;
+        } else {
+          iconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          `;
+        }
+        
+        // Actualizar contenido
+        if (tituloEl) tituloEl.textContent = titulo;
+        if (subtituloEl) {
+          if (tipo === 'error') {
+            subtituloEl.textContent = 'Revise los errores antes de continuar';
+          } else if (tipo === 'success') {
+            subtituloEl.textContent = 'Operación completada exitosamente';
+          } else {
+            subtituloEl.textContent = 'Revise la información antes de continuar';
+          }
+        }
+        if (iconLarge) iconLarge.innerHTML = iconSVG;
+        if (iconHeader) iconHeader.innerHTML = iconSVG.replace('width="64" height="64"', 'width="28" height="28"');
+        
+        // Formatear mensaje (convertir \n a <br> y mantener estructura)
+        let mensajeFormateado = mensaje.replace(/\n/g, '<br>');
+        // Mejorar formato de lista en el mensaje
+        mensajeFormateado = mensajeFormateado.replace(/(\d+)\.\s/g, '<strong class="text-indigo-700">$1.</strong> ');
+        mensajeFormateado = mensajeFormateado.replace(/└─/g, '<span class="text-slate-500 ml-4">└─</span>');
+        if (mensajeEl) mensajeEl.innerHTML = mensajeFormateado;
+        
+        // Mostrar lista de campos faltantes si aplica
+        if (camposFaltantes && camposFaltantes.length > 0) {
+          listaEl.innerHTML = '';
+          camposFaltantes.forEach((campo, index) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-start gap-2';
+            li.innerHTML = `
+              <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">${index + 1}</span>
+              <span class="flex-1 text-sm">${campo}</span>
+            `;
+            listaEl.appendChild(li);
+          });
+          listaEl.style.display = 'block';
+        } else {
+          listaEl.style.display = 'none';
+        }
+        
+        // Configurar botones
+        if (callbackConfirmacion) {
+          console.log('🔧 Configurando botón de confirmación con callback');
+          console.log('🔧 Callback recibido:', callbackConfirmacion);
+          console.log('🔧 Tipo de callback:', typeof callbackConfirmacion);
+          
+          // Guardar el callback en la variable global
+          window.confirmacionCallbackAgregarNino = callbackConfirmacion;
+          
+          // Verificar que se guardó correctamente
+          console.log('🔧 Callback guardado:', window.confirmacionCallbackAgregarNino);
+          
+          if (btnConfirmar) {
+            btnConfirmar.style.display = 'flex';
+            btnConfirmar.disabled = false;
+            console.log('✅ Botón confirmar visible y habilitado');
+          } else {
+            console.error('❌ No se encontró el botón btnConfirmarAdvertenciaAgregarNino');
+          }
+          if (btnCancelar) btnCancelar.textContent = 'Cancelar';
+        } else {
+          console.log('ℹ️ Sin callback, solo mostrar mensaje');
+          window.confirmacionCallbackAgregarNino = null;
+          if (btnConfirmar) {
+            btnConfirmar.style.display = 'none';
+            btnConfirmar.disabled = true;
+          }
+          if (btnCancelar) btnCancelar.textContent = 'Cerrar';
+        }
+        
+        // Mostrar modal
+        console.log('👁️ Mostrando modal...');
+        modal.classList.add('show');
+        console.log('✅ Modal mostrado, clases:', modal.className);
+        
+        // Verificar que el botón esté disponible después de mostrar el modal
+        setTimeout(() => {
+          const btnCheck = document.getElementById('btnConfirmarAdvertenciaAgregarNino');
+          if (btnCheck) {
+            console.log('✅ Botón verificado después de mostrar modal:', {
+              display: window.getComputedStyle(btnCheck).display,
+              disabled: btnCheck.disabled,
+              onclick: btnCheck.getAttribute('onclick')
             });
           }
-        });
+        }, 100);
+      }
+      
+      // Función para cerrar el modal de advertencia
+      function closeModalAdvertenciaAgregarNino(event) {
+        if (event && event.target !== event.currentTarget && !event.target.closest('.modal-advertencia-nino-container')) {
+          return;
+        }
+        const modal = document.getElementById('modalAdvertenciaAgregarNino');
+        if (modal) {
+          modal.classList.remove('show');
+        }
+        window.confirmacionCallbackAgregarNino = null;
+      }
+      
+      // Función para confirmar la advertencia
+      function confirmarAdvertenciaAgregarNino() {
+        console.log('🔘 Botón confirmar presionado');
+        console.log('📋 Callback disponible:', window.confirmacionCallbackAgregarNino);
+        console.log('📋 Tipo de callback:', typeof window.confirmacionCallbackAgregarNino);
+        
+        if (window.confirmacionCallbackAgregarNino && typeof window.confirmacionCallbackAgregarNino === 'function') {
+          console.log('✅ Ejecutando callback de confirmación...');
+          
+          // Guardar el callback antes de cerrar el modal
+          const callback = window.confirmacionCallbackAgregarNino;
+          
+          // Cerrar el modal primero
+          closeModalAdvertenciaAgregarNino();
+          
+          // Ejecutar el callback después de un pequeño delay para asegurar que el modal se cierre
+          setTimeout(() => {
+            try {
+              callback();
+              console.log('✅ Callback ejecutado exitosamente');
+            } catch (error) {
+              console.error('❌ Error al ejecutar callback:', error);
+              mostrarAdvertenciaAgregarNino(
+                'error',
+                'Error',
+                'Ocurrió un error al procesar la confirmación. Por favor, intente nuevamente.\n\nError: ' + error.message
+              );
+            }
+          }, 100);
+        } else {
+          console.warn('⚠️ No hay callback de confirmación disponible');
+          console.warn('⚠️ Tipo:', typeof window.confirmacionCallbackAgregarNino);
+          console.warn('⚠️ Valor:', window.confirmacionCallbackAgregarNino);
+          
+          // Cerrar el modal de todas formas
+          closeModalAdvertenciaAgregarNino();
+        }
       }
 
       // Cargar los niños al cargar la página
@@ -8506,11 +9141,284 @@
     window.cambiarRegistrosPorPagina = cambiarRegistrosPorPagina;
     // cargarNinos ya está disponible globalmente desde su definición
     window.obtenerTipoDocumento = obtenerTipoDocumento;
+    // Variable global para almacenar el ID del niño a eliminar
+    let ninoIdAEliminar = null;
+
+    // Función para abrir el modal de confirmación de eliminación
+    function confirmarEliminarNino() {
+      const ninoId = typeof window !== 'undefined' && window.ninoIdActual ? window.ninoIdActual : ninoIdActual;
+      if (!ninoId) {
+        alert('Error: No se ha seleccionado un niño.');
+        return;
+      }
+
+      ninoIdAEliminar = ninoId;
+
+      // Obtener nombre del niño del modal
+      const nombreNino = document.getElementById('modalPatientName')?.textContent?.replace(/^\s*-\s*|\s*$/g, '') || 'N/A';
+      
+      // Actualizar el nombre en el modal de confirmación
+      const nombreNinoEl = document.getElementById('nombreNinoEliminar');
+      if (nombreNinoEl) {
+        nombreNinoEl.textContent = nombreNino;
+      }
+
+      // Limpiar el input de confirmación
+      const inputConfirmacion = document.getElementById('confirmacionEliminarNino');
+      if (inputConfirmacion) {
+        inputConfirmacion.value = '';
+        inputConfirmacion.classList.remove('valid', 'invalid');
+      }
+
+      // Deshabilitar el botón de eliminar
+      const btnConfirmar = document.getElementById('btnConfirmarEliminarNino');
+      if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+      }
+
+      // Mostrar el modal
+      const modal = document.getElementById('modalConfirmarEliminarNino');
+      if (modal) {
+        modal.classList.add('show');
+        // Enfocar el input
+        setTimeout(() => {
+          if (inputConfirmacion) {
+            inputConfirmacion.focus();
+          }
+        }, 100);
+      }
+    }
+
+    // Función para cerrar el modal de confirmación
+    function closeModalConfirmarEliminarNino(event) {
+      if (event && event.target !== event.currentTarget && !event.target.closest('.modal-eliminar-nino-container')) {
+        return;
+      }
+      const modal = document.getElementById('modalConfirmarEliminarNino');
+      if (modal) {
+        modal.classList.remove('show');
+      }
+      ninoIdAEliminar = null;
+    }
+
+    // Función para validar la confirmación mientras se escribe
+    function validarConfirmacionEliminarNino() {
+      const input = document.getElementById('confirmacionEliminarNino');
+      const btnConfirmar = document.getElementById('btnConfirmarEliminarNino');
+      
+      if (!input || !btnConfirmar) return;
+
+      const valor = input.value.trim();
+      
+      if (valor === 'ELIMINAR') {
+        input.classList.remove('invalid');
+        input.classList.add('valid');
+        btnConfirmar.disabled = false;
+      } else if (valor.length > 0) {
+        input.classList.remove('valid');
+        input.classList.add('invalid');
+        btnConfirmar.disabled = true;
+      } else {
+        input.classList.remove('valid', 'invalid');
+        btnConfirmar.disabled = true;
+      }
+    }
+
+    // Función para ejecutar la eliminación
+    function ejecutarEliminarNino() {
+      if (!ninoIdAEliminar) {
+        alert('Error: No se ha seleccionado un niño.');
+        return;
+      }
+
+      const inputConfirmacion = document.getElementById('confirmacionEliminarNino');
+      if (!inputConfirmacion || inputConfirmacion.value.trim() !== 'ELIMINAR') {
+        alert('Debes escribir "ELIMINAR" para confirmar.');
+        return;
+      }
+
+      // Deshabilitar botones y mostrar loading
+      const btnConfirmar = document.getElementById('btnConfirmarEliminarNino');
+      const btnCancelar = document.querySelector('.modal-eliminar-nino-btn-cancel');
+      
+      if (btnConfirmar) {
+        btnConfirmar.disabled = true;
+        const originalText = btnConfirmar.innerHTML;
+        btnConfirmar.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Eliminando...
+        `;
+      }
+      
+      if (btnCancelar) {
+        btnCancelar.disabled = true;
+      }
+
+      // Realizar petición DELETE
+      const urlEliminar = `/api/nino/${ninoIdAEliminar}`;
+      console.log('🗑️ Eliminando niño con ID:', ninoIdAEliminar);
+      console.log('📡 URL:', urlEliminar);
+      
+      fetch(urlEliminar, {
+        method: 'DELETE',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.message || `Error HTTP ${response.status}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Cerrar modales
+          closeModalConfirmarEliminarNino();
+          closeVerControlesModal();
+          
+          // Mostrar mensaje de éxito
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">✅ Niño eliminado exitosamente</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${data.message || 'Todos los datos del niño han sido eliminados.'}</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 5000);
+
+          // Recargar la tabla de niños
+          if (typeof cargarNinos === 'function') {
+            setTimeout(() => {
+              cargarNinos(1);
+            }, 1000);
+          } else {
+            // Si no existe la función, recargar la página
+            setTimeout(() => {
+              window.location.reload();
+            }, 1500);
+          }
+        } else {
+          // Mostrar mensaje de error
+          const errorMessage = document.createElement('div');
+          errorMessage.className = 'mensaje-error animate-slide-in';
+          errorMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">❌ Error al eliminar</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${data.message || 'No se pudo eliminar el niño. Por favor, intente nuevamente.'}</div>
+            </div>
+          `;
+          document.body.appendChild(errorMessage);
+          
+          setTimeout(() => {
+            errorMessage.classList.add('animate-slide-out');
+            setTimeout(() => errorMessage.remove(), 300);
+          }, 5000);
+
+          // Restaurar botones del modal de confirmación
+          const btnConfirmarError = document.getElementById('btnConfirmarEliminarNino');
+          const btnCancelarError = document.querySelector('.modal-eliminar-nino-btn-cancel');
+          
+          if (btnConfirmarError) {
+            btnConfirmarError.disabled = false;
+            btnConfirmarError.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+              Eliminar Permanentemente
+            `;
+          }
+          if (btnCancelarError) {
+            btnCancelarError.disabled = false;
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error al eliminar niño:', error);
+        
+        // Mostrar mensaje de error
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'mensaje-error animate-slide-in';
+        errorMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorMessage.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">❌ Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">Error al eliminar el niño. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorMessage);
+        
+        setTimeout(() => {
+          errorMessage.classList.add('animate-slide-out');
+          setTimeout(() => errorMessage.remove(), 300);
+        }, 5000);
+
+        // Restaurar botones del modal de confirmación
+        const btnConfirmarCatch = document.getElementById('btnConfirmarEliminarNino');
+        const btnCancelarCatch = document.querySelector('.modal-eliminar-nino-btn-cancel');
+        
+        if (btnConfirmarCatch) {
+          btnConfirmarCatch.disabled = false;
+          btnConfirmarCatch.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+            Eliminar Permanentemente
+          `;
+        }
+        if (btnCancelarCatch) {
+          btnCancelarCatch.disabled = false;
+        }
+      });
+    }
+
     window.openVerControlesModal = openVerControlesModal;
     window.openDatosExtrasModal = openDatosExtrasModal;
     window.closeDatosExtrasModal = closeDatosExtrasModal;
     window.closeVerControlesModal = closeVerControlesModal;
     window.cambiarTab = cambiarTab;
+    window.confirmarEliminarNino = confirmarEliminarNino;
+    window.closeModalConfirmarEliminarNino = closeModalConfirmarEliminarNino;
+    window.validarConfirmacionEliminarNino = validarConfirmacionEliminarNino;
+    window.ejecutarEliminarNino = ejecutarEliminarNino;
+    window.mostrarAdvertenciaAgregarNino = mostrarAdvertenciaAgregarNino;
+    window.closeModalAdvertenciaAgregarNino = closeModalAdvertenciaAgregarNino;
+    window.confirmarAdvertenciaAgregarNino = confirmarAdvertenciaAgregarNino;
     window.scrollTabs = scrollTabs;
     window.formatearFechaISO = formatearFechaISO;
     window.crearFechaLocal = crearFechaLocal;

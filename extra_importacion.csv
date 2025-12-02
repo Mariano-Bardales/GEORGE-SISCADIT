@@ -1,0 +1,6 @@
+id_nino,red,microred,eess_nacimiento,distrito,provincia,departamento,seguro,programa
+1,"CORONEL PORTILLO",YARINACOCHA,"HOSPITAL REGIONAL",Calleria,"Coronel Portillo",Ucayali,SIS,Juntos
+2,"CORONEL PORTILLO",CALLERIA,"CENTRO DE SALUD CALLERIA",Calleria,"Coronel Portillo",Ucayali,SIS,"Cuna Mas"
+3,"CORONEL PORTILLO",YARINACOCHA,"POSTA DE SALUD YARINACOCHA",Yarinacocha,"Coronel Portillo",Ucayali,SIS,Juntos
+4,"CORONEL PORTILLO",MANANTAY,"CENTRO DE SALUD MANANTAY",Manantay,"Coronel Portillo",Ucayali,SIS,"Cuna Mas"
+5,"CORONEL PORTILLO","HOSPITAL AMAZONICO","HOSPITAL AMAZONICO",Yarinacocha,"Coronel Portillo",Ucayali,SIS,Juntos

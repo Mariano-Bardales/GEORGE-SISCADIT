@@ -1,7 +1,6 @@
 // Dashboard JavaScript - SISCADIT
 
 let chartGenero = null;
-let chartCalidadDatos = null;
 
 // Función auxiliar para obtener el token CSRF
 function getCsrfToken() {
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
   cargarGraficos();
   cargarTablaControles();
   // cargarResumenAlertas(); // Sección eliminada
-  cargarTopEstablecimientos();
   
   // Escuchar eventos de control registrado para actualizar el dashboard
   window.addEventListener('controlRegistrado', function(event) {
@@ -127,59 +125,6 @@ function cargarGraficos() {
               borderColor: [
                 'rgba(59, 130, 246, 1)',
                 'rgba(236, 72, 153, 1)'
-              ],
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true,
-                position: 'bottom'
-              },
-              tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                callbacks: {
-                  label: function(context) {
-                    const label = context.label || '';
-                    const value = context.parsed || 0;
-                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                    return `${label}: ${value} (${percentage}%)`;
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-
-      // Gráfico de calidad de datos
-      const ctx2 = document.getElementById('chartCalidadDatos');
-      if (ctx2) {
-        if (chartCalidadDatos) {
-          chartCalidadDatos.destroy();
-        }
-        const calidadData = data.data.calidad_datos || { perfectos: 0, con_errores: 0 };
-        chartCalidadDatos = new Chart(ctx2, {
-          type: 'doughnut',
-          data: {
-            labels: ['Datos Perfectos', 'Datos con Errores'],
-            datasets: [{
-              data: [
-                calidadData.perfectos || 0,
-                calidadData.con_errores || 0
-              ],
-              backgroundColor: [
-                'rgba(16, 185, 129, 0.8)',
-                'rgba(239, 68, 68, 0.8)'
-              ],
-              borderColor: [
-                'rgba(16, 185, 129, 1)',
-                'rgba(239, 68, 68, 1)'
               ],
               borderWidth: 2
             }]
@@ -633,117 +578,4 @@ async function generarResumenAlertasParaNino(nino, edadDias) {
   return alertas;
 }
 
-// Cargar top establecimientos
-function cargarTopEstablecimientos() {
-  if (!window.dashboardRoutes || !window.dashboardRoutes.topEstablecimientos) {
-    console.error('Ruta de top establecimientos no definida');
-    return;
-  }
-  
-  fetch(window.dashboardRoutes.topEstablecimientos, {
-    method: 'GET',
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest',
-      'X-CSRF-TOKEN': getCsrfToken()
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success && data.data) {
-      // Renderizar top establecimientos
-      const topContainer = document.getElementById('topEstablecimientosContainer');
-      if (topContainer) {
-        if (data.data.top_establecimientos && data.data.top_establecimientos.length > 0) {
-          let html = '';
-          data.data.top_establecimientos.forEach((est, index) => {
-            const posicion = index + 1;
-            html += `
-              <div data-testid="top-establishment-${index}"
-                class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-                  style="background: linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105));">${posicion}</div>
-                <div class="flex-1">
-                  <p class="font-semibold text-slate-800">${est.establecimiento || 'Sin nombre'}</p>
-                  <div class="flex items-center gap-4 mt-1">
-                    <p class="text-sm text-slate-500">${est.total_controles} control${est.total_controles !== 1 ? 'es' : ''}</p>
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">${est.calidad_porcentaje}% calidad</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-          topContainer.innerHTML = html;
-        } else {
-          topContainer.innerHTML = `
-            <div class="text-center py-8 text-slate-500">
-              <p>No hay establecimientos con datos suficientes para mostrar.</p>
-            </div>
-          `;
-        }
-      }
-
-      // Renderizar establecimientos que necesitan mejora
-      const mejoraContainer = document.getElementById('necesitanMejoraContainer');
-      if (mejoraContainer) {
-        if (data.data.necesitan_mejora && data.data.necesitan_mejora.length > 0) {
-          let html = '';
-          data.data.necesitan_mejora.forEach((est, index) => {
-            const posicion = index + 1;
-            html += `
-              <div data-testid="improvement-establishment-${index}"
-                class="flex items-center gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                <div
-                  class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0"
-                  style="background: linear-gradient(135deg, rgb(245, 158, 11), rgb(217, 119, 6));">${posicion}</div>
-                <div class="flex-1">
-                  <p class="font-semibold text-slate-800">${est.establecimiento || 'Sin nombre'}</p>
-                  <div class="flex items-center gap-4 mt-1">
-                    <p class="text-sm text-slate-500">${est.total_controles} control${est.total_controles !== 1 ? 'es' : ''}</p>
-                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">${est.calidad_porcentaje}% calidad</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-          mejoraContainer.innerHTML = html;
-        } else {
-          mejoraContainer.innerHTML = `
-            <div class="text-center py-8 text-green-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem;">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-              <p style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">¡Excelente!</p>
-              <p>Todos los establecimientos tienen buena calidad de datos.</p>
-            </div>
-          `;
-        }
-      }
-    }
-  })
-  .catch(error => {
-    console.error('Error al cargar top establecimientos:', error);
-    const topContainer = document.getElementById('topEstablecimientosContainer');
-    const mejoraContainer = document.getElementById('necesitanMejoraContainer');
-    
-    if (topContainer) {
-      topContainer.innerHTML = `
-        <div class="text-center py-8 text-red-500">
-          <p style="font-weight: 600; margin-bottom: 0.5rem;">Error al cargar datos</p>
-          <p style="font-size: 0.875rem;">Por favor, recarga la página e intenta nuevamente.</p>
-        </div>
-      `;
-    }
-    
-    if (mejoraContainer) {
-      mejoraContainer.innerHTML = `
-        <div class="text-center py-8 text-red-500">
-          <p style="font-weight: 600; margin-bottom: 0.5rem;">Error al cargar datos</p>
-          <p style="font-size: 0.875rem;">Por favor, recarga la página e intenta nuevamente.</p>
-        </div>
-      `;
-    }
-  });
-}
 

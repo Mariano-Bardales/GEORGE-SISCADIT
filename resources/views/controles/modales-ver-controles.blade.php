@@ -10,12 +10,31 @@
           <p id="modalPatientFechaNacimiento" style="margin-top: 4px; font-size: 13px; color: #64748b;"><strong>Fecha de Nacimiento:</strong> <span id="fechaNacimientoValue">-</span></p>
         </div>
       </div>
-      <button class="btn-close" data-testid="btn-close-modal" onclick="closeVerControlesModal()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true">
-          <path d="M18 6 6 18"></path>
-          <path d="m6 6 12 12"></path>
-        </svg>
-      </button>
+      <div class="flex items-center gap-2">
+        @if(auth()->user()->role === 'admin' || auth()->user()->role === 'ADMIN')
+          <button 
+            id="btnEliminarNino" 
+            class="btn-eliminar-nino" 
+            onclick="confirmarEliminarNino()"
+            title="Eliminar todos los datos del niño (solo admin)"
+            style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);"
+            onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(239, 68, 68, 0.3)'"
+            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(239, 68, 68, 0.2)'">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+            Eliminar
+          </button>
+        @endif
+        <button class="btn-close" data-testid="btn-close-modal" onclick="closeVerControlesModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
     </div>
     <!-- Sección de Alertas -->
     <div id="alertasSection" class="alertas-container" style="display: none;">
@@ -168,6 +187,112 @@
           <span class="tab-icon">💉</span>
           Vacunas del Recién Nacido
         </button>
+      </div>
+      
+      <!-- Modal de Confirmación para Eliminar Niño -->
+      <div id="modalConfirmarEliminarNino" class="modal-eliminar-nino-overlay" onclick="closeModalConfirmarEliminarNino(event)">
+        <div class="modal-eliminar-nino-container" onclick="event.stopPropagation()">
+          <!-- Header del Modal -->
+          <div class="modal-eliminar-nino-header">
+            <div class="modal-eliminar-nino-header-content">
+              <div class="modal-eliminar-nino-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </div>
+              <div>
+                <h3 class="modal-eliminar-nino-title">Confirmar Eliminación</h3>
+                <p class="modal-eliminar-nino-subtitle">Esta acción no se puede deshacer</p>
+              </div>
+            </div>
+            <button onclick="closeModalConfirmarEliminarNino()" class="modal-eliminar-nino-close">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Contenido del Modal -->
+          <div class="modal-eliminar-nino-content">
+            <div class="modal-eliminar-nino-icon-large">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </div>
+            <h4 class="modal-eliminar-nino-question">¿Está seguro de eliminar todos los datos de este niño?</h4>
+            <p class="modal-eliminar-nino-name" id="nombreNinoEliminar">-</p>
+            
+            <div class="modal-eliminar-nino-warning">
+              <div class="modal-eliminar-nino-warning-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                  <path d="M12 9v4"></path>
+                  <path d="M12 17h.01"></path>
+                </svg>
+                <span>Se eliminarán permanentemente:</span>
+              </div>
+              <ul class="modal-eliminar-nino-list">
+                <li>📋 Datos del niño</li>
+                <li>👩 Datos de la madre</li>
+                <li>📊 Datos extra</li>
+                <li>📈 Todos los controles CRED</li>
+                <li>👶 Todos los controles RN</li>
+                <li>🧬 Tamizaje neonatal</li>
+                <li>💉 Vacunas</li>
+                <li>📝 CNV (Recién Nacido)</li>
+                <li>🏠 Visitas domiciliarias</li>
+              </ul>
+            </div>
+            
+            <div class="modal-eliminar-nino-confirm-input">
+              <label for="confirmacionEliminarNino" class="modal-eliminar-nino-label">
+                Para confirmar, escribe <strong>"ELIMINAR"</strong> (en mayúsculas):
+              </label>
+              <input 
+                type="text" 
+                id="confirmacionEliminarNino" 
+                class="modal-eliminar-nino-input" 
+                placeholder="Escribe ELIMINAR aquí"
+                autocomplete="off"
+                onkeyup="validarConfirmacionEliminarNino()"
+              />
+            </div>
+          </div>
+          
+          <!-- Footer del Modal -->
+          <div class="modal-eliminar-nino-footer">
+            <button type="button" onclick="closeModalConfirmarEliminarNino()" class="modal-eliminar-nino-btn modal-eliminar-nino-btn-cancel">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Cancelar
+            </button>
+            <button 
+              type="button" 
+              id="btnConfirmarEliminarNino" 
+              onclick="ejecutarEliminarNino()" 
+              class="modal-eliminar-nino-btn modal-eliminar-nino-btn-delete"
+              disabled
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+              Eliminar Permanentemente
+            </button>
+          </div>
+        </div>
       </div>
       <button class="tab-scroll-btn tab-scroll-right" onclick="scrollTabs('right')" aria-label="Scroll right">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right">

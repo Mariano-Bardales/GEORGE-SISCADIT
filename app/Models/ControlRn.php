@@ -24,6 +24,9 @@ class ControlRn extends Model
         'fecha',
         'edad',
         'estado',
+        'peso',
+        'talla',
+        'perimetro_cefalico',
     ];
 
     protected $casts = [

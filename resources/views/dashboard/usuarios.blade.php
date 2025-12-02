@@ -681,14 +681,11 @@
                       </svg>
                       Tipo Documento
                     </label>
-                    <select id="tipoDocumentoSolicitud" name="solicitud[id_tipo_documento]" class="modal-usuario-select" required>
-                      <option value="1">DNI</option>
-                      <option value="2">CE</option>
-                      <option value="3">PASS</option>
-                      <option value="4">DIE</option>
-                      <option value="5">S/ DOCUMENTO</option>
-                      <option value="6">CNV</option>
+                    <select id="tipoDocumentoSolicitud" name="solicitud[id_tipo_documento]" class="modal-usuario-select" required disabled>
+                      <option value="1" selected>DNI</option>
                     </select>
+                    <input type="hidden" id="tipoDocumentoSolicitudHidden" name="solicitud[id_tipo_documento]" value="1">
+                    <p class="text-xs text-slate-500 mt-1">Solo se permite DNI</p>
                   </div>
                   
                   <div class="modal-usuario-form-group">
@@ -782,32 +779,17 @@
                   </div>
                 </div>
 
-                <!-- Celular y Correo -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                  <div class="modal-usuario-form-group">
-                    <label class="modal-usuario-label required">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                      </svg>
-                      Celular
-                    </label>
-                    <input type="text" id="celularSolicitud" name="solicitud[celular]" 
-                      class="modal-usuario-input" 
-                      placeholder="Ingrese el celular" maxlength="20" required>
-                  </div>
-                  
-                  <div class="modal-usuario-form-group">
-                    <label class="modal-usuario-label required">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                        <polyline points="22,6 12,13 2,6"></polyline>
-                      </svg>
-                      Correo Electrónico
-                    </label>
-                    <input type="email" id="correoSolicitud" name="solicitud[correo]" 
-                      class="modal-usuario-input" 
-                      placeholder="Ingrese el correo electrónico" maxlength="255" required>
-                  </div>
+                <!-- Celular -->
+                <div class="modal-usuario-form-group">
+                  <label class="modal-usuario-label required">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    Celular
+                  </label>
+                  <input type="text" id="celularSolicitud" name="solicitud[celular]" 
+                    class="modal-usuario-input" 
+                    placeholder="Ingrese el celular" maxlength="20" required>
                 </div>
               </div>
             </div>
@@ -898,6 +880,92 @@
             <line x1="14" y1="11" x2="14" y2="17"></line>
           </svg>
           Sí, Eliminar Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación para Rechazar Solicitud -->
+  <div id="modalConfirmarRechazar" class="modal-usuario-overlay" onclick="closeModalConfirmarRechazar(event)">
+    <div class="modal-usuario-container" style="max-width: 32rem;" onclick="event.stopPropagation()">
+      <!-- Header del Modal -->
+      <div class="modal-usuario-header" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);">
+        <div class="modal-usuario-header-content">
+          <div class="modal-usuario-icon" style="background: rgba(255, 255, 255, 0.25);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-usuario-title">Confirmar Rechazo de Solicitud</h3>
+            <p class="modal-usuario-subtitle">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+        <button onclick="closeModalConfirmarRechazar()" class="modal-usuario-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenido del Modal -->
+      <div class="modal-usuario-content" style="padding: 2rem;">
+        <div style="margin-bottom: 1.5rem; text-align: center;">
+          <div style="margin: 0 auto; width: 5rem; height: 5rem; background-color: #fee2e2; border-radius: 9999px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h4 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">¿Está seguro de rechazar esta solicitud?</h4>
+          <p style="color: #475569; margin-bottom: 0.5rem; font-size: 0.875rem;">
+            La solicitud con DNI <strong id="numeroDocSolicitudRechazar" style="color: #0f172a; font-weight: 600;"></strong> será rechazada y eliminada permanentemente.
+          </p>
+          <p style="font-size: 0.875rem; color: #dc2626; font-weight: 600; margin-top: 0.75rem;">
+            ⚠️ Esta acción no se puede deshacer
+          </p>
+        </div>
+        
+        <!-- Campo para motivo de rechazo (opcional) -->
+        <div style="margin-top: 1.5rem;">
+          <label for="motivoRechazo" style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
+            Motivo de rechazo <span style="color: #9ca3af; font-weight: 400;">(Opcional)</span>
+          </label>
+          <textarea 
+            id="motivoRechazo" 
+            name="motivoRechazo" 
+            rows="3" 
+            placeholder="Ingrese el motivo del rechazo de la solicitud..."
+            style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; resize: vertical; transition: border-color 0.2s;"
+            onfocus="this.style.borderColor='#667eea'; this.style.outline='none';"
+            onblur="this.style.borderColor='#d1d5db';"
+          ></textarea>
+          <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
+            Este motivo puede ser útil para referencia futura.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Footer del Modal -->
+      <div class="modal-usuario-footer" style="display: flex; gap: 0.75rem; justify-content: space-between;">
+        <button type="button" onclick="closeModalConfirmarRechazar()" class="modal-usuario-btn modal-usuario-btn-secondary" style="flex: 0 1 auto; min-width: 140px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Cancelar
+        </button>
+        <button type="button" onclick="confirmarRechazarSolicitud()" class="modal-usuario-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626, #b91c1c); color: white; flex: 1; margin-left: 0.75rem; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Sí, Rechazar Solicitud
         </button>
       </div>
     </div>
@@ -1589,15 +1657,16 @@
               const motivoInput = document.getElementById('motivoSolicitud');
               const cargoInput = document.getElementById('cargoSolicitud');
               const celularInput = document.getElementById('celularSolicitud');
-              const correoInput = document.getElementById('correoSolicitud');
               
-              if (tipoDocInput) tipoDocInput.value = solicitud.id_tipo_documento || '1';
+              if (tipoDocInput) tipoDocInput.value = '1'; // Siempre DNI
+              if (document.getElementById('tipoDocumentoSolicitudHidden')) {
+                document.getElementById('tipoDocumentoSolicitudHidden').value = '1';
+              }
               if (numDocInput) numDocInput.value = solicitud.numero_documento || '';
               if (codRedInput) codRedInput.value = solicitud.codigo_red || '';
               if (motivoInput) motivoInput.value = solicitud.motivo || '';
               if (cargoInput) cargoInput.value = solicitud.cargo || '';
               if (celularInput) celularInput.value = solicitud.celular || '';
-              if (correoInput) correoInput.value = solicitud.correo || '';
               
               // Guardar ID de solicitud para actualización
               const usuarioIdInput = document.getElementById('usuarioIdEditar');
@@ -1626,10 +1695,13 @@
               const motivoInput = document.getElementById('motivoSolicitud');
               const cargoInput = document.getElementById('cargoSolicitud');
               const celularInput = document.getElementById('celularSolicitud');
-              const correoInput = document.getElementById('correoSolicitud');
               const usuarioIdInput = document.getElementById('usuarioIdEditar');
               
+              // Siempre establecer tipo de documento como DNI (1)
               if (tipoDocInput) tipoDocInput.value = '1';
+              if (document.getElementById('tipoDocumentoSolicitudHidden')) {
+                document.getElementById('tipoDocumentoSolicitudHidden').value = '1';
+              }
               if (numDocInput) numDocInput.value = '';
               if (codRedInput) codRedInput.value = '';
               if (microredSelect) {
@@ -1643,7 +1715,6 @@
               if (motivoInput) motivoInput.value = '';
               if (cargoInput) cargoInput.value = '';
               if (celularInput) celularInput.value = '';
-              if (correoInput) correoInput.value = '';
               // Remover ID de solicitud si existe
               if (usuarioIdInput) {
                 usuarioIdInput.removeAttribute('data-solicitud-id');
@@ -1775,7 +1846,9 @@
         const solicitudId = document.getElementById('usuarioIdEditar').getAttribute('data-solicitud-id');
         if (solicitudId) {
           formData.solicitud_id = solicitudId;
-          formData.id_tipo_documento = document.getElementById('tipoDocumentoSolicitud').value;
+          // Usar el campo hidden para el tipo de documento (siempre DNI = 1)
+          const tipoDocHidden = document.getElementById('tipoDocumentoSolicitudHidden');
+          formData.id_tipo_documento = tipoDocHidden ? tipoDocHidden.value : '1';
           formData.numero_documento = document.getElementById('numeroDocumentoSolicitud').value.trim();
           formData.codigo_red = document.getElementById('codigoRedSolicitud').value;
           formData.codigo_microred = document.getElementById('codigoMicroredSolicitud').value;
@@ -1783,7 +1856,6 @@
           formData.motivo = document.getElementById('motivoSolicitud').value.trim();
           formData.cargo = document.getElementById('cargoSolicitud').value.trim();
           formData.celular = document.getElementById('celularSolicitud').value.trim();
-          formData.correo = document.getElementById('correoSolicitud').value.trim();
         }
 
         // Actualizar usuario (y solicitud si existe)
@@ -1920,35 +1992,186 @@
     let usuarioIdAEliminar = null;
     let nombreUsuarioAEliminar = '';
 
-    // Función para rechazar y eliminar permanentemente una solicitud
+    // Variables globales para el modal de rechazo
+    let solicitudIdARechazar = null;
+    let numeroDocSolicitud = '';
+
+    // Función para abrir el modal de confirmación de rechazo
     function rechazarSolicitud(solicitudId, numeroDoc) {
-      if (!confirm(`¿Está seguro de que desea rechazar y eliminar permanentemente la solicitud con DNI ${numeroDoc}?\n\nEsta acción no se puede deshacer y eliminará todos los datos de la solicitud de la base de datos.`)) {
+      solicitudIdARechazar = solicitudId;
+      numeroDocSolicitud = numeroDoc;
+      
+      // Mostrar el DNI en el modal
+      document.getElementById('numeroDocSolicitudRechazar').textContent = numeroDoc;
+      
+      // Limpiar el campo de motivo
+      const motivoInput = document.getElementById('motivoRechazo');
+      if (motivoInput) {
+        motivoInput.value = '';
+      }
+      
+      // Abrir el modal
+      const modal = document.getElementById('modalConfirmarRechazar');
+      if (modal) {
+        modal.classList.add('show');
+      }
+    }
+
+    // Función para cerrar el modal de confirmación de rechazo
+    function closeModalConfirmarRechazar(event) {
+      if (event && event.target === event.currentTarget) {
+        document.getElementById('modalConfirmarRechazar').classList.remove('show');
+      } else if (!event) {
+        document.getElementById('modalConfirmarRechazar').classList.remove('show');
+      }
+      // Limpiar variables
+      solicitudIdARechazar = null;
+      numeroDocSolicitud = '';
+    }
+
+    // Función para confirmar y ejecutar el rechazo
+    async function confirmarRechazarSolicitud() {
+      if (!solicitudIdARechazar) {
+        console.error('No hay solicitud seleccionada para rechazar');
         return;
       }
 
-      fetch(`{{ route("api.solicitudes.destroy", ":id") }}`.replace(':id', solicitudId), {
-        method: 'DELETE',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-          'Accept': 'application/json'
+      // Obtener el motivo de rechazo (opcional)
+      const motivoInput = document.getElementById('motivoRechazo');
+      const motivo = motivoInput ? motivoInput.value.trim() : '';
+
+      // Obtener los botones para deshabilitarlos y mostrar loading
+      const btnRechazar = document.querySelector('#modalConfirmarRechazar button[onclick*="confirmarRechazarSolicitud"]');
+      const btnCancelar = document.querySelector('#modalConfirmarRechazar button[onclick*="closeModalConfirmarRechazar"]');
+      
+      // Guardar el contenido original del botón
+      const contenidoOriginal = btnRechazar ? btnRechazar.innerHTML : '';
+      
+      // Deshabilitar botones y mostrar loading
+      if (btnRechazar) {
+        btnRechazar.disabled = true;
+        btnRechazar.innerHTML = `
+          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Rechazando...
+        `;
+      }
+      if (btnCancelar) {
+        btnCancelar.disabled = true;
+      }
+
+      try {
+        const response = await fetch(`{{ route("api.solicitudes.destroy", ":id") }}`.replace(':id', solicitudIdARechazar), {
+          method: 'DELETE',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            motivo: motivo
+          })
+        });
+
+        const data = await response.json();
+
+        // Restaurar botones
+        if (btnRechazar) {
+          btnRechazar.disabled = false;
+          btnRechazar.innerHTML = contenidoOriginal;
         }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Recargar la tabla de solicitudes
-          cargarSolicitudes();
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        if (response.ok && data.success) {
+          // Cerrar el modal
+          closeModalConfirmarRechazar();
+
           // Mostrar mensaje de éxito
-          alert('Solicitud rechazada y eliminada permanentemente de la base de datos.');
+          const successMessage = document.createElement('div');
+          successMessage.className = 'mensaje-exito animate-slide-in';
+          successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          successMessage.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Solicitud rechazada</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">La solicitud con DNI ${numeroDocSolicitud} ha sido rechazada y eliminada permanentemente</div>
+            </div>
+          `;
+          document.body.appendChild(successMessage);
+          
+          setTimeout(() => {
+            successMessage.classList.add('animate-slide-out');
+            setTimeout(() => successMessage.remove(), 300);
+          }, 4000);
+
+          // Recargar la tabla de solicitudes
+          await cargarSolicitudes();
         } else {
-          alert('Error al rechazar la solicitud: ' + (data.message || 'Error desconocido'));
+          // Mostrar mensaje de error
+          const errorMessage = data.message || 'Error al rechazar la solicitud';
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'mensaje-error animate-slide-in';
+          errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+          errorDiv.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error al rechazar solicitud</div>
+              <div style="font-size: 0.75rem; opacity: 0.95;">${errorMessage}</div>
+            </div>
+          `;
+          document.body.appendChild(errorDiv);
+          
+          setTimeout(() => {
+            errorDiv.classList.add('animate-slide-out');
+            setTimeout(() => errorDiv.remove(), 300);
+          }, 5000);
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error al rechazar la solicitud. Por favor, intente nuevamente.');
-      });
+      } catch (error) {
+        console.error('Error al rechazar solicitud:', error);
+        
+        // Restaurar botones en caso de error
+        if (btnRechazar) {
+          btnRechazar.disabled = false;
+          btnRechazar.innerHTML = contenidoOriginal;
+        }
+        if (btnCancelar) {
+          btnCancelar.disabled = false;
+        }
+
+        // Mostrar mensaje de error
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mensaje-error animate-slide-in';
+        errorDiv.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4), 0 4px 6px -2px rgba(239, 68, 68, 0.3); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+        errorDiv.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; flex-shrink: 0;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Error de conexión</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">No se pudo conectar con el servidor. Por favor, intente nuevamente.</div>
+          </div>
+        `;
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+          errorDiv.classList.add('animate-slide-out');
+          setTimeout(() => errorDiv.remove(), 300);
+        }, 5000);
+      }
     }
 
     // Función para abrir el modal de confirmación de eliminación
@@ -2008,12 +2231,13 @@
       }
 
       try {
-        const response = await fetch('{{ route("api.usuarios") }}/' + usuarioIdAEliminar, {
+        const response = await fetch('{{ route("api.usuarios.destroy", ":id") }}'.replace(':id', usuarioIdAEliminar), {
           method: 'DELETE',
           headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           }
         });
 

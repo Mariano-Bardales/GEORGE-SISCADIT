@@ -18,6 +18,9 @@ class UsuarioController extends Controller
     {
         $query = User::query();
 
+        // Excluir usuarios admin principales por seguridad
+        $query->whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com']);
+
         // Filtro por rol
         if ($request->has('rol') && $request->rol !== '') {
             $query->where('role', $request->rol);
@@ -42,10 +45,12 @@ class UsuarioController extends Controller
         $perPage = $request->get('per_page', 15);
         $usuarios = $query->paginate($perPage);
 
-        // Estadísticas de usuarios
+        // Estadísticas de usuarios (excluyendo admin principales)
         $estadisticas = [
-            'total' => User::count(),
-            'admin' => User::where('role', 'admin')->count(),
+            'total' => User::whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com'])->count(),
+            'admin' => User::where('role', 'admin')
+                          ->whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com'])
+                          ->count(),
             'jefe_red' => User::where('role', 'jefe_red')->count(),
             'coordinador_microred' => User::where('role', 'coordinador_microred')->count(),
             'usuario' => User::where('role', 'usuario')->count(),
@@ -164,6 +169,9 @@ class UsuarioController extends Controller
     {
         $query = User::query();
 
+        // Excluir usuarios admin principales por seguridad
+        $query->whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com']);
+
         // Filtro por rol
         if ($request->has('rol') && $request->rol !== '') {
             $query->where('role', $request->rol);
@@ -188,10 +196,12 @@ class UsuarioController extends Controller
         $perPage = $request->get('per_page', 10);
         $usuarios = $query->paginate($perPage);
 
-        // Estadísticas de usuarios (incluyendo todos los roles)
+        // Estadísticas de usuarios (excluyendo admin principales)
         $estadisticas = [
-            'total' => User::count(),
-            'admin' => User::where('role', 'admin')->count(),
+            'total' => User::whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com'])->count(),
+            'admin' => User::where('role', 'admin')
+                          ->whereNotIn('email', ['diresa@siscadit.com', 'admin@siscadit.com'])
+                          ->count(),
             'jefe_red' => User::where('role', 'jefe_red')->count(),
             'jefe_microred' => User::where('role', 'jefe_microred')->count(),
             'coordinador_microred' => User::where('role', 'coordinador_microred')->count(),
@@ -334,6 +344,14 @@ class UsuarioController extends Controller
     public function update(Request $request, $id)
     {
         $usuario = User::findOrFail($id);
+        
+        // Proteger usuarios admin principales de ser modificados
+        if (in_array($usuario->email, ['diresa@siscadit.com', 'admin@siscadit.com'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede modificar el usuario administrador principal por seguridad'
+            ], 403);
+        }
 
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -400,22 +418,43 @@ class UsuarioController extends Controller
      */
     public function destroy($id)
     {
-        $usuario = User::findOrFail($id);
-        
-        // No permitir eliminar el propio usuario
-        if ($usuario->id === auth()->id()) {
+        try {
+            $usuario = User::findOrFail($id);
+            
+            // Proteger usuarios admin principales de ser eliminados
+            if (in_array($usuario->email, ['diresa@siscadit.com', 'admin@siscadit.com'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede eliminar el usuario administrador principal por seguridad'
+                ], 403);
+            }
+            
+            // No permitir eliminar el propio usuario
+            if ($usuario->id === auth()->id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes eliminar tu propio usuario'
+                ], 403);
+            }
+
+            // Eliminar el usuario (las solicitudes relacionadas se actualizarán automáticamente por la foreign key)
+            $usuario->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario eliminado correctamente'
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'No puedes eliminar tu propio usuario'
-            ], 403);
+                'message' => 'Usuario no encontrado'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el usuario: ' . $e->getMessage()
+            ], 500);
         }
-
-        $usuario->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Usuario eliminado correctamente'
-        ]);
     }
 
     /**

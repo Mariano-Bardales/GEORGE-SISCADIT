@@ -15,12 +15,12 @@
       padding: 1.5rem 2rem;
     }
     .alertas-header {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%);
       border-radius: 12px;
       padding: 1.5rem 2rem;
       margin-bottom: 1.5rem;
       color: white;
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.25);
     }
     .alertas-header h1 {
       font-size: 1.875rem;
@@ -99,7 +99,7 @@
       border-collapse: collapse;
     }
     .alertas-table thead {
-      background: linear-gradient(to right, #ef4444, #dc2626);
+      background: linear-gradient(to right, rgb(102, 126, 234), rgb(118, 75, 162));
       color: white;
     }
     .alertas-table th {
@@ -130,8 +130,8 @@
       display: inline-block;
     }
     .badge-prioridad.alta {
-      background: #fee2e2;
-      color: #991b1b;
+      background: rgba(102, 126, 234, 0.15);
+      color: rgb(79, 70, 229);
     }
     .badge-prioridad.media {
       background: #fef3c7;
@@ -169,12 +169,12 @@
       color: #3730a3;
     }
     .mensaje-alerta {
-      background: #fef2f2;
-      border-left: 4px solid #ef4444;
+      background: rgba(102, 126, 234, 0.1);
+      border-left: 4px solid rgb(102, 126, 234);
       padding: 0.75rem 1rem;
       border-radius: 6px;
       font-size: 0.8125rem;
-      color: #991b1b;
+      color: rgb(79, 70, 229);
       margin-top: 0.5rem;
       line-height: 1.5;
     }
@@ -186,7 +186,7 @@
     }
     .rango-info .edad-actual {
       font-weight: 700;
-      color: #ef4444;
+      color: rgb(102, 126, 234);
     }
     .rango-info .rango-esperado {
       color: #64748b;
@@ -368,7 +368,7 @@
         console.error('Error al cargar alertas:', error);
         document.getElementById('tablaAlertas').innerHTML = `
           <tr>
-            <td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">
+            <td colspan="8" style="text-align: center; padding: 2rem; color: rgb(102, 126, 234);">
               Error al cargar las alertas. Por favor, recarga la página.
             </td>
           </tr>
@@ -450,7 +450,7 @@
               <div class="mensaje-alerta">
                 ${alerta.mensaje || 'Control pendiente de realizar'}
               </div>
-              ${diasFuera > 0 ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: #dc2626; font-weight: 600;">
+              ${diasFuera > 0 ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgb(118, 75, 162); font-weight: 600;">
                 ⚠️ Fuera del rango por ${diasFuera} día(s)
               </div>` : ''}
             </td>
