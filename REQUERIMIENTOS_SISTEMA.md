@@ -228,9 +228,7 @@ El **Sistema de Control de Salud del Niño (SISCADIT)** es una plataforma web di
 - Mostrar total de niños registrados
 - Mostrar total de alertas activas
 - Mostrar últimos 10 controles CRED registrados
-- Mostrar estadísticas de cumplimiento de controles
 - Mostrar gráficos y visualizaciones de datos
-- Filtrar estadísticas por establecimiento, fecha, etc.
 
 **Prioridad:** MEDIA
 
