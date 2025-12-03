@@ -22,15 +22,15 @@ El **Sistema de Control de Salud del Niño (SISCADIT)** es una plataforma web di
 
 ### **RF-01: Gestión de Niños**
 
-**Descripción:** El sistema debe permitir registrar, consultar, editar y eliminar información de niños menores de un año.
+**Descripción:** El sistema debe permitir registrar, consultar y eliminar información de niños menores de un año.
 
 **Funcionalidades:**
 - Registrar datos básicos del niño (nombre, DNI, fecha de nacimiento, género, establecimiento)
 - Registrar datos adicionales (red, microred, distrito, provincia, departamento, seguro, programa)
 - Registrar datos de la madre (DNI, nombre, celular, domicilio)
 - Consultar información completa de un niño
-- Editar datos del niño y sus relaciones
 - Eliminar registros de niños (con validaciones)
+- **Nota:** Los datos del niño no pueden ser editados una vez registrados. Si es necesario corregir información, se debe eliminar y volver a registrar, o usar la importación masiva que actualiza datos existentes.
 
 **Prioridad:** ALTA
 
