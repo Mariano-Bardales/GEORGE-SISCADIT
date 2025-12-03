@@ -9,6 +9,7 @@ use App\Repositories\ControlRepository;
 use App\Services\EdadService;
 use App\Services\EstadoControlService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 /**
  * Controlador API para controles CRED
@@ -75,22 +76,32 @@ class ControlCredController extends Controller
                     }
                 }
 
+                $fecha = $control->fecha;
+                if ($fecha && !($fecha instanceof \Carbon\Carbon)) {
+                    $fecha = \Carbon\Carbon::parse($fecha);
+                }
+                
                 return [
                     'id' => $control->id_cred ?? $control->id,
                     'id_niño' => $control->id_niño,
                     'numero_control' => $control->numero_control,
-                    'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
+                    'fecha' => $fecha ? $fecha->format('Y-m-d') : null,
                     'edad_dias' => $edadDias,
                     'estado' => $estado,
                     'es_ejemplo' => false,
                 ];
             });
 
+            $fechaNacimiento = $nino->fecha_nacimiento;
+            if ($fechaNacimiento && !($fechaNacimiento instanceof \Carbon\Carbon)) {
+                $fechaNacimiento = \Carbon\Carbon::parse($fechaNacimiento);
+            }
+            
             return response()->json([
                 'success' => true,
                 'data' => [
                     'controles' => $controles,
-                    'fecha_nacimiento' => $nino->fecha_nacimiento ? $nino->fecha_nacimiento->format('Y-m-d') : null
+                    'fecha_nacimiento' => $fechaNacimiento ? $fechaNacimiento->format('Y-m-d') : null
                 ]
             ]);
         } catch (\Exception $e) {
