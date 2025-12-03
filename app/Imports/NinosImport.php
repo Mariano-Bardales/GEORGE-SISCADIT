@@ -4,6 +4,8 @@ namespace App\Imports;
 
 use App\Models\Nino;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class NinosImport
@@ -55,11 +57,28 @@ class NinosImport
             $tipoDoc = $tipoDocMap[$tipoDocInput] ?? ($tipoDocInput ?: 'S/ DOCUMENTO');
 
             // Validar fecha de nacimiento (requerida)
-            $fechaNacimiento = $this->parseDate($row['fecha_nacimiento'] ?? null);
+            $fechaNacimientoRaw = $row['fecha_nacimiento'] ?? null;
+            \Log::info('Parseando fecha de nacimiento', [
+                'valor_raw' => $fechaNacimientoRaw,
+                'tipo' => gettype($fechaNacimientoRaw),
+                'fila' => $row['apellidos_nombres'] ?? 'N/A'
+            ]);
+            
+            $fechaNacimiento = $this->parseDate($fechaNacimientoRaw);
             if (!$fechaNacimiento) {
-                $this->errors[] = "Fecha de nacimiento requerida. Fila: " . ($row['apellidos_nombres'] ?? 'N/A');
+                $this->errors[] = "Fecha de nacimiento requerida o inválida. Valor recibido: " . ($fechaNacimientoRaw ?? 'NULL') . ". Fila: " . ($row['apellidos_nombres'] ?? 'N/A');
+                \Log::warning('Fecha de nacimiento inválida', [
+                    'valor_raw' => $fechaNacimientoRaw,
+                    'fila' => $row['apellidos_nombres'] ?? 'N/A'
+                ]);
                 return;
             }
+            
+            \Log::info('Fecha de nacimiento parseada correctamente', [
+                'valor_raw' => $fechaNacimientoRaw,
+                'fecha_parseada' => $fechaNacimiento->format('Y-m-d'),
+                'fila' => $row['apellidos_nombres'] ?? 'N/A'
+            ]);
 
             // Validar que tenga al menos nombre o documento
             if (empty($row['apellidos_nombres']) && empty($row['numero_doc'])) {
@@ -91,10 +110,61 @@ class NinosImport
                 $this->stats['actualizados']++;
                 $this->success[] = "Niño actualizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
             } else {
-                // Crear nuevo niño
-                $nino = Nino::create($data);
-                $this->stats['ninos']++;
-                $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+                // Crear nuevo niño - intentar conservar ID del Excel si está presente
+                $idNinoPersonalizado = $row['id_nino'] ?? $row['id_niño'] ?? null;
+                
+                if ($idNinoPersonalizado && is_numeric($idNinoPersonalizado)) {
+                    // Verificar si el ID ya existe
+                    $existeConId = Nino::where('id_niño', $idNinoPersonalizado)->exists();
+                    if (!$existeConId) {
+                        // Crear con ID personalizado usando inserción directa
+                        $idPersonalizado = (int)$idNinoPersonalizado;
+                        
+                        // Preparar datos completos para inserción directa
+                        // NOTA: La tabla 'niños' NO tiene columnas edad_meses ni edad_dias
+                        $dataCompleto = array_merge($data, [
+                            'id_niño' => $idPersonalizado,
+                        ]);
+                        
+                        // Usar inserción directa para poder especificar el ID
+                        \Log::info('Intentando insertar niño con ID personalizado', [
+                            'id_personalizado' => $idPersonalizado,
+                            'datos' => $dataCompleto
+                        ]);
+                        
+                        try {
+                            DB::table('niños')->insert($dataCompleto);
+                            \Log::info('Niño insertado exitosamente en BD');
+                            
+                            // Recargar el registro desde la base de datos
+                            $nino = Nino::find($idPersonalizado);
+                            if ($nino) {
+                                $this->stats['ninos']++;
+                                $this->success[] = "Niño creado con ID personalizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+                                \Log::info('Niño creado exitosamente', ['id' => $nino->id_niño]);
+                            } else {
+                                \Log::error('Niño insertado pero no se pudo recargar', ['id_personalizado' => $idPersonalizado]);
+                            }
+                        } catch (\Exception $e) {
+                            \Log::error('Error al insertar niño', [
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString(),
+                                'datos' => $dataCompleto
+                            ]);
+                            throw $e;
+                        }
+                    } else {
+                        // El ID ya existe, crear sin ID (auto-incrementar)
+                        $nino = Nino::create($data);
+                        $this->stats['ninos']++;
+                        $this->success[] = "Niño creado (ID {$idNinoPersonalizado} ya existe, usando ID: {$nino->id_niño}): " . ($data['apellidos_nombres'] ?? 'N/A');
+                    }
+                } else {
+                    // Crear sin ID personalizado (auto-incrementar)
+                    $nino = Nino::create($data);
+                    $this->stats['ninos']++;
+                    $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+                }
             }
             
             // Guardar ID del niño importado
@@ -146,7 +216,7 @@ class NinosImport
 
     protected function parseDate($value)
     {
-        if (empty($value)) {
+        if (empty($value) && $value !== 0 && $value !== '0') {
             return null;
         }
 
@@ -154,14 +224,48 @@ class NinosImport
             return Carbon::instance($value);
         }
 
+        // Si es un número (formato serial de Excel)
         if (is_numeric($value)) {
-            // Excel date serial number
-            return Carbon::createFromFormat('Y-m-d', '1900-01-01')->addDays($value - 2);
+            $numericValue = (float)$value;
+            // Excel usa 1900-01-01 como fecha base, pero tiene un bug: considera 1900 como año bisiesto
+            // Por eso restamos 2 días en lugar de 1
+            // Además, Excel cuenta desde el 1 de enero de 1900 como día 1
+            try {
+                $baseDate = Carbon::create(1900, 1, 1);
+                $daysToAdd = (int)($numericValue - 2); // Restar 2 porque Excel cuenta desde 1900-01-01 como día 1, y tiene un bug con 1900
+                return $baseDate->copy()->addDays($daysToAdd);
+            } catch (\Exception $e) {
+                \Log::warning('Error al parsear fecha numérica de Excel', [
+                    'valor' => $value,
+                    'error' => $e->getMessage()
+                ]);
+                return null;
+            }
         }
 
+        // Si es una cadena, intentar parsearla
         try {
+            // Intentar diferentes formatos comunes
+            $formats = ['Y-m-d', 'd/m/Y', 'm/d/Y', 'Y/m/d', 'd-m-Y', 'm-d-Y'];
+            foreach ($formats as $format) {
+                try {
+                    $parsed = Carbon::createFromFormat($format, $value);
+                    if ($parsed) {
+                        return $parsed;
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            
+            // Si ningún formato funciona, intentar parse automático
             return Carbon::parse($value);
         } catch (\Exception $e) {
+            \Log::warning('Error al parsear fecha como string', [
+                'valor' => $value,
+                'tipo' => gettype($value),
+                'error' => $e->getMessage()
+            ]);
             return null;
         }
     }

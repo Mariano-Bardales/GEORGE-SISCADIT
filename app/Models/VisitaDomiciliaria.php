@@ -20,9 +20,8 @@ class VisitaDomiciliaria extends Model
 
     protected $fillable = [
         'id_niño',
-        'grupo_visita',
+        'numero_control',
         'fecha_visita',
-        'numero_visitas',
     ];
 
     protected $casts = [

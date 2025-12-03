@@ -97,6 +97,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Controles CRED Mensual
         Route::get('/controles-cred-mensual', [ApiController::class, 'controlesCredMensual'])->name('api.controles-cred-mensual');
+        Route::get('/controles-cred-mensual/ultimos', [ApiController::class, 'ultimosControlesCred'])->name('api.controles-cred-mensual.ultimos');
         Route::post('/controles-cred-mensual/registrar', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar');
         Route::post('/controles-cred-mensual/registrar/{id}', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar.update');
         

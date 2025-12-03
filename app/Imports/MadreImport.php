@@ -59,16 +59,36 @@ class MadreImport
             'referencia_direccion' => $row['referencia_direccion'] ?? null,
         ];
 
+        // Verificar si hay ID personalizado del Excel
+        $idMadrePersonalizado = $row['id_madre'] ?? null;
+        
         if ($madre) {
             // Actualizar madre existente
             $madre->update($data);
             $this->stats['actualizados']++;
             $this->success[] = "Madre actualizada para niño ID: {$ninoId}";
         } else {
-            // Crear nueva madre
-            Madre::create($data);
-            $this->stats['madres']++;
-            $this->success[] = "Madre creada para niño ID: {$ninoId}";
+            // Si hay ID personalizado y no existe, crear con ese ID
+            if ($idMadrePersonalizado && is_numeric($idMadrePersonalizado)) {
+                $existeConId = Madre::where('id_madre', $idMadrePersonalizado)->exists();
+                if (!$existeConId) {
+                    // Insertar con ID personalizado usando DB directo
+                    $data['id_madre'] = (int)$idMadrePersonalizado;
+                    \Illuminate\Support\Facades\DB::table('madres')->insert($data);
+                    $this->stats['madres']++;
+                    $this->success[] = "Madre creada con ID personalizado (ID: {$idMadrePersonalizado}) para niño ID: {$ninoId}";
+                } else {
+                    // ID ya existe, crear sin ID
+                    Madre::create($data);
+                    $this->stats['madres']++;
+                    $this->success[] = "Madre creada para niño ID: {$ninoId}";
+                }
+            } else {
+                // Crear sin ID personalizado
+                Madre::create($data);
+                $this->stats['madres']++;
+                $this->success[] = "Madre creada para niño ID: {$ninoId}";
+            }
         }
     }
 

@@ -233,3 +233,6 @@ try {
     echo "\n   O combínalos manualmente en Excel.\n";
 }
 
+
+
+

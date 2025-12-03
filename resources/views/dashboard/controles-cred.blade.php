@@ -418,7 +418,7 @@
                     </div>
                     
                     <!-- Modal de Advertencias/Errores para Agregar Niño -->
-                    <div id="modalAdvertenciaAgregarNino" class="modal-advertencia-nino-overlay" onclick="closeModalAdvertenciaAgregarNino(event)">
+                    <div id="modalAdvertenciaAgregarNino" class="modal-advertencia-nino-overlay" onclick="closeModalAdvertenciaAgregarNinoOnOverlay(event)">
                       <div class="modal-advertencia-nino-container" onclick="event.stopPropagation()">
                         <div class="modal-advertencia-nino-header">
                           <div class="modal-advertencia-nino-header-content">
@@ -434,7 +434,7 @@
                               <p class="modal-advertencia-nino-subtitle" id="modalAdvertenciaSubtitulo">Revise la información antes de continuar</p>
                             </div>
                           </div>
-                          <button onclick="closeModalAdvertenciaAgregarNino()" class="modal-advertencia-nino-close">
+                          <button onclick="closeModalAdvertenciaAgregarNino(event)" class="modal-advertencia-nino-close">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18"></line>
                               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -454,6 +454,16 @@
                             <!-- El mensaje se insertará aquí -->
                           </div>
                           
+                          <!-- Contador automático para modal de éxito -->
+                          <div id="modalAdvertenciaContador" style="display: none; margin-top: 1rem; text-align: center;">
+                            <p style="font-size: 0.875rem; color: #64748b;">
+                              Cerrando automáticamente en <span id="contadorSegundos" style="font-weight: 700; color: #10b981; font-size: 1.125rem;">3</span> segundos...
+                            </p>
+                            <div style="width: 100%; height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                              <div id="contadorBarra" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: 100%; transition: width 0.1s linear; border-radius: 2px;"></div>
+                            </div>
+                          </div>
+                          
                           <!-- Lista de campos faltantes (si aplica) -->
                           <ul class="modal-advertencia-nino-list" id="modalAdvertenciaLista" style="display: none;">
                             <!-- Los campos faltantes se insertarán aquí -->
@@ -461,7 +471,7 @@
                         </div>
                         
                         <div class="modal-advertencia-nino-footer">
-                          <button type="button" onclick="closeModalAdvertenciaAgregarNino()" class="modal-advertencia-nino-btn modal-advertencia-nino-btn-cancel">
+                          <button type="button" onclick="closeModalAdvertenciaAgregarNino(event)" class="modal-advertencia-nino-btn modal-advertencia-nino-btn-cancel">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                               <line x1="18" y1="6" x2="6" y2="18"></line>
                               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -471,7 +481,7 @@
                           <button 
                             type="button" 
                             id="btnConfirmarAdvertenciaAgregarNino" 
-                            onclick="confirmarAdvertenciaAgregarNino()" 
+                            onclick="confirmarAdvertenciaAgregarNino(event)" 
                             class="modal-advertencia-nino-btn modal-advertencia-nino-btn-confirm"
                             style="display: none;"
                           >
@@ -1020,30 +1030,6 @@
               </div>
             </div>
 
-            <!-- Sección Antropometría -->
-            <div style="margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.625rem; border: 1.5px solid #e2e8f0;">
-              <h4 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.25rem;">📏</span>
-                Antropometría
-              </h4>
-
-              <div class="modal-registro-form-group">
-                <div class="modal-registro-grid modal-registro-grid-3">
-                  <div>
-                    <label class="modal-registro-label">Peso (kg)</label>
-                    <input type="number" id="credMensualPeso" name="peso" step="0.01" min="0" placeholder="6.5" class="modal-registro-input">
-                  </div>
-                  <div>
-                    <label class="modal-registro-label">Talla (cm)</label>
-                    <input type="number" id="credMensualTalla" name="talla" step="0.1" min="0" placeholder="65.5" class="modal-registro-input">
-                  </div>
-                  <div>
-                    <label class="modal-registro-label">PC (cm)</label>
-                    <input type="number" id="credMensualPerimetro" name="perimetro_cefalico" step="0.1" min="0" placeholder="42.0" class="modal-registro-input">
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <div class="modal-registro-footer">
               <button type="button" onclick="closeModalCredMensual()" class="modal-registro-btn modal-registro-btn-cancel">
@@ -4318,11 +4304,8 @@
           <h4 class="font-semibold text-cyan-900 mb-2 text-sm">📋 Datos que se registran:</h4>
           <ul class="text-xs text-cyan-800 space-y-1 list-disc list-inside">
             <li><strong>Fecha del control:</strong> Fecha en que se realizó el control</li>
-            <li><strong>Peso:</strong> Peso del niño en gramos</li>
-            <li><strong>Talla:</strong> Talla en centímetros</li>
-            <li><strong>Perímetro cefálico:</strong> Medida del perímetro cefálico</li>
-            <li><strong>Desarrollo:</strong> Evaluación del desarrollo psicomotor</li>
-            <li><strong>Observaciones:</strong> Notas adicionales</li>
+            <li><strong>Número de control:</strong> Mes del control (1-11)</li>
+            <li><strong>Estado:</strong> Se calcula automáticamente según el rango de edad</li>
           </ul>
           <p class="text-xs text-cyan-700 mt-2 pt-2 border-t border-cyan-200">
             <strong>💡 Importante:</strong> Los controles mensuales CRED permiten monitorear el crecimiento y desarrollo del niño durante el primer año de vida.
@@ -4916,6 +4899,9 @@
       if (agregarNinoForm) {
         agregarNinoForm.addEventListener('submit', function(e) {
           e.preventDefault();
+          
+          // Declarar variable para el botón de enviar en el scope de la función
+          let submitButton = null;
 
           // Validar campos requeridos
           const requiredFields = this.querySelectorAll('[required]');
@@ -5065,141 +5051,217 @@
             }
           }
 
-          // Mostrar advertencia antes de registrar
-          console.log('📝 Mostrando modal de confirmación...');
-          mostrarAdvertenciaAgregarNino(
-            'advertencia',
-            'Confirmar Registro',
-            '¿Está seguro de que ingresó todos los datos correctamente?\n\nPor favor, revise la información antes de continuar.\n\nAlgunos campos pueden ser opcionales, pero asegúrese de haber completado la información necesaria.',
-            null,
-            function() {
-              // Función de confirmación que se ejecutará cuando el usuario confirme
-              console.log('✅ Usuario confirmó, procediendo con el registro...');
-              // Asegurar que el nombre del establecimiento esté actualizado antes de enviar
-              const eessSelect = document.getElementById('modalIdEstablecimiento');
-              const nombreEstablecimientoInput = document.querySelector('input[name="Nombre_Establecimiento"]');
-              
-              if (eessSelect && eessSelect.value && nombreEstablecimientoInput) {
-                const selectedOption = eessSelect.options[eessSelect.selectedIndex];
-                if (selectedOption && selectedOption.textContent) {
-                  nombreEstablecimientoInput.value = selectedOption.textContent;
-                }
-              }
+          // Proceder directamente con el registro (sin modal de confirmación)
+          
+          // Asegurar que el nombre del establecimiento esté actualizado antes de enviar
+          const eessSelect = document.getElementById('modalIdEstablecimiento');
+          const nombreEstablecimientoInput = document.querySelector('input[name="Nombre_Establecimiento"]');
+          
+          if (eessSelect && eessSelect.value && nombreEstablecimientoInput) {
+            const selectedOption = eessSelect.options[eessSelect.selectedIndex];
+            if (selectedOption && selectedOption.textContent) {
+              nombreEstablecimientoInput.value = selectedOption.textContent;
+            }
+          }
 
-              // Crear FormData
-              const formData = new FormData(agregarNinoForm);
+          // Deshabilitar el botón de enviar para evitar doble envío
+          submitButton = agregarNinoForm.querySelector('button[type="submit"]');
+          if (submitButton) {
+            submitButton.disabled = true;
+            const originalText = submitButton.innerHTML;
+            submitButton.innerHTML = `
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Registrando...
+            `;
+          }
 
-              // Enviar formulario
-              fetch(agregarNinoForm.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                  'X-Requested-With': 'XMLHttpRequest',
-                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                }
-              })
-              .then(response => {
-              // Verificar si la respuesta es JSON
-              const contentType = response.headers.get("content-type");
-              if (contentType && contentType.includes("application/json")) {
-                return response.json().then(data => {
-                  return { ok: response.ok, status: response.status, data: data };
-                });
-              } else {
-                // Si no es JSON, intentar leer como texto
-                return response.text().then(text => {
-                  console.error('Respuesta no JSON recibida:', text);
-                  return { 
-                    ok: false, 
-                    status: response.status, 
-                    data: { 
-                      success: false, 
-                      message: 'Error inesperado del servidor. Por favor, verifique la consola para más detalles.' 
-                    } 
-                  };
-                });
-              }
-            })
-            .then(result => {
-              console.log('Resultado del registro:', result);
-              if (result.ok && result.data && result.data.success) {
-                // Mostrar mensaje de éxito
-                mostrarAdvertenciaAgregarNino(
-                  'success',
-                  '¡Registro Exitoso!',
-                  'El niño ha sido registrado exitosamente en el sistema.',
-                  null,
-                  function() {
-                    closeModalAdvertenciaAgregarNino();
-                    closeAgregarNinoModal();
-                    // Recargar la tabla sin recargar toda la página
-                    setTimeout(() => {
-                      cargarNinos(1);
-                    }, 500);
-                  }
-                );
-              } else {
-                // Manejar errores de validación u otros errores
-                let errorMessage = 'No se pudo registrar el niño';
-                let errorFields = [];
-                
-                if (result.data) {
-                  if (result.data.message) {
-                    errorMessage = result.data.message;
-                  }
-                  
-                  if (result.data.errors) {
-                    errorFields = Object.entries(result.data.errors)
-                      .map(([field, messages]) => {
-                        const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        return fieldName;
-                      });
-                    
-                    const errorList = Object.entries(result.data.errors)
-                      .map(([field, messages]) => {
-                        const fieldName = field.replace(/_/g, ' ');
-                        return `${fieldName}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
-                      })
-                      .join('\n');
-                    errorMessage = errorMessage + '\n\n' + errorList;
-                  }
-                  
-                  // Si hay un error de excepción, mostrarlo
-                  if (result.data.exception) {
-                    console.error('Excepción del servidor:', result.data.exception);
-                    errorMessage = errorMessage + '\n\nDetalle técnico: ' + result.data.exception;
-                  }
-                } else {
-                  errorMessage = `Error HTTP ${result.status || 'desconocido'}. Por favor, verifique la consola para más detalles.`;
-                }
-                
-                console.error('Error al registrar:', result);
-                mostrarAdvertenciaAgregarNino(
-                  'error',
-                  'Error al Registrar',
-                  errorMessage,
-                  errorFields.length > 0 ? errorFields : null
-                );
-              }
-            })
-              .catch(error => {
-                console.error('Error en la petición:', error);
-                mostrarAdvertenciaAgregarNino(
-                  'error',
-                  'Error de Conexión',
-                  'No se pudo conectar con el servidor. Por favor, verifique su conexión a internet e intente nuevamente.\n\nSi el problema persiste, verifique la consola del navegador (F12) para más detalles.'
-                );
+          // Crear FormData
+          const formData = new FormData(agregarNinoForm);
+
+          // Enviar formulario
+          fetch(agregarNinoForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+          })
+          .then(response => {
+            // Verificar si la respuesta es JSON
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              return response.json().then(data => {
+                return { ok: response.ok, status: response.status, data: data };
+              });
+            } else {
+              // Si no es JSON, intentar leer como texto
+              return response.text().then(text => {
+                console.error('Respuesta no JSON recibida:', text);
+                return { 
+                  ok: false, 
+                  status: response.status, 
+                  data: { 
+                    success: false, 
+                    message: 'Error inesperado del servidor. Por favor, verifique la consola para más detalles.' 
+                  } 
+                };
               });
             }
-          );
+          })
+          .then(result => {
+            console.log('Resultado del registro:', result);
+            
+            // Restaurar botón de enviar
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'Registrar Niño';
+            }
+            
+            if (result.ok && result.data && result.data.success) {
+              // Cerrar el modal de agregar niño primero
+              closeAgregarNinoModal();
+              
+              // Mostrar mensaje de éxito que se cerrará automáticamente
+              mostrarAdvertenciaAgregarNino(
+                'success',
+                '¡Registro Exitoso!',
+                'El niño ha sido registrado exitosamente en el sistema.',
+                null,
+                null, // Sin callback de confirmación
+                true  // Auto-cerrar con contador
+              );
+              
+              // Iniciar contador automático y recargar tabla
+              iniciarContadorModalExito();
+            } else {
+              // Manejar errores de validación u otros errores
+              let errorMessage = 'No se pudo registrar el niño';
+              let errorFields = [];
+              
+              if (result.data) {
+                if (result.data.message) {
+                  errorMessage = result.data.message;
+                }
+                
+                if (result.data.errors) {
+                  errorFields = Object.entries(result.data.errors)
+                    .map(([field, messages]) => {
+                      const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      return fieldName;
+                    });
+                  
+                  const errorList = Object.entries(result.data.errors)
+                    .map(([field, messages]) => {
+                      const fieldName = field.replace(/_/g, ' ');
+                      return `${fieldName}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+                    })
+                    .join('\n');
+                  errorMessage = errorMessage + '\n\n' + errorList;
+                }
+              } else {
+                errorMessage = `Error HTTP ${result.status || 'desconocido'}. Por favor, intente nuevamente.`;
+              }
+              
+              console.error('Error al registrar:', result);
+              mostrarAdvertenciaAgregarNino(
+                'error',
+                'Error al Registrar',
+                errorMessage,
+                errorFields.length > 0 ? errorFields : null
+              );
+            }
+          })
+          .catch(error => {
+            console.error('Error en la petición:', error);
+            
+            // Restaurar botón de enviar
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.innerHTML = 'Registrar Niño';
+            }
+            
+            mostrarAdvertenciaAgregarNino(
+              'error',
+              'Error de Conexión',
+              'No se pudo conectar con el servidor. Por favor, verifique su conexión a internet e intente nuevamente.\n\nSi el problema persiste, verifique la consola del navegador (F12) para más detalles.'
+            );
+          });
         });
       }
       
       // Variable para almacenar la función de confirmación (scope global)
       window.confirmacionCallbackAgregarNino = null;
+      window.contadorModalTimeout = null;
+      
+      // Función para iniciar el contador automático del modal de éxito
+      function iniciarContadorModalExito() {
+        // Limpiar cualquier contador anterior
+        if (window.contadorModalTimeout) {
+          clearInterval(window.contadorModalTimeout);
+          clearTimeout(window.contadorModalTimeout);
+        }
+        
+        const contadorEl = document.getElementById('modalAdvertenciaContador');
+        const segundosEl = document.getElementById('contadorSegundos');
+        const barraEl = document.getElementById('contadorBarra');
+        
+        if (!contadorEl || !segundosEl || !barraEl) return;
+        
+        // Mostrar contador
+        contadorEl.style.display = 'block';
+        
+        let segundos = 3;
+        segundosEl.textContent = segundos;
+        barraEl.style.width = '100%';
+        
+        // Función para cerrar y recargar
+        const cerrarYRecargar = () => {
+          closeModalAdvertenciaAgregarNino();
+          // Recargar la tabla sin recargar toda la página
+          if (typeof window.cargarNinos === 'function') {
+            try {
+              window.cargarNinos(1);
+            } catch (error) {
+              console.error('Error al recargar tabla:', error);
+              window.location.reload();
+            }
+          } else {
+            window.location.reload();
+          }
+        };
+        
+        // Actualizar contador cada segundo
+        window.contadorModalTimeout = setInterval(() => {
+          segundos--;
+          segundosEl.textContent = segundos;
+          const porcentaje = (segundos / 3) * 100;
+          barraEl.style.width = porcentaje + '%';
+          
+          if (segundos <= 0) {
+            clearInterval(window.contadorModalTimeout);
+            cerrarYRecargar();
+          }
+        }, 1000);
+        
+        // También actualizar la barra cada 100ms para animación suave
+        let tiempoTranscurrido = 0;
+        const intervaloBarra = setInterval(() => {
+          tiempoTranscurrido += 100;
+          const porcentaje = ((3000 - tiempoTranscurrido) / 3000) * 100;
+          if (porcentaje > 0) {
+            barraEl.style.width = porcentaje + '%';
+          } else {
+            clearInterval(intervaloBarra);
+          }
+        }, 100);
+      }
       
       // Función para mostrar advertencias/errores con modal personalizado
-      function mostrarAdvertenciaAgregarNino(tipo, titulo, mensaje, camposFaltantes = null, callbackConfirmacion = null) {
+      function mostrarAdvertenciaAgregarNino(tipo, titulo, mensaje, camposFaltantes = null, callbackConfirmacion = null, autoCerrar = false) {
         const modal = document.getElementById('modalAdvertenciaAgregarNino');
         const header = modal.querySelector('.modal-advertencia-nino-header');
         const iconLarge = document.getElementById('modalAdvertenciaIconLarge');
@@ -5288,59 +5350,92 @@
           listaEl.style.display = 'none';
         }
         
-        // Configurar botones
-        if (callbackConfirmacion) {
-          console.log('🔧 Configurando botón de confirmación con callback');
-          console.log('🔧 Callback recibido:', callbackConfirmacion);
-          console.log('🔧 Tipo de callback:', typeof callbackConfirmacion);
-          
-          // Guardar el callback en la variable global
-          window.confirmacionCallbackAgregarNino = callbackConfirmacion;
-          
-          // Verificar que se guardó correctamente
-          console.log('🔧 Callback guardado:', window.confirmacionCallbackAgregarNino);
-          
-          if (btnConfirmar) {
-            btnConfirmar.style.display = 'flex';
-            btnConfirmar.disabled = false;
-            console.log('✅ Botón confirmar visible y habilitado');
-          } else {
-            console.error('❌ No se encontró el botón btnConfirmarAdvertenciaAgregarNino');
-          }
-          if (btnCancelar) btnCancelar.textContent = 'Cancelar';
-        } else {
-          console.log('ℹ️ Sin callback, solo mostrar mensaje');
+        // Obtener elementos del contador
+        const contadorEl = document.getElementById('modalAdvertenciaContador');
+        
+        // Ocultar contador por defecto
+        if (contadorEl) {
+          contadorEl.style.display = 'none';
+        }
+        
+        // Configurar botones y contador según el tipo
+        if (autoCerrar && tipo === 'success') {
+          // Para auto-cierre: ocultar botones y mostrar contador
           window.confirmacionCallbackAgregarNino = null;
           if (btnConfirmar) {
             btnConfirmar.style.display = 'none';
             btnConfirmar.disabled = true;
           }
-          if (btnCancelar) btnCancelar.textContent = 'Cerrar';
+          if (btnCancelar) {
+            btnCancelar.style.display = 'none';
+          }
+        } else if (callbackConfirmacion) {
+          // Con callback: mostrar botón de confirmar
+          window.confirmacionCallbackAgregarNino = callbackConfirmacion;
+          
+          if (btnConfirmar) {
+            btnConfirmar.style.display = 'flex';
+            btnConfirmar.disabled = false;
+            btnConfirmar.style.pointerEvents = 'auto';
+            btnConfirmar.style.cursor = 'pointer';
+          }
+          if (btnCancelar) {
+            btnCancelar.style.display = 'flex';
+            btnCancelar.textContent = 'Cancelar';
+          }
+        } else {
+          // Sin callback: solo botón cerrar
+          window.confirmacionCallbackAgregarNino = null;
+          if (btnConfirmar) {
+            btnConfirmar.style.display = 'none';
+            btnConfirmar.disabled = true;
+          }
+          if (btnCancelar) {
+            btnCancelar.style.display = 'flex';
+            btnCancelar.textContent = 'Cerrar';
+          }
         }
         
         // Mostrar modal
-        console.log('👁️ Mostrando modal...');
         modal.classList.add('show');
-        console.log('✅ Modal mostrado, clases:', modal.className);
         
-        // Verificar que el botón esté disponible después de mostrar el modal
-        setTimeout(() => {
-          const btnCheck = document.getElementById('btnConfirmarAdvertenciaAgregarNino');
-          if (btnCheck) {
-            console.log('✅ Botón verificado después de mostrar modal:', {
-              display: window.getComputedStyle(btnCheck).display,
-              disabled: btnCheck.disabled,
-              onclick: btnCheck.getAttribute('onclick')
-            });
-          }
-        }, 100);
+        // Si es auto-cierre, iniciar contador después de mostrar el modal
+        if (autoCerrar && tipo === 'success') {
+          setTimeout(() => {
+            iniciarContadorModalExito();
+          }, 100);
+        }
+      }
+      
+      // Función para cerrar el modal cuando se hace click en el overlay
+      function closeModalAdvertenciaAgregarNinoOnOverlay(event) {
+        // Solo cerrar si se hace click directamente en el overlay, no en el contenedor
+        if (event && event.target === event.currentTarget) {
+          closeModalAdvertenciaAgregarNino();
+        }
       }
       
       // Función para cerrar el modal de advertencia
       function closeModalAdvertenciaAgregarNino(event) {
-        if (event && event.target !== event.currentTarget && !event.target.closest('.modal-advertencia-nino-container')) {
-          return;
+        // Si hay evento, prevenir propagación
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
         }
+        
+        // Limpiar contador si existe
+        if (window.contadorModalTimeout) {
+          clearInterval(window.contadorModalTimeout);
+          clearTimeout(window.contadorModalTimeout);
+          window.contadorModalTimeout = null;
+        }
+        
+        // Ocultar contador
+        const contadorEl = document.getElementById('modalAdvertenciaContador');
+        if (contadorEl) {
+          contadorEl.style.display = 'none';
+        }
+        
         const modal = document.getElementById('modalAdvertenciaAgregarNino');
         if (modal) {
           modal.classList.remove('show');
@@ -5348,41 +5443,45 @@
         window.confirmacionCallbackAgregarNino = null;
       }
       
-      // Función para confirmar la advertencia
-      function confirmarAdvertenciaAgregarNino() {
-        console.log('🔘 Botón confirmar presionado');
+      // Función para confirmar la advertencia (solo para casos especiales)
+      function confirmarAdvertenciaAgregarNino(event) {
+        // Prevenir propagación y comportamiento por defecto
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        
+        console.log('🔘 Botón Continuar presionado');
         console.log('📋 Callback disponible:', window.confirmacionCallbackAgregarNino);
-        console.log('📋 Tipo de callback:', typeof window.confirmacionCallbackAgregarNino);
         
         if (window.confirmacionCallbackAgregarNino && typeof window.confirmacionCallbackAgregarNino === 'function') {
-          console.log('✅ Ejecutando callback de confirmación...');
-          
           // Guardar el callback antes de cerrar el modal
           const callback = window.confirmacionCallbackAgregarNino;
+          
+          // Limpiar el callback global antes de ejecutarlo
+          window.confirmacionCallbackAgregarNino = null;
           
           // Cerrar el modal primero
           closeModalAdvertenciaAgregarNino();
           
-          // Ejecutar el callback después de un pequeño delay para asegurar que el modal se cierre
+          // Ejecutar el callback después de un pequeño delay
           setTimeout(() => {
             try {
+              console.log('✅ Ejecutando callback...');
               callback();
-              console.log('✅ Callback ejecutado exitosamente');
+              console.log('✅ Callback ejecutado correctamente');
             } catch (error) {
               console.error('❌ Error al ejecutar callback:', error);
               mostrarAdvertenciaAgregarNino(
                 'error',
                 'Error',
-                'Ocurrió un error al procesar la confirmación. Por favor, intente nuevamente.\n\nError: ' + error.message
+                'Ocurrió un error al procesar la confirmación. Por favor, intente nuevamente.'
               );
             }
-          }, 100);
+          }, 200);
         } else {
-          console.warn('⚠️ No hay callback de confirmación disponible');
-          console.warn('⚠️ Tipo:', typeof window.confirmacionCallbackAgregarNino);
-          console.warn('⚠️ Valor:', window.confirmacionCallbackAgregarNino);
-          
-          // Cerrar el modal de todas formas
+          console.warn('⚠️ No hay callback disponible, solo cerrando modal');
+          // Cerrar el modal si no hay callback
           closeModalAdvertenciaAgregarNino();
         }
       }
@@ -8568,39 +8667,77 @@
 
       // 3. Procesar controles CRED mensual
       if (datos.controles_cred_mensual && datos.controles_cred_mensual.controles) {
+        console.log('🔄 Procesando controles CRED mensual:', datos.controles_cred_mensual.controles);
+        
         datos.controles_cred_mensual.controles.forEach(control => {
-          const mes = control.mes;
+          // Usar numero_control en lugar de mes
+          const mes = control.numero_control || control.mes;
+          if (!mes || mes < 1 || mes > 11) {
+            console.warn('⚠️ Control CRED con número inválido:', control);
+            return;
+          }
+          
           const fechaEl = document.getElementById(`fo_cred_${mes}`);
           const edadEl = document.getElementById(`edad_cred_${mes}`);
           const estadoEl = document.getElementById(`estado_cred_${mes}`);
 
-          if (fechaEl && control.fecha_control) {
-            const fecha = crearFechaLocal(control.fecha_control);
-            fechaEl.textContent = fecha.toLocaleDateString('es-PE', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            });
-            fechaEl.style.color = '#1e293b';
-            fechaEl.style.fontWeight = '500';
+          // Usar fecha en lugar de fecha_control
+          const fechaControl = control.fecha || control.fecha_control;
+          
+          if (fechaEl && fechaControl) {
+            try {
+              const fecha = crearFechaLocal(fechaControl);
+              fechaEl.textContent = fecha.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              });
+              fechaEl.style.color = '#1e293b';
+              fechaEl.style.fontWeight = '500';
+            } catch (e) {
+              console.error(`❌ Error al formatear fecha del control CRED ${mes}:`, e);
+              fechaEl.textContent = fechaControl;
+            }
           }
+          
+          // Calcular edad en días si tenemos fecha de nacimiento y fecha del control
+          let edadDias = control.edad_dias || control.edad;
+          if (!edadDias && datos.nino && datos.nino.fecha_nacimiento && fechaControl) {
+            try {
+              const fechaNac = crearFechaLocal(datos.nino.fecha_nacimiento);
+              const fechaControlObj = crearFechaLocal(fechaControl);
+              const diffTime = fechaControlObj - fechaNac;
+              edadDias = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            } catch (e) {
+              console.error(`❌ Error al calcular edad del control CRED ${mes}:`, e);
+            }
+          }
+          
           if (edadEl) {
-            edadEl.textContent = control.edad_dias || '-';
-            edadEl.style.color = '#1e293b';
-            edadEl.style.fontWeight = '500';
+            edadEl.textContent = edadDias ? edadDias.toString() : '-';
+            if (edadDias) {
+              edadEl.style.color = '#1e293b';
+              edadEl.style.fontWeight = '500';
+            } else {
+              edadEl.style.color = '#64748b';
+            }
           }
+          
           if (estadoEl) {
-            if (control.estado === 'cumple') {
+            const estado = control.estado || 'SEGUIMIENTO';
+            if (estado === 'CUMPLE' || estado === 'cumple') {
               estadoEl.className = 'estado-badge cumple';
               estadoEl.textContent = 'CUMPLE';
-            } else if (control.estado === 'no_cumple') {
+            } else if (estado === 'NO CUMPLE' || estado === 'no_cumple' || estado === 'no cumple') {
               estadoEl.className = 'estado-badge no-cumple';
               estadoEl.textContent = 'NO CUMPLE';
             } else {
-              estadoEl.className = 'estado-badge pendiente';
-              estadoEl.textContent = 'PENDIENTE';
+              estadoEl.className = 'estado-badge estado-seguimiento';
+              estadoEl.textContent = 'SEGUIMIENTO';
             }
           }
+          
+          console.log(`✅ Control CRED ${mes} procesado: fecha=${fechaControl}, edad=${edadDias}, estado=${control.estado}`);
         });
       }
 
@@ -8626,9 +8763,13 @@
       const edadTamizajeEl = document.getElementById('edad-tamizaje-1');
       const cumpleTamizajeEl = document.getElementById('cumple-tamizaje');
 
-      if (datos.tamizaje && datos.tamizaje.fecha_tamizaje && datos.nino && datos.nino.fecha_nacimiento) {
+      // Procesar tamizaje neonatal (fecha_tam_neo)
+      const fechaTamizajeNeo = datos.tamizaje && datos.tamizaje.fecha_tam_neo ? datos.tamizaje.fecha_tam_neo : null;
+      const fechaTamizajeGalen = datos.tamizaje && datos.tamizaje.galen_fecha_tam_feo ? datos.tamizaje.galen_fecha_tam_feo : null;
+      
+      if (fechaTamizajeNeo && datos.nino && datos.nino.fecha_nacimiento) {
         try {
-          const fechaTamizaje = crearFechaLocal(datos.tamizaje.fecha_tamizaje);
+          const fechaTamizaje = crearFechaLocal(fechaTamizajeNeo);
           const fechaNacTamizaje = crearFechaLocal(datos.nino.fecha_nacimiento);
           const fechaFormateada = fechaTamizaje.toLocaleDateString('es-PE', {
             year: 'numeric',
@@ -8667,7 +8808,57 @@
         } catch (e) {
           console.error('❌ Error al procesar tamizaje:', e);
         }
-      } else {
+      }
+      
+      // Procesar tamizaje Galen (galen_fecha_tam_feo)
+      const fechaTamizajeGalenEl = document.getElementById('fecha-tamizaje-galen');
+      const edadTamizajeGalenEl = document.getElementById('edad-tamizaje-galen');
+      const cumpleTamizajeGalenEl = document.getElementById('cumple-tamizaje-galen');
+      
+      if (fechaTamizajeGalen && datos.nino && datos.nino.fecha_nacimiento) {
+        try {
+          const fechaGalen = crearFechaLocal(fechaTamizajeGalen);
+          const fechaNacGalen = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const fechaFormateadaGalen = fechaGalen.toLocaleDateString('es-PE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+
+          // Calcular edad en días al momento del tamizaje Galen
+          const diffTimeGalen = fechaGalen - fechaNacGalen;
+          const edadDiasGalen = Math.floor(diffTimeGalen / (1000 * 60 * 60 * 24));
+
+          if (fechaTamizajeGalenEl) {
+            fechaTamizajeGalenEl.textContent = fechaFormateadaGalen;
+            fechaTamizajeGalenEl.style.color = '#1e293b';
+            fechaTamizajeGalenEl.style.fontWeight = '500';
+          }
+
+          if (edadTamizajeGalenEl) {
+            edadTamizajeGalenEl.textContent = edadDiasGalen + ' días';
+            edadTamizajeGalenEl.style.color = '#1e293b';
+            edadTamizajeGalenEl.style.fontWeight = '500';
+          }
+
+          if (cumpleTamizajeGalenEl) {
+            // Evaluar si cumple con el rango (1-29 días)
+            if (edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax) {
+              cumpleTamizajeGalenEl.className = 'estado-badge cumple';
+              cumpleTamizajeGalenEl.textContent = 'CUMPLE';
+            } else {
+              cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
+              cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
+            }
+          }
+
+          console.log(`✅ Tamizaje Galen: ${fechaFormateadaGalen} (${edadDiasGalen} días) - ${edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax ? 'CUMPLE' : 'NO CUMPLE'}`);
+        } catch (e) {
+          console.error('❌ Error al procesar tamizaje Galen:', e);
+        }
+      }
+      
+      if (!fechaTamizajeNeo) {
         // Si NO hay tamizaje registrado, evaluar según edad actual
         if (cumpleTamizajeEl) {
           if (edadActualDiasTamizaje > rangoTamizajeMax) {
@@ -9418,6 +9609,7 @@
     window.ejecutarEliminarNino = ejecutarEliminarNino;
     window.mostrarAdvertenciaAgregarNino = mostrarAdvertenciaAgregarNino;
     window.closeModalAdvertenciaAgregarNino = closeModalAdvertenciaAgregarNino;
+    window.closeModalAdvertenciaAgregarNinoOnOverlay = closeModalAdvertenciaAgregarNinoOnOverlay;
     window.confirmarAdvertenciaAgregarNino = confirmarAdvertenciaAgregarNino;
     window.scrollTabs = scrollTabs;
     window.formatearFechaISO = formatearFechaISO;

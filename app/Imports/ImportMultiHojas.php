@@ -11,6 +11,10 @@ class ImportMultiHojas
     protected $madreImport;
     protected $controlesImport;
     protected $controlesCredImport;
+    protected $tamizajeImport;
+    protected $vacunasImport;
+    protected $visitasImport;
+    protected $recienNacidoImport;
 
     public function __construct()
     {
@@ -19,6 +23,10 @@ class ImportMultiHojas
         $this->madreImport = new MadreImport();
         $this->controlesImport = new ControlesRnImport();
         $this->controlesCredImport = new ControlesMenor1Import();
+        $this->tamizajeImport = new TamizajeImport();
+        $this->vacunasImport = new VacunasImport();
+        $this->visitasImport = new VisitasImport();
+        $this->recienNacidoImport = new RecienNacidoImport();
     }
 
     /**
@@ -61,20 +69,156 @@ class ImportMultiHojas
             // Obtener todas las hojas
             $sheetNames = $spreadsheet->getSheetNames();
             
-            // Procesar cada hoja
+            // Lista de hojas reconocidas
+            $hojasReconocidas = [];
+            $hojasNoReconocidas = [];
+            
+            // Separar hojas: primero "Niños" (OBLIGATORIA), luego las demás
+            $hojaNinos = null;
+            $otrasHojas = [];
+            
             foreach ($sheetNames as $sheetName) {
-                $sheet = $spreadsheet->getSheetByName($sheetName);
                 $sheetNameLower = strtolower(trim($sheetName));
+                if (in_array($sheetNameLower, ['niños', 'ninos', 'niño', 'nino'])) {
+                    $hojaNinos = $sheetName;
+                } else {
+                    $otrasHojas[] = $sheetName;
+                }
+            }
+            
+            // PRIMERO: Procesar hoja "Niños" (OBLIGATORIA)
+            if ($hojaNinos) {
+                $sheet = $spreadsheet->getSheetByName($hojaNinos);
+                $sheetNameLower = strtolower(trim($hojaNinos));
+                
+                \Log::info('Procesando hoja Niños PRIMERO', [
+                    'nombre_original' => $hojaNinos,
+                    'nombre_normalizado' => $sheetNameLower
+                ]);
                 
                 // Convertir hoja a array con encabezados
                 $rows = $this->sheetToArrayPhpSpreadsheet($sheet);
                 
-                // Procesar según el nombre de la hoja
-                $this->processSheetByName($sheetNameLower, $rows);
+                \Log::info('Datos de hoja Niños', [
+                    'hoja' => $hojaNinos,
+                    'filas' => count($rows),
+                    'primeras_columnas' => !empty($rows) ? array_keys($rows[0] ?? []) : [],
+                    'primera_fila_ejemplo' => !empty($rows) ? array_slice($rows[0] ?? [], 0, 5, true) : []
+                ]);
+                
+                $hojasReconocidas[] = $hojaNinos;
+                try {
+                    $this->processSheetByName($sheetNameLower, $rows);
+                } catch (\Exception $e) {
+                    \Log::error('Error al procesar hoja Niños', [
+                        'hoja' => $hojaNinos,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    throw new \Exception("Error crítico al procesar hoja 'Niños' (OBLIGATORIA): " . $e->getMessage());
+                }
+            } else {
+                throw new \Exception("La hoja 'Niños' es OBLIGATORIA y no se encontró en el archivo Excel.");
             }
+            
+            // SEGUNDO: Procesar las demás hojas
+            foreach ($otrasHojas as $sheetName) {
+                $sheet = $spreadsheet->getSheetByName($sheetName);
+                $sheetNameLower = strtolower(trim($sheetName));
+                
+                \Log::info('Procesando hoja', [
+                    'nombre_original' => $sheetName,
+                    'nombre_normalizado' => $sheetNameLower,
+                    'reconocida' => $this->isSheetRecognized($sheetNameLower)
+                ]);
+                
+                // Convertir hoja a array con encabezados
+                $rows = $this->sheetToArrayPhpSpreadsheet($sheet);
+                
+                \Log::info('Datos de hoja', [
+                    'hoja' => $sheetName,
+                    'filas' => count($rows),
+                    'primeras_columnas' => !empty($rows) ? array_keys($rows[0] ?? []) : [],
+                    'primera_fila_ejemplo' => !empty($rows) ? array_slice($rows[0] ?? [], 0, 5, true) : []
+                ]);
+                
+                // Verificar si la hoja será procesada
+                if ($this->isSheetRecognized($sheetNameLower)) {
+                    $hojasReconocidas[] = $sheetName;
+                    // Procesar según el nombre de la hoja
+                    try {
+                        $this->processSheetByName($sheetNameLower, $rows);
+                    } catch (\Exception $e) {
+                        \Log::error('Error al procesar hoja reconocida', [
+                            'hoja' => $sheetName,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString()
+                        ]);
+                        $this->addWarning("Error al procesar hoja '{$sheetName}': " . $e->getMessage());
+                    }
+                } else {
+                    $hojasNoReconocidas[] = $sheetName;
+                    \Log::warning('Hoja no reconocida', ['hoja' => $sheetName]);
+                }
+            }
+            
+            // Guardar información de las hojas procesadas para reporte
+            $this->processedSheets = [
+                'reconocidas' => $hojasReconocidas,
+                'no_reconocidas' => $hojasNoReconocidas,
+                'total' => count($sheetNames)
+            ];
+            
+            // Si hay hojas no reconocidas, agregar advertencia
+            if (!empty($hojasNoReconocidas)) {
+                $this->addWarning("Las siguientes hojas no fueron reconocidas y fueron omitidas: " . implode(', ', $hojasNoReconocidas) . 
+                    ". Hojas válidas: 'Niños', 'Datos Extra' (o 'Extra'), 'Madre', 'Controles RN', 'Controles CRED', 'Tamizaje', 'Vacunas', 'Visitas', 'Recien Nacido'");
+            }
+            
         } catch (\Exception $e) {
             throw new \Exception("Error al procesar archivo Excel con PhpSpreadsheet: " . $e->getMessage());
         }
+    }
+    
+    /**
+     * Verificar si una hoja es reconocida
+     */
+    protected function isSheetRecognized($sheetNameLower)
+    {
+        $hojasValidas = [
+            'niños', 'ninos', 'niño', 'nino',
+            'extra', 'datos_extra', 'datos extra',
+            'madre', 'madres',
+            'controles', 'control', 'controles_rn', 'controles rn',
+            'controles_cred', 'controles cred', 'controles_menor1', 'controles menor1', 'cred',
+            'tamizaje', 'tamisaje', 'tamizaje neonatal',
+            'vacunas', 'vacuna', 'vacuna_rn', 'vacuna rn',
+            'visitas', 'visita', 'visita domiciliaria',
+            'recien nacido', 'recien_nacido', 'recién nacido', 'recién_nacido', 'cnv'
+        ];
+        
+        return in_array($sheetNameLower, $hojasValidas);
+    }
+    
+    protected $processedSheets = [];
+    protected $warnings = [];
+    
+    protected function addWarning($message)
+    {
+        if (!isset($this->warnings)) {
+            $this->warnings = [];
+        }
+        $this->warnings[] = $message;
+    }
+    
+    public function getWarnings()
+    {
+        return $this->warnings ?? [];
+    }
+    
+    public function getProcessedSheets()
+    {
+        return $this->processedSheets ?? [];
     }
     
     /**
@@ -134,6 +278,33 @@ class ImportMultiHojas
             case 'controles menor1':
             case 'cred':
                 $this->processSheet($this->controlesCredImport, $rows);
+                break;
+
+            case 'tamizaje':
+            case 'tamisaje':
+            case 'tamizaje neonatal':
+                $this->processSheet($this->tamizajeImport, $rows);
+                break;
+
+            case 'vacunas':
+            case 'vacuna':
+            case 'vacuna_rn':
+            case 'vacuna rn':
+                $this->processSheet($this->vacunasImport, $rows);
+                break;
+
+            case 'visitas':
+            case 'visita':
+            case 'visita domiciliaria':
+                $this->processSheet($this->visitasImport, $rows);
+                break;
+
+            case 'recien nacido':
+            case 'recien_nacido':
+            case 'recién nacido':
+            case 'recién_nacido':
+            case 'cnv':
+                $this->processSheet($this->recienNacidoImport, $rows);
                 break;
         }
     }
@@ -254,6 +425,7 @@ class ImportMultiHojas
 
     /**
      * Normalizar encabezados (convertir a formato snake_case y minúsculas)
+     * Preserva caracteres especiales como ñ, á, é, í, ó, ú
      */
     protected function normalizeHeader($header)
     {
@@ -261,10 +433,19 @@ class ImportMultiHojas
             return '';
         }
 
-        // Convertir a minúsculas y reemplazar espacios/guiones con guiones bajos
-        $normalized = strtolower(trim($header));
-        $normalized = preg_replace('/[^a-z0-9_]/', '_', $normalized);
+        // Convertir a minúsculas y preservar caracteres especiales
+        $normalized = mb_strtolower(trim($header), 'UTF-8');
+        
+        // Reemplazar espacios y guiones con guiones bajos, pero preservar letras con acentos y ñ
+        $normalized = preg_replace('/[\s\-]+/', '_', $normalized);
+        
+        // Eliminar caracteres especiales excepto letras, números, guiones bajos y caracteres acentuados
+        $normalized = preg_replace('/[^a-z0-9_áéíóúñü]/u', '_', $normalized);
+        
+        // Reemplazar múltiples guiones bajos con uno solo
         $normalized = preg_replace('/_+/', '_', $normalized);
+        
+        // Eliminar guiones bajos al inicio y final
         $normalized = trim($normalized, '_');
 
         return $normalized;
@@ -275,12 +456,35 @@ class ImportMultiHojas
      */
     protected function processSheet($importer, $rows)
     {
+        // Verificar que haya filas para procesar
+        if (empty($rows) || count($rows) === 0) {
+            \Log::warning('Hoja vacía o sin datos para procesar');
+            return;
+        }
+
         // Crear una Collection con los datos
         $collection = new Collection($rows);
 
         // Llamar al método collection del importador
         if (method_exists($importer, 'collection')) {
-            $importer->collection($collection);
+            try {
+                $importer->collection($collection);
+                \Log::info('Hoja procesada exitosamente', [
+                    'filas' => count($rows),
+                    'importer' => get_class($importer)
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error al procesar hoja', [
+                    'error' => $e->getMessage(),
+                    'importer' => get_class($importer),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
+        } else {
+            \Log::warning('El importador no tiene método collection', [
+                'importer' => get_class($importer)
+            ]);
         }
     }
 
@@ -321,6 +525,34 @@ class ImportMultiHojas
             $errors = $this->controlesCredImport->getErrors();
             foreach ($errors as $error) {
                 $allErrors[] = "[controles_cred] {$error}";
+            }
+        }
+        
+        if (method_exists($this->tamizajeImport, 'getErrors')) {
+            $errors = $this->tamizajeImport->getErrors();
+            foreach ($errors as $error) {
+                $allErrors[] = "[tamizaje] {$error}";
+            }
+        }
+        
+        if (method_exists($this->vacunasImport, 'getErrors')) {
+            $errors = $this->vacunasImport->getErrors();
+            foreach ($errors as $error) {
+                $allErrors[] = "[vacunas] {$error}";
+            }
+        }
+        
+        if (method_exists($this->visitasImport, 'getErrors')) {
+            $errors = $this->visitasImport->getErrors();
+            foreach ($errors as $error) {
+                $allErrors[] = "[visitas] {$error}";
+            }
+        }
+        
+        if (method_exists($this->recienNacidoImport, 'getErrors')) {
+            $errors = $this->recienNacidoImport->getErrors();
+            foreach ($errors as $error) {
+                $allErrors[] = "[recien_nacido] {$error}";
             }
         }
         
@@ -367,6 +599,34 @@ class ImportMultiHojas
             }
         }
         
+        if (method_exists($this->tamizajeImport, 'getSuccess')) {
+            $success = $this->tamizajeImport->getSuccess();
+            foreach ($success as $s) {
+                $allSuccess[] = "[tamizaje] {$s}";
+            }
+        }
+        
+        if (method_exists($this->vacunasImport, 'getSuccess')) {
+            $success = $this->vacunasImport->getSuccess();
+            foreach ($success as $s) {
+                $allSuccess[] = "[vacunas] {$s}";
+            }
+        }
+        
+        if (method_exists($this->visitasImport, 'getSuccess')) {
+            $success = $this->visitasImport->getSuccess();
+            foreach ($success as $s) {
+                $allSuccess[] = "[visitas] {$s}";
+            }
+        }
+        
+        if (method_exists($this->recienNacidoImport, 'getSuccess')) {
+            $success = $this->recienNacidoImport->getSuccess();
+            foreach ($success as $s) {
+                $allSuccess[] = "[recien_nacido] {$s}";
+            }
+        }
+        
         return $allSuccess;
     }
 
@@ -394,6 +654,14 @@ class ImportMultiHojas
             'actualizados_controles' => 0,
             'controles_cred' => 0,
             'actualizados_controles_cred' => 0,
+            'tamizajes' => 0,
+            'actualizados_tamizajes' => 0,
+            'vacunas' => 0,
+            'actualizados_vacunas' => 0,
+            'visitas' => 0,
+            'actualizados_visitas' => 0,
+            'recien_nacido' => 0,
+            'actualizados_recien_nacido' => 0,
         ];
         
         // Recopilar estadísticas de todas las hojas
@@ -427,7 +695,53 @@ class ImportMultiHojas
             $allStats['actualizados_controles_cred'] += $stats['actualizados'] ?? 0;
         }
         
+        if (method_exists($this->tamizajeImport, 'getStats')) {
+            $stats = $this->tamizajeImport->getStats();
+            $allStats['tamizajes'] += $stats['tamizajes'] ?? 0;
+            $allStats['actualizados_tamizajes'] += $stats['actualizados'] ?? 0;
+        }
+        
+        if (method_exists($this->vacunasImport, 'getStats')) {
+            $stats = $this->vacunasImport->getStats();
+            $allStats['vacunas'] += $stats['vacunas'] ?? 0;
+            $allStats['actualizados_vacunas'] += $stats['actualizados'] ?? 0;
+        }
+        
+        if (method_exists($this->visitasImport, 'getStats')) {
+            $stats = $this->visitasImport->getStats();
+            $allStats['visitas'] += $stats['visitas'] ?? 0;
+            $allStats['actualizados_visitas'] += $stats['actualizados'] ?? 0;
+        }
+        
+        if (method_exists($this->recienNacidoImport, 'getStats')) {
+            $stats = $this->recienNacidoImport->getStats();
+            $allStats['recien_nacido'] += $stats['recien_nacido'] ?? 0;
+            $allStats['actualizados_recien_nacido'] += $stats['actualizados'] ?? 0;
+        }
+        
         return $allStats;
+    }
+
+    /**
+     * Recopilar todas las alertas de controles fuera de rango
+     */
+    public function getAlertas()
+    {
+        $allAlertas = [];
+        
+        // Recopilar alertas de controles RN
+        if (method_exists($this->controlesImport, 'getAlertas')) {
+            $alertas = $this->controlesImport->getAlertas();
+            $allAlertas = array_merge($allAlertas, $alertas);
+        }
+        
+        // Recopilar alertas de controles CRED
+        if (method_exists($this->controlesCredImport, 'getAlertas')) {
+            $alertas = $this->controlesCredImport->getAlertas();
+            $allAlertas = array_merge($allAlertas, $alertas);
+        }
+        
+        return $allAlertas;
     }
 }
 

@@ -19,6 +19,7 @@ class Nino extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_niño', // Permitir asignar ID personalizado
         'establecimiento',
         'tipo_doc',
         'numero_doc',

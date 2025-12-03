@@ -284,9 +284,6 @@ class ApiController extends Controller
                             'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
                             'edad' => $control->edad,
                             'estado' => $control->estado,
-                            'peso' => $control->peso,
-                            'talla' => $control->talla,
-                            'perimetro_cefalico' => $control->perimetro_cefalico,
                             'es_ejemplo' => false, // Marcar como control real
                         ];
                     });
@@ -510,10 +507,15 @@ class ApiController extends Controller
                 
                 // Mapear controles reales al formato esperado por la vista
                 $controlesFormateados = $controles->map(function($control) use ($nino) {
-                    // Recalcular estado basándose en la edad del control y el rango permitido
-                    $estadoRecalculado = $control->estado; // Por defecto, usar el estado guardado
+                    // Calcular edad en días desde la fecha de nacimiento y la fecha del control
+                    $edadDias = null;
+                    $estadoRecalculado = 'SEGUIMIENTO'; // Por defecto
                     
-                    if ($control->edad !== null && $nino->fecha_nacimiento) {
+                    if ($nino->fecha_nacimiento && $control->fecha) {
+                        $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                        $fechaControl = Carbon::parse($control->fecha);
+                        $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                        
                         // Rangos CRED mensual
                         $rangosCRED = [
                             1 => ['min' => 29, 'max' => 59],
@@ -531,7 +533,6 @@ class ApiController extends Controller
                         
                         $numeroControl = $control->numero_control;
                         $rango = $rangosCRED[$numeroControl] ?? ['min' => 0, 'max' => 365];
-                        $edadDias = (int)$control->edad;
                         
                         // Si hay control registrado, verificar si está dentro del rango
                         if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
@@ -543,26 +544,18 @@ class ApiController extends Controller
                             // Control registrado pero antes del rango mínimo (raro, pero posible)
                             $estadoRecalculado = 'NO CUMPLE';
                         }
-                        
-                        // Actualizar el estado en la base de datos si es diferente
-                        if ($control->estado !== $estadoRecalculado) {
-                            $control->estado = $estadoRecalculado;
-                            $control->save();
-                        }
                     }
                     
                     return [
-                        'id' => $control->id,
+                        'id' => $control->id_cred ?? $control->id,
                         'id_niño' => $control->id_niño,
                         'numero_control' => $control->numero_control,
                         'fecha' => $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null,
-                        'edad' => $control->edad,
-                        'estado' => $estadoRecalculado, // Usar el estado recalculado
-                        'peso' => $control->peso,
-                        'talla' => $control->talla,
-                        'perimetro_cefalico' => $control->perimetro_cefalico,
-                        'estado_cred_once' => $control->estado_cred_once,
-                        'estado_cred_final' => $control->estado_cred_final,
+                        'edad' => $edadDias, // Calcular edad en días desde fecha de nacimiento y fecha del control
+                        'edad_dias' => $edadDias, // Alias para compatibilidad
+                        'estado' => $estadoRecalculado,
+                        'estado_cred_once' => $control->estado_cred_once ?? null,
+                        'estado_cred_final' => $control->estado_cred_final ?? null,
                         'es_ejemplo' => false, // Marcar como dato real de la base de datos
                     ];
                 });
@@ -593,19 +586,28 @@ class ApiController extends Controller
         } else {
             // Si no hay nino_id, devolver todos los controles formateados
             $controles = ControlMenor1::all();
+            // Si no hay nino_id, necesitamos obtener la fecha de nacimiento de cada niño
             $controlesFormateados = $controles->map(function($control) {
+                $nino = $control->nino;
+                $edadDias = null;
+                
+                // Calcular edad en días si tenemos fecha de nacimiento y fecha del control
+                if ($nino && $nino->fecha_nacimiento && $control->fecha) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $fechaControl = Carbon::parse($control->fecha);
+                    $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                }
+                
                 return [
-                    'id' => $control->id,
+                    'id' => $control->id_cred ?? $control->id,
                     'id_niño' => $control->id_niño,
                     'numero_control' => $control->numero_control,
                     'fecha' => $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null,
-                    'edad' => $control->edad,
-                    'estado' => $control->estado,
-                    'peso' => $control->peso,
-                    'talla' => $control->talla,
-                    'perimetro_cefalico' => $control->perimetro_cefalico,
-                    'estado_cred_once' => $control->estado_cred_once,
-                    'estado_cred_final' => $control->estado_cred_final,
+                    'edad' => $edadDias, // Calcular edad en días
+                    'edad_dias' => $edadDias, // Alias para compatibilidad
+                    'estado' => $control->estado ?? 'SEGUIMIENTO',
+                    'estado_cred_once' => $control->estado_cred_once ?? null,
+                    'estado_cred_final' => $control->estado_cred_final ?? null,
                     'es_ejemplo' => false,
                 ];
             });
@@ -629,21 +631,18 @@ class ApiController extends Controller
         
         $controlesEjemplo = collect();
         $rangos = [
-            1 => ['min' => 29, 'max' => 59, 'peso_base' => 3.5, 'talla_base' => 50, 'pc_base' => 35],
-            2 => ['min' => 60, 'max' => 89, 'peso_base' => 4.2, 'talla_base' => 55, 'pc_base' => 37],
-            3 => ['min' => 90, 'max' => 119, 'peso_base' => 5.0, 'talla_base' => 60, 'pc_base' => 39],
-            4 => ['min' => 120, 'max' => 149, 'peso_base' => 5.8, 'talla_base' => 64, 'pc_base' => 40],
-            5 => ['min' => 150, 'max' => 179, 'peso_base' => 6.5, 'talla_base' => 67, 'pc_base' => 41],
-            6 => ['min' => 180, 'max' => 209, 'peso_base' => 7.2, 'talla_base' => 70, 'pc_base' => 42],
-            7 => ['min' => 210, 'max' => 239, 'peso_base' => 7.8, 'talla_base' => 72, 'pc_base' => 43],
-            8 => ['min' => 240, 'max' => 269, 'peso_base' => 8.3, 'talla_base' => 74, 'pc_base' => 44],
-            9 => ['min' => 270, 'max' => 299, 'peso_base' => 8.8, 'talla_base' => 76, 'pc_base' => 45],
-            10 => ['min' => 300, 'max' => 329, 'peso_base' => 9.2, 'talla_base' => 78, 'pc_base' => 45.5],
-            11 => ['min' => 330, 'max' => 359, 'peso_base' => 9.6, 'talla_base' => 79, 'pc_base' => 46],
+            1 => ['min' => 29, 'max' => 59],
+            2 => ['min' => 60, 'max' => 89],
+            3 => ['min' => 90, 'max' => 119],
+            4 => ['min' => 120, 'max' => 149],
+            5 => ['min' => 150, 'max' => 179],
+            6 => ['min' => 180, 'max' => 209],
+            7 => ['min' => 210, 'max' => 239],
+            8 => ['min' => 240, 'max' => 269],
+            9 => ['min' => 270, 'max' => 299],
+            10 => ['min' => 300, 'max' => 329],
+            11 => ['min' => 330, 'max' => 359],
         ];
-        
-        // Usar el ID del niño para generar variaciones consistentes pero diferentes por niño
-        $seed = $ninoIdReal % 100; // Usar módulo para tener valores entre 0-99
         
         foreach ($rangos as $numeroControl => $rango) {
             // Solo generar controles que ya deberían haberse realizado (edad actual >= min del rango)
@@ -651,15 +650,6 @@ class ApiController extends Controller
                 // Calcular fecha del control (aproximadamente en el medio del rango)
                 $diasDesdeNacimiento = $rango['min'] + (($rango['max'] - $rango['min']) / 2);
                 $fechaControl = $fechaNacimiento->copy()->addDays($diasDesdeNacimiento);
-                
-                // Generar variaciones basadas en el seed del niño
-                $variacionPeso = (($seed + $numeroControl) % 20 - 10) / 100; // Variación de -0.1 a +0.1 kg
-                $variacionTalla = (($seed + $numeroControl * 2) % 10 - 5) / 10; // Variación de -0.5 a +0.5 cm
-                $variacionPC = (($seed + $numeroControl * 3) % 6 - 3) / 10; // Variación de -0.3 a +0.3 cm
-                
-                $peso = round($rango['peso_base'] + $variacionPeso, 2);
-                $talla = round($rango['talla_base'] + $variacionTalla, 1);
-                $perimetroCefalico = round($rango['pc_base'] + $variacionPC, 1);
                 
                 // Determinar estado basándose en la edad del control (diasDesdeNacimiento) y el rango permitido
                 $estado = 'SEGUIMIENTO'; // Por defecto
@@ -677,9 +667,6 @@ class ApiController extends Controller
                     'numero_control' => $numeroControl,
                     'fecha' => $fechaControl->format('Y-m-d'),
                     'edad' => (int)$diasDesdeNacimiento,
-                    'peso' => $peso,
-                    'talla' => $talla,
-                    'perimetro_cefalico' => $perimetroCefalico,
                     'estado' => $estado,
                     'es_ejemplo' => true, // Marcar como dato de ejemplo
                 ]);
@@ -695,9 +682,6 @@ class ApiController extends Controller
             'nino_id' => 'required|integer',
             'mes' => 'required|integer|between:1,11',
             'fecha_control' => 'required|date',
-            'peso' => 'nullable|numeric|min:0',
-            'talla' => 'nullable|numeric|min:0',
-            'perimetro_cefalico' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -741,9 +725,6 @@ class ApiController extends Controller
                     'fecha' => $request->fecha_control,
                     'edad' => $edadDias,
                     'estado' => $estado,
-                    'peso' => $request->peso ?? $control->peso,
-                    'talla' => $request->talla ?? $control->talla,
-                    'perimetro_cefalico' => $request->perimetro_cefalico ?? $control->perimetro_cefalico,
                 ]);
             } else {
                 // Crear nuevo control
@@ -753,9 +734,6 @@ class ApiController extends Controller
                     'fecha' => $request->fecha_control,
                     'edad' => $edadDias,
                     'estado' => $estado,
-                    'peso' => $request->peso,
-                    'talla' => $request->talla,
-                    'perimetro_cefalico' => $request->perimetro_cefalico,
                 ]);
             }
 
@@ -1067,9 +1045,8 @@ class ApiController extends Controller
 
             $visita = VisitaDomiciliaria::create([
                 'id_niño' => $ninoIdReal,
-                'grupo_visita' => $request->periodo,
                 'fecha_visita' => $request->fecha_visita,
-                'numero_visitas' => $numeroVisitas,
+                'numero_control' => $numeroVisitas,
             ]);
 
             return response()->json([
@@ -1926,10 +1903,15 @@ class ApiController extends Controller
             $controlesCredFormateados = $controlesCred->map(function($control) use ($nino) {
                 $fecha = $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null;
                 
-                // Recalcular estado basándose en la edad del control y el rango permitido
-                $estadoRecalculado = $control->estado; // Por defecto, usar el estado guardado
+                // Calcular edad en días desde la fecha de nacimiento y la fecha del control
+                $edadDias = null;
+                $estadoRecalculado = 'SEGUIMIENTO'; // Por defecto
                 
-                if ($control->edad !== null && $nino->fecha_nacimiento) {
+                if ($nino->fecha_nacimiento && $control->fecha) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $fechaControl = Carbon::parse($control->fecha);
+                    $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                    
                     // Rangos CRED mensual
                     $rangosCRED = [
                         1 => ['min' => 29, 'max' => 59],
@@ -1947,12 +1929,6 @@ class ApiController extends Controller
                     
                     $numeroControl = $control->numero_control;
                     $rango = $rangosCRED[$numeroControl] ?? ['min' => 0, 'max' => 365];
-                    $edadDias = (int)$control->edad;
-                    
-                    // Calcular edad actual del niño
-                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-                    $hoy = Carbon::now();
-                    $edadActualDias = $fechaNacimiento->diffInDays($hoy);
                     
                     // Si hay control registrado, verificar si está dentro del rango
                     if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
@@ -1964,12 +1940,6 @@ class ApiController extends Controller
                         // Control registrado pero antes del rango mínimo (raro, pero posible)
                         $estadoRecalculado = 'NO CUMPLE';
                     }
-                    
-                    // Actualizar el estado en la base de datos si es diferente
-                    if ($control->estado !== $estadoRecalculado) {
-                        $control->estado = $estadoRecalculado;
-                        $control->save();
-                    }
                 }
                 
                 return [
@@ -1979,12 +1949,9 @@ class ApiController extends Controller
                     'mes' => $control->numero_control,
                     'fecha' => $fecha,
                     'fecha_control' => $fecha,
-                    'edad' => $control->edad,
-                    'edad_dias' => $control->edad,
-                    'estado' => $estadoRecalculado, // Usar el estado recalculado
-                    'peso' => $control->peso ?? null,
-                    'talla' => $control->talla ?? null,
-                    'perimetro_cefalico' => $control->perimetro_cefalico ?? null,
+                    'edad' => $edadDias, // Calcular edad en días desde fecha de nacimiento y fecha del control
+                    'edad_dias' => $edadDias, // Alias para compatibilidad
+                    'estado' => $estadoRecalculado,
                     'estado_cred_once' => $control->estado_cred_once ?? null,
                     'estado_cred_final' => $control->estado_cred_final ?? null,
                     'es_ejemplo' => false,
@@ -1997,9 +1964,10 @@ class ApiController extends Controller
                 $tamizajeFormateado = [
                     'id' => $tamizaje->id_tamizaje ?? $tamizaje->id,
                     'id_niño' => $tamizaje->id_niño,
-                    'fecha_tamizaje' => $tamizaje->fecha_tam_neo ? Carbon::parse($tamizaje->fecha_tam_neo)->format('Y-m-d') : null,
-                    'edad_dias' => $tamizaje->edad_tam_neo ?? null,
-                    'cumple' => $tamizaje->cumple_tam_neo ?? null,
+                    'numero_control' => $tamizaje->numero_control ?? null,
+                    'fecha_tam_neo' => $tamizaje->fecha_tam_neo ? Carbon::parse($tamizaje->fecha_tam_neo)->format('Y-m-d') : null,
+                    'fecha_tamizaje' => $tamizaje->fecha_tam_neo ? Carbon::parse($tamizaje->fecha_tam_neo)->format('Y-m-d') : null, // Alias para compatibilidad
+                    'galen_fecha_tam_feo' => $tamizaje->galen_fecha_tam_feo ? Carbon::parse($tamizaje->galen_fecha_tam_feo)->format('Y-m-d') : null,
                     'es_ejemplo' => false,
                 ];
             }
@@ -2019,28 +1987,48 @@ class ApiController extends Controller
             }
             
             // Formatear visitas
-            $visitasFormateadas = $visitas->map(function($visita) {
-                // Mapear grupo_visita a texto legible
-                $periodoMap = [
-                    'A' => '28 días de vida',
-                    'B' => '2-5 meses',
-                    'C' => '6-8 meses',
-                    'D' => '9-11 meses',
-                    // Mantener compatibilidad con códigos antiguos
-                    '28d' => '28 días de vida',
-                    '2-5m' => '2-5 meses',
-                    '6-8m' => '6-8 meses',
-                    '9-11m' => '9-11 meses',
-                ];
-                $periodoTexto = $periodoMap[$visita->grupo_visita] ?? $visita->grupo_visita;
+            $visitasFormateadas = $visitas->map(function($visita) use ($nino) {
+                $numeroControl = $visita->numero_control ?? 1;
+                
+                // Calcular edad en días de la visita para determinar el grupo
+                $grupoVisita = null;
+                $periodoTexto = "Visita {$numeroControl}";
+                
+                if ($visita->fecha_visita && $nino->fecha_nacimiento) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $fechaVisita = Carbon::parse($visita->fecha_visita);
+                    $edadDias = $fechaNacimiento->diffInDays($fechaVisita);
+                    
+                    // Determinar grupo basado en edad en días
+                    if ($edadDias >= 28 && $edadDias <= 35) {
+                        $grupoVisita = 'A';
+                        $periodoTexto = '28 días de vida';
+                    } elseif ($edadDias >= 60 && $edadDias <= 150) {
+                        $grupoVisita = 'B';
+                        $periodoTexto = '2-5 meses';
+                    } elseif ($edadDias >= 180 && $edadDias <= 240) {
+                        $grupoVisita = 'C';
+                        $periodoTexto = '6-8 meses';
+                    } elseif ($edadDias >= 270 && $edadDias <= 330) {
+                        $grupoVisita = 'D';
+                        $periodoTexto = '9-11 meses';
+                    } else {
+                        // Si no coincide con ningún rango, usar el numero_control
+                        $grupoVisita = $numeroControl <= 4 ? chr(64 + $numeroControl) : 'A'; // A, B, C, D
+                    }
+                } else {
+                    // Si no hay fecha, usar numero_control para determinar grupo
+                    $grupoVisita = $numeroControl <= 4 ? chr(64 + $numeroControl) : 'A'; // A, B, C, D
+                }
                 
                 return [
                     'id' => $visita->id_visita ?? $visita->id,
                     'id_niño' => $visita->id_niño,
                     'fecha_visita' => $visita->fecha_visita ? Carbon::parse($visita->fecha_visita)->format('Y-m-d') : null,
-                    'grupo_visita' => $visita->grupo_visita,
-                    'periodo' => $periodoTexto, // Para compatibilidad con frontend
-                    'numero_visitas' => $visita->numero_visitas,
+                    'grupo_visita' => $grupoVisita,
+                    'periodo' => $periodoTexto,
+                    'numero_control' => $numeroControl,
+                    'numero_visitas' => $numeroControl, // Alias para compatibilidad
                     'es_ejemplo' => false,
                 ];
             });
@@ -2048,23 +2036,36 @@ class ApiController extends Controller
             // Formatear vacunas (como array para compatibilidad con el frontend)
             $vacunasFormateadas = [];
             if ($vacunas) {
+                // Calcular edad en días desde fecha de nacimiento
+                $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : null;
+                
                 if ($vacunas->fecha_bcg) {
+                    $fechaBCG = Carbon::parse($vacunas->fecha_bcg);
+                    $edadBCG = $fechaNacimiento ? $fechaNacimiento->diffInDays($fechaBCG) : null;
+                    
                     $vacunasFormateadas[] = [
                         'id' => ($vacunas->id_vacuna ?? $vacunas->id) . '_bcg',
                         'id_niño' => $vacunas->id_niño,
+                        'numero_control' => $vacunas->numero_control ?? null,
                         'nombre_vacuna' => 'BCG',
-                        'fecha_aplicacion' => Carbon::parse($vacunas->fecha_bcg)->format('Y-m-d'),
-                        'edad_dias' => $vacunas->edad_bcg,
+                        'fecha_aplicacion' => $fechaBCG->format('Y-m-d'),
+                        'fecha_bcg' => $fechaBCG->format('Y-m-d'), // Alias para compatibilidad
+                        'edad_dias' => $edadBCG,
                         'es_ejemplo' => false,
                     ];
                 }
                 if ($vacunas->fecha_hvb) {
+                    $fechaHVB = Carbon::parse($vacunas->fecha_hvb);
+                    $edadHVB = $fechaNacimiento ? $fechaNacimiento->diffInDays($fechaHVB) : null;
+                    
                     $vacunasFormateadas[] = [
                         'id' => ($vacunas->id_vacuna ?? $vacunas->id) . '_hvb',
                         'id_niño' => $vacunas->id_niño,
+                        'numero_control' => $vacunas->numero_control ?? null,
                         'nombre_vacuna' => 'HVB',
-                        'fecha_aplicacion' => Carbon::parse($vacunas->fecha_hvb)->format('Y-m-d'),
-                        'edad_dias' => $vacunas->edad_hvb,
+                        'fecha_aplicacion' => $fechaHVB->format('Y-m-d'),
+                        'fecha_hvb' => $fechaHVB->format('Y-m-d'), // Alias para compatibilidad
+                        'edad_dias' => $edadHVB,
                         'es_ejemplo' => false,
                     ];
                 }
@@ -2115,6 +2116,83 @@ class ApiController extends Controller
                 'success' => false,
                 'message' => 'Error al obtener controles: ' . $e->getMessage(),
                 'data' => null
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener los últimos controles CRED registrados para el dashboard
+     */
+    public function ultimosControlesCred(Request $request)
+    {
+        try {
+            $limite = $request->get('limite', 10);
+            
+            // Obtener los últimos controles CRED ordenados por id_cred descendente (o id si no existe id_cred)
+            // Intentar primero con id_cred, si falla usar id
+            try {
+                $controles = ControlMenor1::with('nino')
+                    ->orderBy('id_cred', 'desc')
+                    ->limit($limite)
+                    ->get();
+            } catch (\Exception $e) {
+                // Si falla, intentar con id
+                $controles = ControlMenor1::with('nino')
+                    ->orderBy('id', 'desc')
+                    ->limit($limite)
+                    ->get();
+            }
+            
+            \Log::info('Controles CRED encontrados: ' . $controles->count());
+            
+            // Formatear los datos con información del niño
+            $controlesFormateados = $controles->map(function($control) {
+                $nino = $control->nino;
+                
+                if (!$nino) {
+                    // Si no hay relación, intentar buscar el niño manualmente
+                    $nino = Nino::where('id_niño', $control->id_niño)->first();
+                    if (!$nino) {
+                        \Log::warning('Control CRED sin niño asociado: id_cred=' . ($control->id_cred ?? $control->id) . ', id_niño=' . $control->id_niño);
+                        return null;
+                    }
+                }
+                
+                $fechaNacimiento = $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento) : null;
+                $fechaFormateada = $fechaNacimiento ? $fechaNacimiento->format('Y-m-d') : null;
+                
+                return [
+                    'id_cred' => $control->id_cred ?? $control->id,
+                    'id_niño' => $control->id_niño,
+                    'numero_control' => $control->numero_control,
+                    'fecha' => $control->fecha ? ($control->fecha instanceof \Carbon\Carbon ? $control->fecha->format('Y-m-d') : $control->fecha) : null,
+                    'edad' => $control->edad,
+                    'estado' => $control->estado,
+                    'nino' => [
+                        'id_niño' => $nino->id_niño,
+                        'establecimiento' => $nino->establecimiento ?? '-',
+                        'numero_doc' => $nino->numero_doc ?? '-',
+                        'apellidos_nombres' => $nino->apellidos_nombres ?? '-',
+                        'fecha_nacimiento' => $fechaFormateada,
+                        'genero' => $nino->genero ?? 'M',
+                    ]
+                ];
+            })->filter(); // Eliminar nulls si algún control no tiene niño asociado
+            
+            \Log::info('Controles CRED formateados: ' . $controlesFormateados->count());
+            
+            return response()->json([
+                'success' => true,
+                'data' => $controlesFormateados->values(), // Reindexar el array
+                'total' => $controlesFormateados->count()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en API ultimosControlesCred: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cargar los datos: ' . $e->getMessage(),
+                'data' => []
             ], 500);
         }
     }

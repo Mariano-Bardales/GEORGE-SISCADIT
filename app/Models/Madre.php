@@ -19,6 +19,7 @@ class Madre extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_madre', // Permitir asignar ID personalizado
         'id_niño',
         'dni',
         'apellidos_nombres',

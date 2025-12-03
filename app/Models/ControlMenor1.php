@@ -19,6 +19,7 @@ class ControlMenor1 extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_cred', // Permitir asignar ID personalizado
         'id_niño',
         'numero_control',
         'fecha',
@@ -26,9 +27,6 @@ class ControlMenor1 extends Model
         'estado',
         'estado_cred_once',
         'estado_cred_final',
-        'peso',
-        'talla',
-        'perimetro_cefalico',
     ];
 
     protected $casts = [
@@ -37,6 +35,6 @@ class ControlMenor1 extends Model
 
     public function nino()
     {
-        return $this->belongsTo(Nino::class, 'id_niño');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id_niño');
     }
 }

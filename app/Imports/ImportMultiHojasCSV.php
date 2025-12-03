@@ -351,5 +351,29 @@ class ImportMultiHojasCSV
         
         return $allStats;
     }
+
+    /**
+     * Recopilar todas las alertas de controles fuera de rango
+     */
+    public function getAlertas()
+    {
+        $allAlertas = [];
+        
+        // Recopilar alertas de controles RN
+        if (method_exists($this->controlesImport, 'getAlertas')) {
+            $alertas = $this->controlesImport->getAlertas();
+            $allAlertas = array_merge($allAlertas, $alertas);
+        }
+        
+        // Recopilar alertas de controles CRED
+        if (method_exists($this->controlesCredImport, 'getAlertas')) {
+            $alertas = $this->controlesCredImport->getAlertas();
+            $allAlertas = array_merge($allAlertas, $alertas);
+        }
+        
+        return $allAlertas;
+    }
 }
+
+
 

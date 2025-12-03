@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\ControlRn;
 use App\Models\Nino;
 use App\Imports\Traits\BuscaNinoTrait;
+use App\Services\RangosCredService;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
 
@@ -14,6 +15,7 @@ class ControlesRnImport
     
     protected $errors = [];
     protected $success = [];
+    protected $alertas = []; // Alertas para controles fuera de rango
     protected $stats = ['controles_rn' => 0, 'actualizados' => 0];
 
     public function collection(Collection $rows)
@@ -41,67 +43,171 @@ class ControlesRnImport
         
         $ninoId = $nino->id_niño;
 
-        $numeroControl = (int)($row['numero_control'] ?? 0);
+        // Aceptar tanto 'numero_control' como 'nro_control'
+        $numeroControl = (int)($row['numero_control'] ?? $row['nro_control'] ?? 0);
         if ($numeroControl < 1 || $numeroControl > 4) {
             $this->errors[] = "Número de control RN inválido: {$numeroControl} (debe ser 1-4)";
             return;
         }
 
-        // Verificar si ya existe
-        $existe = ControlRn::where('id_niño', $ninoId)
-                          ->where('numero_control', $numeroControl)
-                          ->exists();
-
-        $fecha = $this->parseDate($row['fecha'] ?? null);
+        // Aceptar tanto 'fecha' como 'fecha_control'
+        $fecha = $this->parseDate($row['fecha'] ?? $row['fecha_control'] ?? null);
         if (!$fecha) {
             $this->errors[] = "Fecha requerida para control RN {$numeroControl} del niño ID: {$ninoId}";
             return;
         }
         
-        // Calcular edad
-        $edad = $this->calculateAge($ninoId, $fecha);
-        
-        // Determinar estado automáticamente basándose en rangos
-        $rangosRN = [
-            1 => ['min' => 2, 'max' => 6],
-            2 => ['min' => 7, 'max' => 13],
-            3 => ['min' => 14, 'max' => 20],
-            4 => ['min' => 21, 'max' => 28],
-        ];
-        
-        $rango = $rangosRN[$numeroControl] ?? ['min' => 0, 'max' => 28];
-        $estado = 'SEGUIMIENTO'; // Por defecto
-        
-        if ($edad !== null) {
-            if ($edad >= $rango['min'] && $edad <= $rango['max']) {
-                $estado = 'CUMPLE';
-            } elseif ($edad > $rango['max']) {
-                $estado = 'NO CUMPLE';
-            }
+        // Obtener fecha de nacimiento del niño para calcular edad
+        $nino = Nino::find($ninoId);
+        if (!$nino || !$nino->fecha_nacimiento) {
+            $this->errors[] = "No se encontró fecha de nacimiento para el niño ID: {$ninoId}";
+            return;
         }
 
+        // Calcular edad en días usando el servicio centralizado
+        $edad = RangosCredService::calcularEdadEnDias($nino->fecha_nacimiento, $fecha);
+        
+        if ($edad === null) {
+            $this->errors[] = "No se pudo calcular la edad en días para el control RN {$numeroControl} del niño ID: {$ninoId}";
+            return;
+        }
+        
+        // Validar control usando el servicio centralizado
+        $validacion = RangosCredService::validarControl($numeroControl, $edad, 'recien_nacido');
+        $estado = $validacion['estado'];
+        $rango = $validacion['rango'] ?? null;
+        
+        // Generar alerta si no cumple
+        if (!$validacion['cumple'] && $validacion['estado'] === 'NO CUMPLE') {
+            $alerta = RangosCredService::generarAlerta($numeroControl, $edad, $fecha->format('Y-m-d'), 'recien_nacido');
+            $this->alertas[] = [
+                'tipo' => 'Control Recién Nacido',
+                'numero_control' => $numeroControl,
+                'fecha_control' => $fecha->format('Y-m-d'),
+                'edad_dias' => $edad,
+                'rango_min' => $rango['min'] ?? null,
+                'rango_max' => $rango['max'] ?? null,
+                'mensaje' => $alerta,
+                'nino_id' => $ninoId,
+                'nino_nombre' => $nino->apellidos_nombres ?? 'N/A'
+            ];
+        }
+
+        // Preparar datos del control
+        // NOTA: La tabla 'controles_rn' solo tiene: id_crn, id_niño, numero_control, fecha
         $data = [
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
             'fecha' => $fecha->format('Y-m-d'),
-            'edad' => $edad,
-            'estado' => $estado,
-            'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
-            'talla' => !empty($row['talla']) ? (float)$row['talla'] : null,
-            'perimetro_cefalico' => !empty($row['perimetro_cefalico']) || !empty($row['pc']) ? (float)($row['perimetro_cefalico'] ?? $row['pc']) : null,
         ];
 
-        if ($existe) {
-            ControlRn::where('id_niño', $ninoId)
-                     ->where('numero_control', $numeroControl)
-                     ->update($data);
-            $this->stats['actualizados']++;
-        } else {
-            ControlRn::create($data);
-            $this->stats['controles_rn']++;
+        // Verificar si hay ID personalizado del Excel - Buscar en múltiples variaciones de nombres de columnas
+        $idCrnPersonalizado = $row['id_crn'] 
+                           ?? $row['idcrn'] 
+                           ?? $row['id_control'] 
+                           ?? $row['idcontrol'] 
+                           ?? $row['id'] 
+                           ?? null;
+        
+        // Limpiar el ID: quitar espacios, convertir a número
+        if ($idCrnPersonalizado !== null) {
+            // Si es string, limpiarlo
+            if (is_string($idCrnPersonalizado)) {
+                $idCrnPersonalizado = trim($idCrnPersonalizado);
+                // Si está vacío después de trim, considerar como null
+                if ($idCrnPersonalizado === '') {
+                    $idCrnPersonalizado = null;
+                }
+            }
         }
-
-        $this->success[] = "Control RN {$numeroControl} importado para niño ID: {$ninoId}";
+        
+        $controlExistente = null;
+        
+        // ESTRATEGIA: Primero buscar por ID personalizado si está presente
+        if ($idCrnPersonalizado !== null && $idCrnPersonalizado !== '') {
+            // Intentar convertir a número
+            $idNumero = is_numeric($idCrnPersonalizado) ? (int)$idCrnPersonalizado : null;
+            
+            if ($idNumero !== null && $idNumero > 0) {
+                $controlExistente = ControlRn::find($idNumero);
+                
+                if ($controlExistente) {
+                    // Actualizar el control existente con el ID del Excel
+                    $controlExistente->update($data);
+                    $this->stats['actualizados']++;
+                    $this->success[] = "Control RN {$numeroControl} actualizado usando ID del Excel (ID: {$idNumero}) para niño ID: {$ninoId}";
+                    return;
+                }
+            }
+        }
+        
+        // Si no se encontró por ID, buscar por id_niño + numero_control
+        if (!$controlExistente) {
+            $controlExistente = ControlRn::where('id_niño', $ninoId)
+                                        ->where('numero_control', $numeroControl)
+                                        ->first();
+            
+            if ($controlExistente) {
+                // Si hay ID personalizado, actualizar también el ID
+                if ($idCrnPersonalizado !== null && $idCrnPersonalizado !== '') {
+                    $idNumero = is_numeric($idCrnPersonalizado) ? (int)$idCrnPersonalizado : null;
+                    
+                    if ($idNumero !== null && $idNumero > 0) {
+                        // Verificar que el ID personalizado no esté en uso por otro registro
+                        $existeConId = ControlRn::where('id_crn', $idNumero)
+                                               ->where('id_crn', '!=', $controlExistente->id_crn)
+                                               ->exists();
+                        
+                        if (!$existeConId) {
+                            $data['id_crn'] = $idNumero;
+                            // Actualizar con nuevo ID usando DB directo
+                            \Illuminate\Support\Facades\DB::table('controles_rn')
+                                ->where('id_crn', $controlExistente->id_crn)
+                                ->update($data);
+                            $this->stats['actualizados']++;
+                            $this->success[] = "Control RN {$numeroControl} actualizado y ID cambiado a {$idNumero} para niño ID: {$ninoId}";
+                            return;
+                        }
+                    }
+                }
+                
+                // Actualizar sin cambiar ID
+                $controlExistente->update($data);
+                $this->stats['actualizados']++;
+                $this->success[] = "Control RN {$numeroControl} actualizado para niño ID: {$ninoId}";
+                return;
+            }
+        }
+        
+        // CREAR NUEVO CONTROL
+        // Si hay ID personalizado, crear con ese ID exacto
+        if ($idCrnPersonalizado !== null && $idCrnPersonalizado !== '') {
+            $idNumero = is_numeric($idCrnPersonalizado) ? (int)$idCrnPersonalizado : null;
+            
+            if ($idNumero !== null && $idNumero > 0) {
+                // Verificar que el ID no esté en uso
+                $existeConId = ControlRn::where('id_crn', $idNumero)->exists();
+                
+                if (!$existeConId) {
+                    // Insertar con ID personalizado usando DB directo
+                    $data['id_crn'] = $idNumero;
+                    \Illuminate\Support\Facades\DB::table('controles_rn')->insert($data);
+                    $this->stats['controles_rn']++;
+                    $this->success[] = "Control RN {$numeroControl} creado con ID del Excel (ID: {$idNumero}) para niño ID: {$ninoId}";
+                    return;
+                } else {
+                    // ID ya existe, crear sin ID (auto-generado)
+                    $this->errors[] = "⚠️ El ID {$idNumero} ya existe en la BD. Se creará con ID automático.";
+                }
+            }
+        }
+        
+        // Crear sin ID personalizado (auto-generado)
+        $control = ControlRn::create($data);
+        if ($control && $control->id_crn) {
+            $this->stats['controles_rn']++;
+            $this->success[] = "Control RN {$numeroControl} creado para niño ID: {$ninoId} (ID auto-generado: {$control->id_crn})";
+        }
     }
 
     protected function parseDate($value)
@@ -154,6 +260,11 @@ class ControlesRnImport
     public function getStats()
     {
         return $this->stats;
+    }
+
+    public function getAlertas()
+    {
+        return $this->alertas;
     }
 }
 

@@ -128,7 +128,7 @@
                   </div>
                   <div>
                     <h3 class="text-lg font-bold text-slate-800">Datos de Controles CRED</h3>
-                    <p class="text-sm text-slate-500">Últimos registros de controles</p>
+                    <p class="text-sm text-slate-500">Últimos 10 registros del sistema</p>
                   </div>
                 </div>
                 <a href="{{ route('controles-cred') }}" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2">
@@ -164,7 +164,7 @@
               </div>
               <div style="padding: 1rem; border-top: 1px solid #e5e7eb; background: #f9fafb; display: flex; justify-content: space-between; align-items: center;">
                 <div style="font-size: 0.875rem; color: #64748b;">
-                  Mostrando <span id="totalControlesTabla" style="font-weight: 600; color: #1e293b;">0</span> registros
+                  Mostrando los últimos <span id="totalControlesTabla" style="font-weight: 600; color: #1e293b;">0</span> registros del sistema
                 </div>
                 <a href="{{ route('controles-cred') }}" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 0.875rem;">
                   Ver todos los controles →

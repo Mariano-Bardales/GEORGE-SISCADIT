@@ -19,6 +19,7 @@ class ControlRn extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_crn', // Permitir asignar ID personalizado
         'id_niño',
         'numero_control',
         'fecha',

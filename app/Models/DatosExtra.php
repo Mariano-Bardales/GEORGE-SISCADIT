@@ -19,6 +19,7 @@ class DatosExtra extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_extra', // Permitir asignar ID personalizado
         'id_niño',
         'red',
         'microred',

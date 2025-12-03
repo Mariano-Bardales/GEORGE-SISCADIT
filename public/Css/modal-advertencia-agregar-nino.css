@@ -36,6 +36,9 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: slideUp 0.3s ease-out;
+  position: relative;
+  z-index: 10002;
+  pointer-events: auto;
 }
 
 @keyframes slideUp {
@@ -242,6 +245,10 @@
   transition: all 0.2s;
   border: none;
   flex: 1;
+  position: relative;
+  z-index: 10003;
+  pointer-events: auto;
+  user-select: none;
 }
 
 .modal-advertencia-nino-btn-cancel {
@@ -273,6 +280,12 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  pointer-events: none;
+}
+
+.modal-advertencia-nino-btn:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive */

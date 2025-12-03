@@ -16,6 +16,7 @@ use App\Models\TamizajeNeonatal;
 use App\Models\VacunaRn;
 use App\Models\RecienNacido;
 use App\Models\VisitaDomiciliaria;
+use App\Services\ReorganizarIdsService;
 
 class ImportControlesController extends Controller
 {
@@ -59,8 +60,25 @@ class ImportControlesController extends Controller
                 $tempPath = storage_path('app/' . $tempPath);
             }
             
+            // PRIMERO: Reorganizar IDs de niños para que empiecen desde 1
+            // Esto asegura que cuando se importen controles, puedan usar los IDs correctos
+            try {
+                Log::info('Reorganizando IDs de niños antes de la importación...');
+                $reorganizacionNinos = ReorganizarIdsService::reorganizarIdsNinosPrimero();
+                Log::info('IDs de niños reorganizados', $reorganizacionNinos);
+            } catch (\Exception $e) {
+                // Si falla la reorganización previa, continuar con la importación
+                Log::warning('No se pudo reorganizar IDs de niños antes de importar (continuando): ' . $e->getMessage());
+            }
+            
             // Usar transacción de base de datos para asegurar que todo se guarde o nada
             DB::beginTransaction();
+            
+            // Inicializar variables para uso después del try
+            $stats = [];
+            $success = [];
+            $errors = [];
+            $hojasProcesadas = [];
             
             try {
                 // Si es CSV, usar el importador CSV (funciona con PHP 8)
@@ -77,18 +95,47 @@ class ImportControlesController extends Controller
                 $stats = $import->getStats();
                 $success = $import->getSuccess();
                 $errors = $import->getErrors();
+                $alertas = [];
+                
+                // Obtener alertas de controles fuera de rango
+                if (method_exists($import, 'getAlertas')) {
+                    $alertas = $import->getAlertas();
+                }
+                
+                // Obtener información de hojas procesadas (si está disponible)
+                if (method_exists($import, 'getProcessedSheets')) {
+                    $hojasProcesadas = $import->getProcessedSheets();
+                }
+                if (method_exists($import, 'getWarnings')) {
+                    $warnings = $import->getWarnings();
+                    // Agregar warnings a los errores para mostrarlos
+                    foreach ($warnings as $warning) {
+                        $errors[] = "⚠️ " . $warning;
+                    }
+                }
                 
                 // Verificar que se haya guardado algo
                 $totalGuardados = ($stats['ninos'] ?? 0) + 
                                  ($stats['controles_cred'] ?? 0) + 
                                  ($stats['controles_rn'] ?? 0) + 
                                  ($stats['madres'] ?? 0) + 
-                                 ($stats['datos_extra'] ?? 0);
+                                 ($stats['datos_extra'] ?? 0) +
+                                 ($stats['tamizajes'] ?? 0) +
+                                 ($stats['vacunas'] ?? 0) +
+                                 ($stats['visitas'] ?? 0) +
+                                 ($stats['recien_nacido'] ?? 0);
                 
                 if ($totalGuardados === 0 && empty($errors)) {
                     DB::rollBack();
+                    $mensajeError = 'No se importaron datos. Verifique que el archivo tenga el formato correcto y datos válidos.';
+                    if (!empty($hojasProcesadas)) {
+                        $mensajeError .= "\n\nHojas encontradas: " . implode(', ', $hojasProcesadas['reconocidas'] ?? []);
+                        if (!empty($hojasProcesadas['no_reconocidas'])) {
+                            $mensajeError .= "\nHojas no reconocidas: " . implode(', ', $hojasProcesadas['no_reconocidas']);
+                        }
+                    }
                     return redirect()->route('controles-cred')
-                        ->with('import_error', 'No se importaron datos. Verifique que el archivo tenga el formato correcto y datos válidos.');
+                        ->with('import_error', $mensajeError);
                 }
                 
                 // Si hay errores críticos, hacer rollback
@@ -106,6 +153,16 @@ class ImportControlesController extends Controller
                 
                 // Confirmar la transacción - TODOS los datos se guardan ahora
                 DB::commit();
+                
+                // Reorganizar IDs para que sean consecutivos después de la importación
+                try {
+                    Log::info('Iniciando reorganización de IDs después de la importación...');
+                    $reorganizacion = ReorganizarIdsService::reorganizarTodosLosIds();
+                    Log::info('Reorganización de IDs completada', $reorganizacion);
+                } catch (\Exception $e) {
+                    // No fallar la importación si hay error en reorganización
+                    Log::warning('Error al reorganizar IDs (no crítico): ' . $e->getMessage());
+                }
                 
                 Log::info('Importación completada exitosamente', [
                     'stats' => $stats,
@@ -146,6 +203,21 @@ class ImportControlesController extends Controller
             }
 
             $mensaje = "✅ Importación completada exitosamente!\n\n";
+            
+            // Información sobre hojas procesadas (si está disponible)
+            if (isset($hojasProcesadas) && !empty($hojasProcesadas)) {
+                $mensaje .= "📄 Hojas procesadas:\n";
+                if (!empty($hojasProcesadas['reconocidas'])) {
+                    $mensaje .= "  - Reconocidas: " . implode(', ', $hojasProcesadas['reconocidas']) . "\n";
+                }
+                if (!empty($hojasProcesadas['no_reconocidas'])) {
+                    $mensaje .= "  - No reconocidas (omitidas): " . implode(', ', $hojasProcesadas['no_reconocidas']) . "\n";
+                    $mensaje .= "    💡 Sugerencia: Verifica que los nombres de las hojas sean correctos.\n";
+                    $mensaje .= "    Hojas válidas: 'Niños', 'Datos Extra', 'Madre', 'Controles RN', 'Controles CRED', 'Tamizaje', 'Vacunas', 'Visitas', 'Recien Nacido'\n";
+                }
+                $mensaje .= "\n";
+            }
+            
             $mensaje .= "📊 Estadísticas:\n";
             if (isset($stats['ninos']) && $stats['ninos'] > 0) {
                 $mensaje .= "- Niños creados: {$stats['ninos']}\n";
@@ -175,18 +247,51 @@ class ImportControlesController extends Controller
                 $mensaje .= "- Controles CRED: {$stats['controles_cred']}\n";
             }
             if (isset($stats['tamizajes']) && $stats['tamizajes'] > 0) {
-                $mensaje .= "- Tamizajes: {$stats['tamizajes']}\n";
+                $mensaje .= "- Tamizajes creados: {$stats['tamizajes']}\n";
+            }
+            if (isset($stats['actualizados_tamizajes']) && $stats['actualizados_tamizajes'] > 0) {
+                $mensaje .= "- Tamizajes actualizados: {$stats['actualizados_tamizajes']}\n";
             }
             if (isset($stats['vacunas']) && $stats['vacunas'] > 0) {
-                $mensaje .= "- Vacunas: {$stats['vacunas']}\n";
+                $mensaje .= "- Vacunas creadas: {$stats['vacunas']}\n";
+            }
+            if (isset($stats['actualizados_vacunas']) && $stats['actualizados_vacunas'] > 0) {
+                $mensaje .= "- Vacunas actualizadas: {$stats['actualizados_vacunas']}\n";
             }
             if (isset($stats['visitas']) && $stats['visitas'] > 0) {
-                $mensaje .= "- Visitas: {$stats['visitas']}\n";
+                $mensaje .= "- Visitas creadas: {$stats['visitas']}\n";
+            }
+            if (isset($stats['actualizados_visitas']) && $stats['actualizados_visitas'] > 0) {
+                $mensaje .= "- Visitas actualizadas: {$stats['actualizados_visitas']}\n";
             }
             if (isset($stats['recien_nacido']) && $stats['recien_nacido'] > 0) {
-                $mensaje .= "- Recién Nacido: {$stats['recien_nacido']}\n";
+                $mensaje .= "- Recién Nacido creados: {$stats['recien_nacido']}\n";
+            }
+            if (isset($stats['actualizados_recien_nacido']) && $stats['actualizados_recien_nacido'] > 0) {
+                $mensaje .= "- Recién Nacido actualizados: {$stats['actualizados_recien_nacido']}\n";
             }
 
+            // Informar sobre reorganización de IDs
+            $mensaje .= "\n🔄 Reorganización de IDs:\n";
+            $mensaje .= "✅ Los IDs de niños fueron reorganizados PRIMERO para empezar desde 1.\n";
+            $mensaje .= "✅ Luego se reorganizaron todos los demás IDs (controles, madres, etc.) para que sean consecutivos.\n";
+            $mensaje .= "✅ Ahora todos los IDs están ordenados y los controles están correctamente vinculados con sus niños.\n";
+            $mensaje .= "💡 Al importar controles, puedes usar los IDs reorganizados (1, 2, 3, ...) para vincular correctamente.\n";
+            
+            // Agregar información sobre alertas de controles fuera de rango
+            if (!empty($alertas)) {
+                $mensaje .= "\n⚠️ Alertas - Controles fuera de rango: " . count($alertas) . "\n";
+                foreach (array_slice($alertas, 0, 10) as $alerta) {
+                    $mensajeAlerta = is_array($alerta) && isset($alerta['mensaje']) 
+                        ? $alerta['mensaje'] 
+                        : (is_string($alerta) ? $alerta : json_encode($alerta));
+                    $mensaje .= "- {$mensajeAlerta}\n";
+                }
+                if (count($alertas) > 10) {
+                    $mensaje .= "... y " . (count($alertas) - 10) . " alertas más\n";
+                }
+            }
+            
             if (!empty($errors)) {
                 $mensaje .= "\n⚠️ Errores: " . count($errors) . "\n";
                 foreach (array_slice($errors, 0, 10) as $error) {
@@ -213,6 +318,7 @@ class ImportControlesController extends Controller
                 ->with('import_success', $mensaje)
                 ->with('stats', $stats)
                 ->with('errors', $errors)
+                ->with('alertas', $alertas)
                 ->with('ninos_detallados', $ninosDetallados)
                 ->with('verificacion_bd', $verificacionBD);
 
