@@ -54,6 +54,7 @@
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
+            <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -64,6 +65,7 @@
             <td style="padding: 12px; color: #64748b;" id="control-1-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-1-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-1-estado">SEGUIMIENTO</span></td>
+            <td style="padding: 12px; text-align: center;" id="control-1-accion"></td>
           </tr>
           <!-- Control 2 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -72,6 +74,7 @@
             <td style="padding: 12px; color: #64748b;" id="control-2-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-2-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-2-estado">SEGUIMIENTO</span></td>
+            <td style="padding: 12px; text-align: center;" id="control-2-accion"></td>
           </tr>
           <!-- Control 3 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -80,6 +83,7 @@
             <td style="padding: 12px; color: #64748b;" id="control-3-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-3-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-3-estado">SEGUIMIENTO</span></td>
+            <td style="padding: 12px; text-align: center;" id="control-3-accion"></td>
           </tr>
           <!-- Control 4 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
@@ -88,6 +92,7 @@
             <td style="padding: 12px; color: #64748b;" id="control-4-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-4-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-4-estado">SEGUIMIENTO</span></td>
+            <td style="padding: 12px; text-align: center;" id="control-4-accion"></td>
           </tr>
         </tbody>
       </table>

@@ -45,7 +45,6 @@ Route::get('/consultar-solicitud', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/controles-cred', [ControlCredController::class, 'index'])->name('controles-cred');
-    Route::get('/registro-controles', [RegistroControlesController::class, 'index'])->name('registro-controles');
     Route::post('/controles-cred', [ControlCredController::class, 'store'])->name('controles-cred.store');
     // Páginas independientes para registrar controles
     Route::get('/controles-cred/cred-mensual/registrar', [ControlCredController::class, 'formCredMensual'])->name('controles-cred.cred-mensual.form');
@@ -97,7 +96,6 @@ Route::middleware(['auth'])->group(function () {
         
         // Controles CRED Mensual
         Route::get('/controles-cred-mensual', [ApiController::class, 'controlesCredMensual'])->name('api.controles-cred-mensual');
-        Route::get('/controles-cred-mensual/ultimos', [ApiController::class, 'ultimosControlesCred'])->name('api.controles-cred-mensual.ultimos');
         Route::post('/controles-cred-mensual/registrar', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar');
         Route::post('/controles-cred-mensual/registrar/{id}', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar.update');
         

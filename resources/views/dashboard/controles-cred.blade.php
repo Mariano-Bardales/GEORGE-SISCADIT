@@ -5508,7 +5508,7 @@
           return;
         }
 
-        // Redirigir a la página de registro
+        // Redirigir a la página de registro en nueva pestaña
         const url = `{{ route('controles-cred.recien-nacido.form') }}?nino_id=${currentNinoId}&numero_control=${numeroControl}`;
         window.open(url, '_blank');
       }
@@ -5694,7 +5694,7 @@
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                Editar
+                Editar Control
               </button>
               <button onclick="eliminarControlRecienNacido(${control.id}, ${numeroControl})"
                 class="btn-eliminar-control"
@@ -5713,12 +5713,12 @@
           const rangoMin = numeroControl === 1 ? 2 : numeroControl === 2 ? 7 : numeroControl === 3 ? 14 : 21;
           const rangoMax = numeroControl === 1 ? 6 : numeroControl === 2 ? 13 : numeroControl === 3 ? 20 : 28;
           accionElement.innerHTML = `
-            <button class="btn-registrar" onclick="abrirModalRegistro(${numeroControl}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+            <button class="btn-registrar" onclick="abrirModalRegistro(${numeroControl}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
                 <path d="M5 12h14"></path>
                 <path d="M12 5v14"></path>
               </svg>
-              Registrar
+              Registrar Control
             </button>
           `;
         }
@@ -6802,12 +6802,12 @@
                 const rangoMin = [2, 7, 14, 21][num - 1];
                 const rangoMax = [6, 13, 20, 28][num - 1];
                 accionEl.innerHTML = `
-                  <button class="btn-registrar" onclick="abrirModalRegistro(${num}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <button class="btn-registrar" onclick="abrirModalRegistro(${num}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
                       <path d="M5 12h14"></path>
                       <path d="M12 5v14"></path>
                     </svg>
-                    Registrar
+                    Registrar Control
                   </button>
                 `;
               }
@@ -6827,11 +6827,25 @@
               const fechaEl = document.getElementById(`control-${num}-fecha`);
               const edadEl = document.getElementById(`control-${num}-edad`);
               const estadoEl = document.getElementById(`control-${num}-estado`);
+              const accionEl = document.getElementById(`control-${num}-accion`);
               if (fechaEl) fechaEl.textContent = '-';
               if (edadEl) edadEl.textContent = '-';
               if (estadoEl) {
                 estadoEl.className = 'estado-badge estado-seguimiento';
                 estadoEl.textContent = 'SEGUIMIENTO';
+              }
+              if (accionEl) {
+                const rangoMin = [2, 7, 14, 21][num - 1];
+                const rangoMax = [6, 13, 20, 28][num - 1];
+                accionEl.innerHTML = `
+                  <button class="btn-registrar" onclick="abrirModalRegistro(${num}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
+                      <path d="M5 12h14"></path>
+                      <path d="M12 5v14"></path>
+                    </svg>
+                    Registrar Control
+                  </button>
+                `;
               }
             }
           }
@@ -7044,18 +7058,18 @@
                 totalSeguimiento++;
               }
 
-              // Actualizar botón a "Editar" si hay registro
+              // Actualizar botón a "Editar Control" si hay registro
               if (btnElement && control.id) {
                 btnElement.setAttribute('data-control-id', control.id);
                 btnElement.setAttribute('onclick', `abrirModalCredMensual(${mes}, ${control.id})`);
-                const btnText = btnElement.querySelector('.btn-text');
-                if (btnText) {
-                  btnText.textContent = 'Editar';
-                }
-                const btnIcon = btnElement.querySelector('.btn-icon');
-                if (btnIcon) {
-                  btnIcon.innerHTML = '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>';
-                }
+                btnElement.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  Editar Control
+                `;
+                btnElement.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;';
               }
             } else {
               // Si NO HAY control registrado (REGLA 3)
@@ -7069,6 +7083,19 @@
                 // Aún está dentro del rango o no ha llegado, EN SEGUIMIENTO
                 estadoFinal = 'SEGUIMIENTO';
                 totalSeguimiento++;
+              }
+              
+              // Crear botón "Registrar Control" si no hay control
+              if (btnElement) {
+                btnElement.setAttribute('onclick', `abrirModalCredMensual(${mes})`);
+                btnElement.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path>
+                  </svg>
+                  Registrar Control
+                `;
+                btnElement.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;';
               }
             }
 

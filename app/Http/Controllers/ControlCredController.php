@@ -115,7 +115,7 @@ class ControlCredController extends Controller
             ->where('numero_control', $numeroControl)
             ->first();
 
-        return view('controles.registrar-recien-nacido', [
+        return view('controles.form-recien-nacido', [
             'nino' => $nino,
             'numeroControl' => $numeroControl,
             'rango' => $rango,
@@ -143,7 +143,7 @@ class ControlCredController extends Controller
             ->where('id_niño', $nino->id_niño)
             ->first();
 
-        return view('controles.registrar-tamizaje', [
+        return view('controles.form-tamizaje', [
             'nino' => $nino,
             'tamizaje' => $tamizaje,
         ]);
@@ -168,7 +168,7 @@ class ControlCredController extends Controller
             ->where('id_niño', $nino->id_niño)
             ->first();
 
-        return view('controles.registrar-cnv', [
+        return view('controles.form-cnv', [
             'nino' => $nino,
             'cnv' => $cnv,
         ]);
@@ -208,7 +208,7 @@ class ControlCredController extends Controller
             ->where('grupo_visita', $periodo)
             ->first();
 
-        return view('controles.registrar-visita', [
+        return view('controles.form-visita', [
             'nino' => $nino,
             'periodo' => $periodo,
             'periodoTexto' => $periodoData['texto'],
@@ -250,7 +250,7 @@ class ControlCredController extends Controller
             }
         }
 
-        return view('controles.registrar-vacuna', [
+        return view('controles.form-vacuna', [
             'nino' => $nino,
             'tipoVacuna' => $tipoVacuna,
             'fechaVacuna' => $fechaVacuna,
