@@ -1,0 +1,4 @@
+# Esta carpeta contiene los backups de la base de datos
+# Los archivos .sql se ignoran en .gitignore
+
+
