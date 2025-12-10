@@ -39,7 +39,7 @@ class TamizajeImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         // Aceptar 'fecha_tam_neo' o 'fecha_tamizaje'
         $fechaTamNeo = $this->parseDate($row['fecha_tam_neo'] ?? $row['fecha_tamizaje'] ?? null);
@@ -79,7 +79,7 @@ class TamizajeImport
                 $existeConId = TamizajeNeonatal::where('id_tamizaje', $idTamizajePersonalizado)->exists();
                 if (!$existeConId) {
                     $data['id_tamizaje'] = (int)$idTamizajePersonalizado;
-                    \Illuminate\Support\Facades\DB::table('tamizaje_neonatal')->insert($data);
+                    \Illuminate\Support\Facades\DB::table('tamizaje_neonatals')->insert($data);
                     $this->stats['tamizajes']++;
                     $this->success[] = "Tamizaje creado con ID personalizado (ID: {$idTamizajePersonalizado}) para niño ID: {$ninoId}";
                 } else {

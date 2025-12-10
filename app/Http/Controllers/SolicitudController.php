@@ -43,8 +43,8 @@ class SolicitudController extends Controller
             });
         }
 
-        // Ordenar por más recientes primero
-        $query->orderBy('created_at', 'desc');
+        // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)
+        $query->orderBy('id', 'desc');
 
         // Cargar relación con usuario
         $query->with('usuario');
@@ -105,8 +105,8 @@ class SolicitudController extends Controller
                     'celular' => $solicitud->celular,
                     'correo' => $solicitud->correo,
                     'estado' => $solicitud->estado,
-                    'created_at' => $solicitud->created_at->toISOString(),
-                    'fecha_solicitud' => $solicitud->created_at->format('d/m/Y H:i'),
+                    // created_at eliminado - campo no existe en la base de datos
+                    'fecha_solicitud' => null, // created_at eliminado
                     'user_id' => $solicitud->user_id,
                     'usuario_creado' => $solicitud->usuario ? [
                         'id' => $solicitud->usuario->id,
@@ -432,7 +432,7 @@ class SolicitudController extends Controller
                 'celular' => $solicitud->celular,
                 'correo' => $solicitud->correo,
                 'estado' => $solicitud->estado,
-                'fecha_solicitud' => $solicitud->created_at->format('d/m/Y H:i'),
+                'fecha_solicitud' => null, // created_at eliminado - campo no existe en la base de datos
                 'user_id' => $solicitud->user_id,
                 'usuario_creado' => $solicitud->usuario ? [
                     'id' => $solicitud->usuario->id,

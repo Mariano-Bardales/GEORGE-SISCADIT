@@ -123,9 +123,7 @@ class ImportMultiHojasCSV
                 return 'madre';
             }
             if (in_array('numero_control', $headersLower) && in_array('fecha', $headersLower)) {
-                if (in_array('estado_cred_once', $headersLower) || in_array('estado_cred_final', $headersLower)) {
-                    return 'controles_cred';
-                }
+                // estado_cred_once y estado_cred_final eliminados - ya no se usan para identificar tipo
                 return 'controles';
             }
         }

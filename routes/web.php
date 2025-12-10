@@ -56,12 +56,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
     
     // Importar controles desde Excel (solo admin)
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('/importar-controles', [ImportControlesController::class, 'import'])->name('importar-controles.import');
     });
     
-    // Solicitudes (solo admin) - CRUD completo
-    Route::middleware(['auth'])->group(function () {
+    // Solicitudes (solo admin y jefe_red) - CRUD completo
+    Route::middleware(['auth', 'role:admin,jefe_red'])->group(function () {
         Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('solicitudes');
         Route::post('/solicitudes', [SolicitudController::class, 'store'])->name('solicitudes.store');
         Route::get('/solicitudes/{id}', [SolicitudController::class, 'show'])->name('solicitudes.show');
@@ -71,7 +71,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Usuarios (solo admin)
-    Route::middleware(['auth'])->group(function () {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::get('/usuarios', [UsuarioController::class, 'index'])->name('usuarios');
         Route::post('/usuarios', [UsuarioController::class, 'store'])->name('usuarios.store');
         Route::get('/usuarios/{id}', [UsuarioController::class, 'show'])->name('usuarios.show');
@@ -79,8 +79,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
     });
     
-    // API Routes
-    Route::prefix('api')->group(function () {
+    // API Routes (requieren autenticación)
+    Route::prefix('api')->middleware(['auth'])->group(function () {
         Route::get('/dashboard/stats', [ApiController::class, 'dashboardStats'])->name('api.dashboard.stats');
         Route::get('/reportes/estadisticas', [ApiController::class, 'reportesEstadisticas'])->name('api.reportes.estadisticas');
         Route::get('/ninos', [ApiController::class, 'ninos'])->name('api.ninos');
@@ -98,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/controles-cred-mensual', [ApiController::class, 'controlesCredMensual'])->name('api.controles-cred-mensual');
         Route::post('/controles-cred-mensual/registrar', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar');
         Route::post('/controles-cred-mensual/registrar/{id}', [ApiController::class, 'registrarCredMensual'])->name('api.controles-cred-mensual.registrar.update');
+        Route::delete('/controles-cred-mensual/{id}', [ApiController::class, 'eliminarControlCredMensual'])->name('api.controles-cred-mensual.delete');
         
         // Tamizaje Neonatal
         Route::get('/tamizaje', [ApiController::class, 'tamizaje'])->name('api.tamizaje');
@@ -118,14 +119,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/alertas/total', [ApiController::class, 'totalAlertas'])->name('api.alertas.total');
         Route::get('/alertas', [ApiController::class, 'obtenerAlertas'])->name('api.alertas');
         
-        // Solicitudes API
-        Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('api.solicitudes');
-        Route::delete('/solicitudes/{id}', [SolicitudController::class, 'destroy'])->name('api.solicitudes.destroy');
+        // Solicitudes API (solo admin y jefe_red)
+        Route::middleware(['role:admin,jefe_red'])->group(function () {
+            Route::get('/solicitudes', [SolicitudController::class, 'index'])->name('api.solicitudes');
+            Route::delete('/solicitudes/{id}', [SolicitudController::class, 'destroy'])->name('api.solicitudes.destroy');
+        });
         
-        // Usuarios API
-        Route::get('/usuarios', [UsuarioController::class, 'index'])->name('api.usuarios');
-        Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('api.usuarios.update');
-        Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('api.usuarios.destroy');
+        // Usuarios API (solo admin)
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/usuarios', [UsuarioController::class, 'index'])->name('api.usuarios');
+            Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('api.usuarios.update');
+            Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('api.usuarios.destroy');
+        });
         
         // RENIEC API
         Route::get('/consultar-reniec', [UsuarioController::class, 'consultarReniec'])->name('api.consultar-reniec');

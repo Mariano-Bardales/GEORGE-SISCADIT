@@ -35,8 +35,8 @@ class UsuarioController extends Controller
             });
         }
 
-        // Ordenar por más recientes primero
-        $query->orderBy('created_at', 'desc');
+        // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)
+        $query->orderBy('id', 'desc');
 
         // Cargar relación con solicitud
         $query->with('solicitud');
@@ -74,7 +74,7 @@ class UsuarioController extends Controller
             });
         }
 
-        $querySolicitudes->with('usuario')->orderBy('created_at', 'desc');
+        $querySolicitudes->with('usuario')->orderBy('id', 'desc'); // Ordenar por ID en lugar de created_at eliminado
         $solicitudes = $querySolicitudes->paginate(15, ['*'], 'solicitudes_page');
 
         // Estadísticas de solicitudes
@@ -139,8 +139,7 @@ class UsuarioController extends Controller
                     'celular' => $solicitud ? ($solicitud->celular ?? null) : null,
                     'motivo' => $solicitud ? ($solicitud->motivo ?? null) : null,
                     'solicitud_id' => $solicitud ? ($solicitud->id ?? null) : null,
-                    'created_at' => $usuario->created_at ? $usuario->created_at->toDateTimeString() : null,
-                    'updated_at' => $usuario->updated_at ? $usuario->updated_at->toDateTimeString() : null,
+                    // created_at y updated_at eliminados - campos no existen en la base de datos
                 ];
             })->toArray();
 
@@ -186,8 +185,8 @@ class UsuarioController extends Controller
             });
         }
 
-        // Ordenar por más recientes primero
-        $query->orderBy('created_at', 'desc');
+        // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)
+        $query->orderBy('id', 'desc');
 
         // Cargar relación con solicitud
         $query->with('solicitud');
@@ -264,8 +263,7 @@ class UsuarioController extends Controller
                     'celular' => $solicitud ? ($solicitud->celular ?? null) : null,
                     'motivo' => $solicitud ? ($solicitud->motivo ?? null) : null,
                     'solicitud_id' => $solicitud ? ($solicitud->id ?? null) : null,
-                    'created_at' => $usuario->created_at ? $usuario->created_at->toDateTimeString() : null,
-                    'updated_at' => $usuario->updated_at ? $usuario->updated_at->toDateTimeString() : null,
+                    // created_at y updated_at eliminados - campos no existen en la base de datos
                 ];
         })->toArray();
 
@@ -298,7 +296,7 @@ class UsuarioController extends Controller
                 'name' => $usuario->name,
                 'email' => $usuario->email,
                 'role' => $usuario->role,
-                'created_at' => $usuario->created_at->format('d/m/Y'),
+                // created_at eliminado - campo no existe en la base de datos
             ]
         ]);
     }

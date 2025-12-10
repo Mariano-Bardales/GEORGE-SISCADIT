@@ -23,7 +23,8 @@ return new class extends Migration
         Schema::table($tableName, function (Blueprint $table) use ($tableName) {
             // Verificar si los campos ya existen antes de agregarlos
             if (!Schema::hasColumn($tableName, 'peso')) {
-                $table->decimal('peso', 5, 2)->nullable()->after('estado_cred_final');
+                // estado_cred_final ya no existe, agregar después de fecha
+                $table->decimal('peso', 5, 2)->nullable()->after('fecha');
             }
             if (!Schema::hasColumn($tableName, 'talla')) {
                 $table->decimal('talla', 5, 2)->nullable()->after('peso');

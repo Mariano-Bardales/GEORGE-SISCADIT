@@ -39,7 +39,7 @@ class VacunasImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
         
         $fechaBCG = $this->parseDate($row['fecha_bcg'] ?? null);
         $fechaHVB = $this->parseDate($row['fecha_hvb'] ?? null);
@@ -75,7 +75,7 @@ class VacunasImport
                 $existeConId = VacunaRn::where('id_vacuna', $idVacunaPersonalizado)->exists();
                 if (!$existeConId) {
                     $data['id_vacuna'] = (int)$idVacunaPersonalizado;
-                    \Illuminate\Support\Facades\DB::table('vacuna_rn')->insert($data);
+                    \Illuminate\Support\Facades\DB::table('vacuna_rns')->insert($data);
                     $this->stats['vacunas']++;
                     $this->success[] = "Vacunas creadas con ID personalizado (ID: {$idVacunaPersonalizado}) para niño ID: {$ninoId}";
                 } else {

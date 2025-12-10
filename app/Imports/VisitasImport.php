@@ -39,10 +39,33 @@ class VisitasImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
-        // Aceptar 'numero_control' o 'nro_control'
-        $numeroControl = (int)($row['numero_control'] ?? $row['nro_control'] ?? 0);
+        // Aceptar 'control_de_visita', 'numero_control', 'nro_control', o valores como 'A', 'B', 'C', 'D'
+        $controlDeVisita = null;
+        
+        // Mapear valores de texto a números
+        $controlMap = [
+            'A' => 1, '28D' => 1, '28 DÍAS' => 1, '28 DIAS' => 1, '28 días' => 1,
+            'B' => 2, '2-5M' => 2, '2-5 MESES' => 2, '2-5 MES' => 2, '2-5 meses' => 2,
+            'C' => 3, '6-8M' => 3, '6-8 MESES' => 3, '6-8 MES' => 3, '6-8 meses' => 3,
+            'D' => 4, '9-11M' => 4, '9-11 MESES' => 4, '9-11 MES' => 4, '9-11 meses' => 4,
+        ];
+        
+        $controlInput = $row['control_de_visita'] ?? $row['numero_control'] ?? $row['nro_control'] ?? null;
+        
+        if ($controlInput) {
+            if (is_numeric($controlInput)) {
+                $controlDeVisita = (int)$controlInput;
+            } else {
+                $controlDeVisita = $controlMap[strtoupper(trim($controlInput))] ?? null;
+            }
+        }
+        
+        if (!$controlDeVisita || $controlDeVisita < 1 || $controlDeVisita > 4) {
+            $this->errors[] = "Control de visita inválido: {$controlInput} (debe ser 1-4 o A-D) para niño ID: {$ninoId}";
+            return;
+        }
         
         // Aceptar 'fecha_visita' o 'fecha'
         $fechaVisita = $this->parseDate($row['fecha_visita'] ?? $row['fecha'] ?? null);
@@ -51,10 +74,10 @@ class VisitasImport
             return;
         }
 
-        // Preparar datos - la tabla tiene numero_control, no numero_visitas ni grupo_visita
+        // Preparar datos - la tabla tiene control_de_visita (1-4)
         $data = [
             'id_niño' => $ninoId,
-            'numero_control' => $numeroControl ?: 1,
+            'control_de_visita' => $controlDeVisita,
             'fecha_visita' => $fechaVisita->format('Y-m-d'),
         ];
 
@@ -68,9 +91,9 @@ class VisitasImport
             $existe = VisitaDomiciliaria::find($idVisitaPersonalizado);
         }
         
-        if (!$existe && $numeroControl) {
+        if (!$existe && $controlDeVisita) {
             $existe = VisitaDomiciliaria::where('id_niño', $ninoId)
-                                       ->where('numero_control', $numeroControl)
+                                       ->where('control_de_visita', $controlDeVisita)
                                        ->first();
         }
         
@@ -84,7 +107,7 @@ class VisitasImport
                 $existeConId = VisitaDomiciliaria::where('id_visita', $idVisitaPersonalizado)->exists();
                 if (!$existeConId) {
                     $data['id_visita'] = (int)$idVisitaPersonalizado;
-                    \Illuminate\Support\Facades\DB::table('visitas_domiciliarias')->insert($data);
+                    \Illuminate\Support\Facades\DB::table('visita_domiciliarias')->insert($data);
                     $this->stats['visitas']++;
                     $this->success[] = "Visita creada con ID personalizado (ID: {$idVisitaPersonalizado}) para niño ID: {$ninoId}";
                 } else {

@@ -9,13 +9,13 @@ class RecienNacido extends Model
 {
     use HasFactory;
 
-    protected $table = 'recien_nacido';
+    protected $table = 'recien_nacidos';
     
-    protected $primaryKey = 'id_rn';
+    protected $primaryKey = 'id';
     
     public $incrementing = true;
     
-    // Deshabilitar timestamps porque la tabla no tiene created_at y updated_at
+    // Deshabilitar timestamps - campos eliminados de la base de datos
     public $timestamps = false;
 
     protected $fillable = [

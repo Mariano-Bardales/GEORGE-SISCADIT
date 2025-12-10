@@ -168,11 +168,11 @@
                                 </svg>
                                 Datos del Niño
                               </h4>
-                              <div class="space-y-4">
+                                <div class="space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Nombre del Establecimiento</label>
-                                    <input type="text" name="Nombre_Establecimiento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nombre del Establecimiento">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Nombre del Establecimiento <span class="text-red-500">*</span></label>
+                                    <input type="text" name="Nombre_Establecimiento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Nombre del Establecimiento" required>
                                   </div>
                                   <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Documento <span class="text-red-500">*</span></label>
@@ -314,20 +314,20 @@
                                     </div>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Distrito</label>
-                                    <input type="text" id="input-distrito" name="Distrito" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Distrito">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Distrito <span class="text-red-500">*</span></label>
+                                    <input type="text" id="input-distrito" name="Distrito" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Distrito" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Provincia</label>
-                                    <input type="text" id="input-provincia" name="Provincia" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Provincia">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Provincia <span class="text-red-500">*</span></label>
+                                    <input type="text" id="input-provincia" name="Provincia" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Provincia" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Departamento</label>
-                                    <input type="text" name="Departamento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Departamento">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Departamento <span class="text-red-500">*</span></label>
+                                    <input type="text" name="Departamento" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Departamento" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Seguro</label>
-                                    <select name="Seguro" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Seguro <span class="text-red-500">*</span></label>
+                                    <select name="Seguro" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                       <option value="">Seleccione</option>
                                       <option value="SIS">SIS</option>
                                       <option value="ESSALUD">ESSALUD</option>
@@ -336,8 +336,8 @@
                                     </select>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Programa</label>
-                                    <select name="Programa" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Programa <span class="text-red-500">*</span></label>
+                                    <select name="Programa" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
                                       <option value="">Seleccione</option>
                                       <option value="CRED">CRED</option>
                                       <option value="PIANE">PIANE</option>
@@ -360,7 +360,7 @@
                                 </h4>
                                 <div class="space-y-4">
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">DNI</label>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">DNI de la Madre <span class="text-red-500">*</span></label>
                                     <input 
                                       type="text" 
                                       name="DNI_Madre" 
@@ -370,16 +370,17 @@
                                       maxlength="8"
                                       pattern="[0-9]{8}"
                                       inputmode="numeric"
+                                      required
                                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8)"
                                     >
                                     <p class="text-xs text-slate-500 mt-1">Máximo 8 dígitos numéricos</p>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Apellidos y Nombres</label>
-                                    <input type="text" name="Apellidos_Nombres_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Apellidos y Nombres">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Apellidos y Nombres de la Madre <span class="text-red-500">*</span></label>
+                                    <input type="text" name="Apellidos_Nombres_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Apellidos y Nombres" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Celular</label>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Celular de la Madre <span class="text-red-500">*</span></label>
                                     <input 
                                       type="tel" 
                                       name="Celular_Madre" 
@@ -389,17 +390,18 @@
                                       maxlength="9"
                                       pattern="[0-9]{9}"
                                       inputmode="numeric"
+                                      required
                                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 9)"
                                     >
                                     <p class="text-xs text-slate-500 mt-1">Máximo 9 dígitos numéricos</p>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Domicilio</label>
-                                    <input type="text" name="Domicilio_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Domicilio">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Domicilio de la Madre <span class="text-red-500">*</span></label>
+                                    <input type="text" name="Domicilio_Madre" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Domicilio" required>
                                   </div>
                                   <div>
-                                    <label class="block text-sm font-medium text-slate-700 mb-2">Referencia Dirección</label>
-                                    <input type="text" name="Referencia_Direccion" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Referencia de dirección">
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Referencia de Dirección <span class="text-red-500">*</span></label>
+                                    <input type="text" name="Referencia_Direccion" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Referencia de dirección" required>
                                   </div>
                                 </div>
                               </div>
@@ -1190,8 +1192,10 @@
                       @if($ninoData['tamizaje'])
                         <div class="p-2 bg-yellow-50 rounded border border-yellow-200">
                           <span class="text-yellow-700 font-semibold">Tamizaje:</span>
-                          <div class="text-yellow-800">{{ $ninoData['tamizaje']['fecha_tam_neo'] ?? '-' }}</div>
-                          <div class="text-yellow-600 text-xs">{{ $ninoData['tamizaje']['cumple_tam_neo'] ?? '-' }}</div>
+                          <div class="text-yellow-800 text-xs">Fecha: {{ $ninoData['tamizaje']['fecha_tam_neo'] ?? '-' }}</div>
+                          @if(!empty($ninoData['tamizaje']['galen_fecha_tam_feo']))
+                            <div class="text-yellow-600 text-xs">Galen: {{ $ninoData['tamizaje']['galen_fecha_tam_feo'] ?? '-' }}</div>
+                          @endif
                         </div>
                       @endif
                       
@@ -1206,8 +1210,9 @@
                       @if($ninoData['cnv'])
                         <div class="p-2 bg-teal-50 rounded border border-teal-200">
                           <span class="text-teal-700 font-semibold">CNV:</span>
-                          <div class="text-teal-800 text-xs">Peso: {{ $ninoData['cnv']['peso'] ?? '-' }}g</div>
+                          <div class="text-teal-800 text-xs">Peso: {{ $ninoData['cnv']['peso'] ?? '-' }} kg</div>
                           <div class="text-teal-800 text-xs">EG: {{ $ninoData['cnv']['edad_gestacional'] ?? '-' }} sem</div>
+                          <div class="text-teal-800 text-xs">{{ $ninoData['cnv']['clasificacion'] ?? '-' }}</div>
                         </div>
                       @endif
                       
@@ -1215,6 +1220,11 @@
                         <div class="p-2 bg-cyan-50 rounded border border-cyan-200">
                           <span class="text-cyan-700 font-semibold">Visitas:</span>
                           <div class="text-cyan-800 text-xs">{{ count($ninoData['visitas']) }} registradas</div>
+                          <div class="text-cyan-600 text-xs mt-1">
+                            @foreach($ninoData['visitas'] as $visita)
+                              Visita {{ $visita['control_de_visita'] ?? '-' }}: {{ $visita['fecha_visita'] ?? '-' }}<br>
+                            @endforeach
+                          </div>
                         </div>
                       @endif
                     </div>
@@ -5871,6 +5881,61 @@
         });
       }
 
+      function eliminarControlCredMensual(controlId, numeroControl) {
+        if (!confirm(`¿Está seguro de eliminar el Control CRED ${numeroControl}? Esta acción no se puede deshacer.`)) {
+          return;
+        }
+
+        fetch(`{{ route("api.controles-cred-mensual.delete", ["id" => ":id"]) }}`.replace(':id', controlId), {
+          method: 'DELETE',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Recargar controles CRED mensual
+            if (typeof cargarControlesCredMensual === 'function') {
+              cargarControlesCredMensual(ninoIdActual);
+            }
+            
+            // Recargar alertas si existe la función
+            if (typeof evaluarAlertas === 'function') {
+              evaluarAlertas(ninoIdActual, '', '', '');
+            }
+
+            // Mostrar mensaje de éxito
+            const successMessage = document.createElement('div');
+            successMessage.className = 'mensaje-exito animate-slide-in';
+            successMessage.style.cssText = 'position: fixed; top: 1rem; right: 1rem; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2); z-index: 9999; display: flex; align-items: center; gap: 0.75rem; min-width: 300px; max-width: 500px;';
+            successMessage.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">Control CRED eliminado exitosamente</div>
+                <div style="font-size: 0.75rem; opacity: 0.95;">El Control CRED ${numeroControl} ha sido eliminado correctamente.</div>
+              </div>
+            `;
+            document.body.appendChild(successMessage);
+
+            setTimeout(() => {
+              successMessage.classList.add('animate-slide-out');
+              setTimeout(() => successMessage.remove(), 300);
+            }, 4000);
+          } else {
+            alert('Error: ' + (data.message || 'No se pudo eliminar el control CRED'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al eliminar el control CRED. Por favor, inténtelo nuevamente.');
+        });
+      }
+
       // ========== FUNCIONES PARA MODAL DE TAMIZAJE ==========
       // Función para abrir modal de tamizaje
       window.abrirModalTamizaje = function abrirModalTamizaje() {
@@ -7058,18 +7123,45 @@
                 totalSeguimiento++;
               }
 
-              // Actualizar botón a "Editar Control" si hay registro
+              // Actualizar botones a "Editar Control" y "Eliminar" si hay registro
               if (btnElement && control.id) {
-                btnElement.setAttribute('data-control-id', control.id);
-                btnElement.setAttribute('onclick', `abrirModalCredMensual(${mes}, ${control.id})`);
-                btnElement.innerHTML = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
+                // Crear contenedor para los botones
+                const btnContainer = document.createElement('div');
+                btnContainer.style.cssText = 'display: flex; gap: 0.5rem; justify-content: center; align-items: center;';
+                
+                // Botón Editar
+                const btnEditar = document.createElement('button');
+                btnEditar.setAttribute('onclick', `abrirModalCredMensual(${mes}, ${control.id})`);
+                btnEditar.setAttribute('title', 'Editar control');
+                btnEditar.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                   </svg>
-                  Editar Control
+                  Editar
                 `;
-                btnElement.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;';
+                btnEditar.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;';
+                
+                // Botón Eliminar
+                const btnEliminar = document.createElement('button');
+                btnEliminar.setAttribute('onclick', `eliminarControlCredMensual(${control.id}, ${mes})`);
+                btnEliminar.setAttribute('title', 'Eliminar control');
+                btnEliminar.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  Eliminar
+                `;
+                btnEliminar.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;';
+                
+                btnContainer.appendChild(btnEditar);
+                btnContainer.appendChild(btnEliminar);
+                
+                // Reemplazar el contenido del botón original con el contenedor
+                btnElement.innerHTML = '';
+                btnElement.appendChild(btnContainer);
+                btnElement.style.cssText = 'padding: 0; background: transparent; border: none;';
               }
             } else {
               // Si NO HAY control registrado (REGLA 3)
@@ -9489,14 +9581,29 @@
           'Accept': 'application/json'
         }
       })
-      .then(response => {
+      .then(async response => {
         console.log('📡 Respuesta del servidor:', response.status, response.statusText);
-        if (!response.ok) {
-          return response.json().then(data => {
-            throw new Error(data.message || `Error HTTP ${response.status}`);
-          });
+        console.log('📡 Headers:', response.headers);
+        
+        // Intentar obtener el JSON siempre
+        let data;
+        try {
+          const text = await response.text();
+          console.log('📄 Respuesta texto:', text);
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('❌ Error al parsear JSON:', e);
+          throw new Error(`Error al procesar respuesta del servidor: ${response.status} ${response.statusText}`);
         }
-        return response.json();
+        
+        if (!response.ok) {
+          // Mostrar el mensaje de error del servidor si existe
+          const errorMsg = data.message || data.error || `Error HTTP ${response.status}: ${response.statusText}`;
+          console.error('❌ Error del servidor:', errorMsg);
+          throw new Error(errorMsg);
+        }
+        
+        return data;
       })
       .then(data => {
         if (data.success) {
@@ -9581,6 +9688,17 @@
       })
       .catch(error => {
         console.error('Error al eliminar niño:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        
+        // Obtener mensaje de error más específico
+        let errorMsg = 'Error al eliminar el niño. Por favor, intente nuevamente.';
+        if (error.message) {
+          errorMsg = error.message;
+        }
         
         // Mostrar mensaje de error
         const errorMessage = document.createElement('div');
@@ -9593,8 +9711,8 @@
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
           <div style="flex: 1;">
-            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">❌ Error de conexión</div>
-            <div style="font-size: 0.75rem; opacity: 0.95;">Error al eliminar el niño. Por favor, intente nuevamente.</div>
+            <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.25rem;">❌ Error al eliminar</div>
+            <div style="font-size: 0.75rem; opacity: 0.95;">${errorMsg}</div>
           </div>
         `;
         document.body.appendChild(errorMessage);

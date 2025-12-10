@@ -37,7 +37,7 @@ class NinosImport
             
             if (!empty($row['id_nino']) || !empty($row['id_niño'])) {
                 $idNino = $row['id_nino'] ?? $row['id_niño'];
-                $nino = Nino::where('id_niño', $idNino)->first();
+                $nino = Nino::find($idNino);
             } elseif (!empty($row['numero_doc']) && !empty($row['tipo_doc'])) {
                 $nino = Nino::where('numero_doc', $row['numero_doc'])
                            ->where('tipo_doc', $row['tipo_doc'])
@@ -108,22 +108,21 @@ class NinosImport
                 // Actualizar niño existente
                 $nino->update($data);
                 $this->stats['actualizados']++;
-                $this->success[] = "Niño actualizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+                $this->success[] = "Niño actualizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id})";
             } else {
                 // Crear nuevo niño - intentar conservar ID del Excel si está presente
                 $idNinoPersonalizado = $row['id_nino'] ?? $row['id_niño'] ?? null;
                 
-                if ($idNinoPersonalizado && is_numeric($idNinoPersonalizado)) {
+                    if ($idNinoPersonalizado && is_numeric($idNinoPersonalizado)) {
                     // Verificar si el ID ya existe
-                    $existeConId = Nino::where('id_niño', $idNinoPersonalizado)->exists();
+                    $existeConId = Nino::find($idNinoPersonalizado) !== null;
                     if (!$existeConId) {
                         // Crear con ID personalizado usando inserción directa
                         $idPersonalizado = (int)$idNinoPersonalizado;
                         
                         // Preparar datos completos para inserción directa
-                        // NOTA: La tabla 'niños' NO tiene columnas edad_meses ni edad_dias
                         $dataCompleto = array_merge($data, [
-                            'id_niño' => $idPersonalizado,
+                            'id' => $idPersonalizado,
                         ]);
                         
                         // Usar inserción directa para poder especificar el ID
@@ -133,15 +132,15 @@ class NinosImport
                         ]);
                         
                         try {
-                            DB::table('niños')->insert($dataCompleto);
+                            DB::table('ninos')->insert($dataCompleto);
                             \Log::info('Niño insertado exitosamente en BD');
                             
                             // Recargar el registro desde la base de datos
                             $nino = Nino::find($idPersonalizado);
                             if ($nino) {
                                 $this->stats['ninos']++;
-                                $this->success[] = "Niño creado con ID personalizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
-                                \Log::info('Niño creado exitosamente', ['id' => $nino->id_niño]);
+                                $this->success[] = "Niño creado con ID personalizado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id})";
+                                \Log::info('Niño creado exitosamente', ['id' => $nino->id]);
                             } else {
                                 \Log::error('Niño insertado pero no se pudo recargar', ['id_personalizado' => $idPersonalizado]);
                             }
@@ -157,19 +156,19 @@ class NinosImport
                         // El ID ya existe, crear sin ID (auto-incrementar)
                         $nino = Nino::create($data);
                         $this->stats['ninos']++;
-                        $this->success[] = "Niño creado (ID {$idNinoPersonalizado} ya existe, usando ID: {$nino->id_niño}): " . ($data['apellidos_nombres'] ?? 'N/A');
+                        $this->success[] = "Niño creado (ID {$idNinoPersonalizado} ya existe, usando ID: {$nino->id}): " . ($data['apellidos_nombres'] ?? 'N/A');
                     }
                 } else {
                     // Crear sin ID personalizado (auto-incrementar)
                     $nino = Nino::create($data);
                     $this->stats['ninos']++;
-                    $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+                    $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id})";
                 }
             }
             
             // Guardar ID del niño importado
-            if ($nino && $nino->id_niño) {
-                $this->ninosImportados[] = $nino->id_niño;
+            if ($nino && $nino->id) {
+                $this->ninosImportados[] = $nino->id;
             }
         } catch (\Exception $e) {
             $this->errors[] = "Error al importar niño: " . $e->getMessage() . " - Fila: " . ($row['apellidos_nombres'] ?? 'N/A');

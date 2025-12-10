@@ -69,33 +69,47 @@ class ReniecService
             if ($response->successful()) {
                 $data = $response->json();
 
+                // Log completo de la respuesta para debugging
+                Log::info('Respuesta completa de API Perú', [
+                    'dni' => $dni,
+                    'data_keys' => is_array($data) ? array_keys($data) : 'no es array',
+                    'data' => $data
+                ]);
+
                 // Manejar diferentes formatos de respuesta de apiperu.dev
                 // Formato 1: {"success": true, "data": {...}}
                 if (isset($data['success']) && $data['success'] === true && isset($data['data'])) {
+                    $formattedData = $this->formatearDatos($data['data']);
+                    Log::info('Datos formateados (formato 1)', ['formatted' => $formattedData]);
                     return [
                         'success' => true,
-                        'data' => $this->formatearDatos($data['data'])
+                        'data' => $formattedData
                     ];
                 }
                 
                 // Formato 2: {"data": {...}} (sin campo success)
                 if (isset($data['data']) && is_array($data['data'])) {
+                    $formattedData = $this->formatearDatos($data['data']);
+                    Log::info('Datos formateados (formato 2)', ['formatted' => $formattedData]);
                     return [
                         'success' => true,
-                        'data' => $this->formatearDatos($data['data'])
+                        'data' => $formattedData
                     ];
                 }
                 
                 // Formato 3: Datos directos con campos de RENIEC
-                if (isset($data['numeroDocumento']) || isset($data['dni']) || isset($data['nombres']) || isset($data['apellidoPaterno'])) {
+                if (isset($data['numeroDocumento']) || isset($data['dni']) || isset($data['nombres']) || isset($data['apellidoPaterno']) || isset($data['apellido_paterno'])) {
+                    $formattedData = $this->formatearDatos($data);
+                    Log::info('Datos formateados (formato 3)', ['formatted' => $formattedData]);
                     return [
                         'success' => true,
-                        'data' => $this->formatearDatos($data)
+                        'data' => $formattedData
                     ];
                 }
                 
                 // Formato 4: Error en la respuesta
                 if (isset($data['success']) && $data['success'] === false) {
+                    Log::warning('Error en respuesta de API', ['error' => $data]);
                     return [
                         'success' => false,
                         'message' => $data['message'] ?? 'No se encontraron datos para el DNI proporcionado',

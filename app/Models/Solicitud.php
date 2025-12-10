@@ -9,6 +9,9 @@ class Solicitud extends Model
 {
     use HasFactory;
 
+    // Deshabilitar timestamps - campos eliminados de la base de datos
+    public $timestamps = false;
+
     protected $table = 'solicitudes';
 
     protected $fillable = [

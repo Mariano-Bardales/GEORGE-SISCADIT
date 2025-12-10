@@ -185,8 +185,7 @@ class ControlesSeeder extends Seeder
                         'fecha' => $fechaControl->format('Y-m-d'),
                         'edad' => $edadControl,
                         'estado' => ['Completo', 'Pendiente'][rand(0, 1)],
-                        'estado_cred_once' => ['Adecuado', 'Riesgo', 'Retraso'][rand(0, 2)],
-                        'estado_cred_final' => ['Normal', 'Alerta'][rand(0, 1)],
+                        // estado_cred_once y estado_cred_final eliminados - campos innecesarios
                     ]);
 
                     $this->command->line("  ✅ Control CRED {$numeroControl} creado");

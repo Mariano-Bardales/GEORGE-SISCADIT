@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolSeeder::class,
+            // RolSeeder::class, // Eliminado: La tabla roles no se usa, se usa campo 'role' directamente en users
             UserSeeder::class,
             // ControlesSeeder::class, // Descomentar para importar controles
         ]);

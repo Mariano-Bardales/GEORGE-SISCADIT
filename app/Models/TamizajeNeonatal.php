@@ -9,27 +9,26 @@ class TamizajeNeonatal extends Model
 {
     use HasFactory;
 
-    protected $table = 'tamizaje_neonatal';
+    protected $table = 'tamizaje_neonatals';
     
     protected $primaryKey = 'id_tamizaje';
     
     public $incrementing = true;
     
-    // Deshabilitar timestamps porque la tabla no tiene created_at y updated_at
+    // Deshabilitar timestamps - campos eliminados de la base de datos
     public $timestamps = false;
 
     protected $fillable = [
         'id_niño',
-        'fecha_29_dias',
+        // fecha_29_dias eliminado - se calcula dinámicamente (fecha_nacimiento + 29 días)
         'fecha_tam_neo',
-        'edad_tam_neo',
+        // edad_tam_neo eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha_tam_neo
         'galen_fecha_tam_feo',
-        'galen_dias_tam_feo',
-        'cumple_tam_neo',
+        // galen_dias_tam_feo eliminado - se calcula dinámicamente desde fecha_nacimiento y galen_fecha_tam_feo
+        // cumple_tam_neo eliminado - se calcula dinámicamente comparando fecha_tam_neo con fecha_nacimiento + 29 días
     ];
 
     protected $casts = [
-        'fecha_29_dias' => 'date',
         'fecha_tam_neo' => 'date',
         'galen_fecha_tam_feo' => 'date',
     ];

@@ -64,7 +64,7 @@ class ControlesImport
         $nino = null;
         
         if (!empty($row['id_nino'])) {
-            $nino = Nino::where('id_niño', $row['id_nino'])->first();
+            $nino = Nino::find($row['id_nino']);
         } elseif (!empty($row['numero_documento']) && !empty($row['tipo_documento'])) {
             $nino = Nino::where('numero_doc', $row['numero_documento'])
                        ->where('tipo_doc', $row['tipo_documento'])
@@ -76,7 +76,7 @@ class ControlesImport
             return;
         }
 
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         switch ($tipoControl) {
             case 'crn':
@@ -130,7 +130,7 @@ class ControlesImport
         $nino = null;
         
         if (!empty($row['id_nino'])) {
-            $nino = Nino::where('id_niño', $row['id_nino'])->first();
+            $nino = Nino::find($row['id_nino']);
         } elseif (!empty($row['numero_documento']) && !empty($row['tipo_documento'])) {
             $nino = Nino::where('numero_doc', $row['numero_documento'])
                        ->where('tipo_doc', $row['tipo_documento'])
@@ -154,10 +154,7 @@ class ControlesImport
             return;
         }
 
-        // Calcular edad
-        $hoy = Carbon::now();
-        $edadMeses = $fechaNacimiento->diffInMonths($hoy);
-        $edadDias = $fechaNacimiento->diffInDays($hoy);
+        // edad_meses y edad_dias se calculan dinámicamente - no se almacenan en la BD
 
         $data = [
             'establecimiento' => $row['establecimiento'] ?? null,
@@ -166,8 +163,7 @@ class ControlesImport
             'apellidos_nombres' => $row['apellidos_nombres'] ?? $row['nombre'] ?? null,
             'fecha_nacimiento' => $fechaNacimiento->format('Y-m-d'),
             'genero' => strtoupper($row['genero'] ?? $row['sexo'] ?? 'M'),
-            'edad_meses' => $edadMeses,
-            'edad_dias' => $edadDias,
+            // edad_meses y edad_dias eliminados - se calculan dinámicamente con EdadService
         ];
 
         if ($nino) {
@@ -178,12 +174,12 @@ class ControlesImport
             // Crear nuevo niño
             $nino = Nino::create($data);
             $this->stats['ninos']++;
-            $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id_niño})";
+            $this->success[] = "Niño creado: " . ($data['apellidos_nombres'] ?? 'N/A') . " (ID: {$nino->id})";
         }
 
         // Si hay datos extras en la misma fila, importarlos
         if (!empty($row['red']) || !empty($row['microred']) || !empty($row['distrito'])) {
-            $this->importDatosExtra($nino->id_niño, $row);
+            $this->importDatosExtra($nino->id, $row);
         }
     }
 
@@ -193,7 +189,7 @@ class ControlesImport
         $nino = null;
         
         if (!empty($row['id_nino'])) {
-            $nino = Nino::where('id_niño', $row['id_nino'])->first();
+            $nino = Nino::find($row['id_nino']);
         } elseif (!empty($row['numero_documento_nino']) && !empty($row['tipo_documento_nino'])) {
             $nino = Nino::where('numero_doc', $row['numero_documento_nino'])
                        ->where('tipo_doc', $row['tipo_documento_nino'])
@@ -205,7 +201,7 @@ class ControlesImport
             return;
         }
 
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         // Buscar madre existente por DNI
         $madre = null;
@@ -214,7 +210,7 @@ class ControlesImport
         }
 
         $data = [
-            'id_niño' => $ninoId,
+            'id_niño' => $ninoId, // Correcto - es el nombre de la columna FK en madres
             'dni' => $row['dni_madre'] ?? null,
             'apellidos_nombres' => $row['apellidos_nombres_madre'] ?? $row['nombre_madre'] ?? 'Sin especificar',
             'celular' => $row['celular_madre'] ?? null,
@@ -284,11 +280,9 @@ class ControlesImport
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
             'fecha' => $fecha,
-            'edad' => $edad,
-            'estado' => $estado, // Estado calculado automáticamente
-            'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
-            'talla' => !empty($row['talla']) ? (float)$row['talla'] : null,
-            'perimetro_cefalico' => !empty($row['perimetro_cefalico']) || !empty($row['pc']) ? (float)($row['perimetro_cefalico'] ?? $row['pc']) : null,
+            // edad eliminado - se calcula dinámicamente
+            // estado eliminado - se calcula dinámicamente
+            // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
         ];
 
         if ($existe) {
@@ -360,13 +354,11 @@ class ControlesImport
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
             'fecha' => $fecha,
-            'edad' => $edad,
-            'estado' => $estado, // Estado calculado automáticamente
-            'estado_cred_once' => $row['estado_cred_once'] ?? null,
-            'estado_cred_final' => $row['estado_cred_final'] ?? null,
-            'peso' => !empty($row['peso']) ? (float)$row['peso'] : null,
-            'talla' => !empty($row['talla']) ? (float)$row['talla'] : null,
-            'perimetro_cefalico' => !empty($row['perimetro_cefalico']) || !empty($row['pc']) ? (float)($row['perimetro_cefalico'] ?? $row['pc']) : null,
+            // edad eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha del control
+            // estado eliminado - se calcula dinámicamente con RangosCredService
+            // estado_cred_once eliminado - campo innecesario
+            // estado_cred_final eliminado - campo innecesario
+            // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
         ];
 
         if ($existe) {
@@ -407,12 +399,12 @@ class ControlesImport
 
         $data = [
             'id_niño' => $ninoId,
-            'fecha_29_dias' => $fecha29Dias->format('Y-m-d'),
+            // fecha_29_dias eliminado - se calcula dinámicamente (fecha_nacimiento + 29 días)
             'fecha_tam_neo' => $fechaTamizaje->format('Y-m-d'),
-            'edad_tam_neo' => $edadTamizaje,
+            // edad_tam_neo eliminado - se calcula dinámicamente
             'galen_fecha_tam_feo' => $this->parseDate($row['galen_fecha'] ?? null)?->format('Y-m-d') ?? $fechaTamizaje->copy()->addDays(5)->format('Y-m-d'),
-            'galen_dias_tam_feo' => $row['galen_dias'] ?? rand(30, 35),
-            'cumple_tam_neo' => $cumpleTamizaje, // Calculado automáticamente
+            // galen_dias_tam_feo eliminado - se calcula dinámicamente
+            // cumple_tam_neo eliminado - se calcula dinámicamente comparando fecha_tam_neo con fecha_nacimiento + 29 días
         ];
 
         if ($existe) {
@@ -456,12 +448,12 @@ class ControlesImport
         $data = [
             'id_niño' => $ninoId,
             'fecha_bcg' => $fechaBCG->format('Y-m-d'),
-            'edad_bcg' => $edadBCG,
-            'estado_bcg' => $estadoBCG, // Calculado automáticamente
+            // edad_bcg eliminado - se calcula dinámicamente
+            // estado_bcg eliminado - se puede determinar por fecha_bcg (si existe = aplicada)
             'fecha_hvb' => $fechaHVB->format('Y-m-d'),
-            'edad_hvb' => $edadHVB,
-            'estado_hvb' => $estadoHVB, // Calculado automáticamente
-            'cumple_BCG_HVB' => $cumpleVacunas, // Calculado automáticamente
+            // edad_hvb eliminado - se calcula dinámicamente
+            // estado_hvb eliminado - se puede determinar por fecha_hvb (si existe = aplicada)
+            // cumple_BCG_HVB eliminado - se calcula dinámicamente (ambas fechas existen)
         ];
 
         if ($existe) {
@@ -482,77 +474,59 @@ class ControlesImport
             return;
         }
 
-        // Mapear período de visita
-        $periodo = $row['periodo'] ?? $row['grupo_visita'] ?? null;
-        $periodoMap = [
-            'A' => '28 días', '28D' => '28 días', '28 DÍAS' => '28 días', '28 DIAS' => '28 días', '28 días' => '28 días',
-            'B' => '2-5 meses', '2-5M' => '2-5 meses', '2-5 MESES' => '2-5 meses', '2-5 MES' => '2-5 meses', '2-5 meses' => '2-5 meses',
-            'C' => '6-8 meses', '6-8M' => '6-8 meses', '6-8 MESES' => '6-8 meses', '6-8 MES' => '6-8 meses', '6-8 meses' => '6-8 meses',
-            'D' => '9-11 meses', '9-11M' => '9-11 meses', '9-11 MESES' => '9-11 meses', '9-11 MES' => '9-11 meses', '9-11 meses' => '9-11 meses',
-        ];
-        $periodoFinal = $periodoMap[strtolower($periodo ?? '')] ?? '28 días';
-
-        // Mapear grupo de visita a código de una letra (A, B, C, D) para compatibilidad
-        $grupoVisita = strtoupper(trim($row['grupo_visita'] ?? 'A'));
-        $grupoMap = [
-            'A' => 'A', '28D' => 'A', '28 DÍAS' => 'A', '28 DIAS' => 'A', '28 días' => 'A',
-            'B' => 'B', '2-5M' => 'B', '2-5 MESES' => 'B', '2-5 MES' => 'B', '2-5 meses' => 'B',
-            'C' => 'C', '6-8M' => 'C', '6-8 MESES' => 'C', '6-8 MES' => 'C', '6-8 meses' => 'C',
-            'D' => 'D', '9-11M' => 'D', '9-11 MESES' => 'D', '9-11 MES' => 'D', '9-11 meses' => 'D',
-        ];
-        $grupoVisitaCodigo = $grupoMap[$grupoVisita] ?? 'A';
-
-        // Calcular edad en días al momento de la visita
-        $nino = Nino::find($ninoId);
-        $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
-        $edadVisita = $fechaNacimiento->diffInDays($fechaVisita);
+        // Mapear período/grupo a control_de_visita (1, 2, 3, 4)
+        // Control 1: 28 días
+        // Control 2: 60-150 días (2-5 meses)
+        // Control 3: 180-240 días (6-8 meses)
+        // Control 4: 270-330 días (9-11 meses)
+        $periodo = $row['periodo'] ?? $row['grupo_visita'] ?? $row['control_de_visita'] ?? null;
         
-        // Determinar estado basándose en rangos de visitas
-        $rangosVisitas = [
-            'A' => ['min' => 28, 'max' => 28],      // 28 días exactos
-            'B' => ['min' => 60, 'max' => 150],     // 2-5 meses
-            'C' => ['min' => 180, 'max' => 240],    // 6-8 meses
-            'D' => ['min' => 270, 'max' => 330],   // 9-11 meses
+        // Mapear a número de control (1-4)
+        $controlMap = [
+            'A' => 1, '28D' => 1, '28 DÍAS' => 1, '28 DIAS' => 1, '28 días' => 1, '1' => 1,
+            'B' => 2, '2-5M' => 2, '2-5 MESES' => 2, '2-5 MES' => 2, '2-5 meses' => 2, '2' => 2,
+            'C' => 3, '6-8M' => 3, '6-8 MESES' => 3, '6-8 MES' => 3, '6-8 meses' => 3, '3' => 3,
+            'D' => 4, '9-11M' => 4, '9-11 MESES' => 4, '9-11 MES' => 4, '9-11 meses' => 4, '4' => 4,
         ];
+        $controlDeVisita = $controlMap[strtoupper(trim($periodo ?? ''))] ?? 1;
         
-        $rango = $rangosVisitas[$grupoVisitaCodigo] ?? ['min' => 0, 'max' => 365];
-        $estadoVisita = 'SEGUIMIENTO'; // Por defecto
-        
-        if ($edadVisita !== null) {
-            if ($edadVisita >= $rango['min'] && $edadVisita <= $rango['max']) {
-                $estadoVisita = 'CUMPLE';
-            } elseif ($edadVisita > $rango['max']) {
-                $estadoVisita = 'NO CUMPLE';
-            }
-        }
+        // Descripción del período para mensajes
+        $periodoDesc = [
+            1 => '28 días',
+            2 => '2-5 meses',
+            3 => '6-8 meses',
+            4 => '9-11 meses',
+        ];
+        $periodoFinal = $periodoDesc[$controlDeVisita] ?? '28 días';
 
-        // Verificar si ya existe una visita para este período
+        // Verificar si ya existe una visita para este control
         $existe = VisitaDomiciliaria::where('id_niño', $ninoId)
-                                   ->where('grupo_visita', $grupoVisitaCodigo)
+                                   ->where('control_de_visita', $controlDeVisita)
                                    ->exists();
 
         if ($existe && empty($row['sobrescribir'])) {
-            $this->errors[] = "Visita grupo {$grupoVisitaCodigo} ya existe para niño ID: {$ninoId}";
+            $this->errors[] = "Visita control {$controlDeVisita} ya existe para niño ID: {$ninoId}";
             return;
         }
 
         $data = [
             'id_niño' => $ninoId,
-            'grupo_visita' => $grupoVisitaCodigo,
+            'control_de_visita' => $controlDeVisita,
             'fecha_visita' => $fechaVisita->format('Y-m-d'),
-            'numero_visitas' => (int)($row['numero_visita'] ?? $row['numero_visitas'] ?? 1),
+            // grupo_visita eliminado - reemplazado por control_de_visita
+            // numero_visitas eliminado - reemplazado por control_de_visita
         ];
 
         if ($existe) {
             VisitaDomiciliaria::where('id_niño', $ninoId)
-                             ->where('grupo_visita', $grupoVisitaCodigo)
+                             ->where('control_de_visita', $controlDeVisita)
                              ->update($data);
         } else {
             VisitaDomiciliaria::create($data);
         }
 
         $this->stats['visitas']++;
-        $this->success[] = "Visita {$periodoFinal} importada para niño ID: {$ninoId}";
+        $this->success[] = "Visita control {$controlDeVisita} ({$periodoFinal}) importada para niño ID: {$ninoId}";
     }
 
     protected function importDatosExtra($ninoId, $row)
@@ -560,7 +534,7 @@ class ControlesImport
         $existe = DatosExtra::where('id_niño', $ninoId)->exists();
 
         $data = [
-            'id_niño' => $ninoId,
+            'id_niño' => $ninoId, // Correcto - es el nombre de la columna FK en datos_extras
             'red' => $row['red'] ?? null,
             'microred' => $row['microred'] ?? null,
             'eess_nacimiento' => $row['eess_nacimiento'] ?? null,

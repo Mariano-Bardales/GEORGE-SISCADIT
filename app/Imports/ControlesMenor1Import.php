@@ -41,7 +41,7 @@ class ControlesMenor1Import
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         // Aceptar tanto 'numero_control' como 'nro_control'
         $numeroControl = (int)($row['numero_control'] ?? $row['nro_control'] ?? 0);
@@ -103,7 +103,7 @@ class ControlesMenor1Import
                 'tipo' => 'Control CRED',
                 'numero_control' => $numeroControl,
                 'fecha_control' => $fecha->format('Y-m-d'),
-                'edad_dias' => $edad,
+                // edad_dias eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha del control
                 'rango_min' => $rango['min'] ?? null,
                 'rango_max' => $rango['max'] ?? null,
                 'mensaje' => $alerta,
@@ -113,7 +113,7 @@ class ControlesMenor1Import
         }
 
         // Preparar datos del control
-        // NOTA: La tabla 'controles_menor1' solo tiene: id_cred, id_niño, numero_control, fecha
+        // NOTA: La tabla 'control_menor1s' solo tiene: id, id_niño, numero_control, fecha
         $data = [
             'id_niño' => $ninoId,
             'numero_control' => $numeroControl,
@@ -121,11 +121,11 @@ class ControlesMenor1Import
         ];
 
         // Verificar si hay ID personalizado del Excel - Buscar en múltiples variaciones de nombres de columnas
-        $idCredPersonalizado = $row['id_cred'] 
+        $idCredPersonalizado = $row['id'] 
+                            ?? $row['id_cred'] 
                             ?? $row['idcred'] 
                             ?? $row['id_control'] 
                             ?? $row['idcontrol'] 
-                            ?? $row['id'] 
                             ?? null;
         
         // Aceptar también 'id_control' como nombre principal (según las imágenes)
@@ -179,15 +179,15 @@ class ControlesMenor1Import
                         
                         if ($idNumero !== null && $idNumero > 0) {
                             // Verificar que el ID personalizado no esté en uso por otro registro
-                            $existeConId = ControlMenor1::where('id_cred', $idNumero)
-                                                       ->where('id_cred', '!=', $controlExistente->id_cred)
+                            $existeConId = ControlMenor1::where('id', $idNumero)
+                                                       ->where('id', '!=', $controlExistente->id)
                                                        ->exists();
                             
                             if (!$existeConId) {
-                                $data['id_cred'] = $idNumero;
+                                $data['id'] = $idNumero;
                                 // Actualizar con nuevo ID usando DB directo
-                                \Illuminate\Support\Facades\DB::table('controles_menor1')
-                                    ->where('id_cred', $controlExistente->id_cred)
+                                \Illuminate\Support\Facades\DB::table('control_menor1s')
+                                    ->where('id', $controlExistente->id)
                                     ->update($data);
                                 $this->stats['actualizados']++;
                                 $this->success[] = "Control CRED {$numeroControl} actualizado y ID cambiado a {$idNumero} para niño ID: {$ninoId}";
@@ -211,12 +211,12 @@ class ControlesMenor1Import
                 
                 if ($idNumero !== null && $idNumero > 0) {
                     // Verificar que el ID no esté en uso
-                    $existeConId = ControlMenor1::where('id_cred', $idNumero)->exists();
+                    $existeConId = ControlMenor1::where('id', $idNumero)->exists();
                     
                     if (!$existeConId) {
                         // Insertar con ID personalizado usando DB directo
-                        $data['id_cred'] = $idNumero;
-                        \Illuminate\Support\Facades\DB::table('controles_menor1')->insert($data);
+                        $data['id'] = $idNumero;
+                        \Illuminate\Support\Facades\DB::table('control_menor1s')->insert($data);
                         $this->stats['controles_cred']++;
                         $this->success[] = "Control CRED {$numeroControl} creado con ID del Excel (ID: {$idNumero}) para niño ID: {$ninoId}";
                         return;
@@ -235,11 +235,11 @@ class ControlesMenor1Import
             ]);
             
             $control = ControlMenor1::create($data);
-            if ($control && $control->id_cred) {
+            if ($control && $control->id) {
                 $this->stats['controles_cred']++;
-                $this->success[] = "Control CRED {$numeroControl} creado para niño ID: {$ninoId} (ID auto-generado: {$control->id_cred})";
+                $this->success[] = "Control CRED {$numeroControl} creado para niño ID: {$ninoId} (ID auto-generado: {$control->id})";
                 \Log::info('Control CRED creado exitosamente', [
-                    'id_cred' => $control->id_cred,
+                    'id' => $control->id,
                     'nino_id' => $ninoId,
                     'numero_control' => $numeroControl
                 ]);
@@ -248,7 +248,8 @@ class ControlesMenor1Import
                 \Log::error('Error al crear control CRED', [
                     'nino_id' => $ninoId,
                     'numero_control' => $numeroControl,
-                    'datos' => $data
+                    'datos' => $data,
+                    'control_creado' => $control ? $control->toArray() : null
                 ]);
             }
             

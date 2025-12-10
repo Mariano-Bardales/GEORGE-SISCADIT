@@ -347,7 +347,7 @@ class ImportControlesController extends Controller
         }
         
         // Verificar que los niños existen en la BD
-        $ninosEnBD = Nino::whereIn('id_niño', $ninosIds)->count();
+        $ninosEnBD = Nino::whereIn('id', $ninosIds)->count();
         $verificacion['ninos_en_bd'] = $ninosEnBD;
         
         // Verificar controles CRED
@@ -387,38 +387,38 @@ class ImportControlesController extends Controller
         $ninosDetallados = [];
         
         foreach ($ninosIds as $ninoId) {
-            $nino = Nino::where('id_niño', $ninoId)->first();
+            $nino = Nino::find($ninoId);
             if (!$nino) {
                 continue;
             }
             
             // Obtener datos extra
-            $datosExtra = DatosExtra::where('id_niño', $ninoId)->first();
+            $datosExtra = DatosExtra::where('id_niño', $nino->id)->first();
             
             // Obtener datos de la madre
-            $madre = Madre::where('id_niño', $ninoId)->first();
+            $madre = Madre::where('id_niño', $nino->id)->first();
             
             // Obtener controles RN
-            $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
+            $controlesRn = ControlRn::where('id_niño', $nino->id)->get();
             
             // Obtener controles CRED
-            $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
+            $controlesCred = ControlMenor1::where('id_niño', $nino->id)->get();
             
             // Obtener tamizaje neonatal
-            $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+            $tamizaje = TamizajeNeonatal::where('id_niño', $nino->id)->first();
             
             // Obtener vacunas RN
-            $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
+            $vacunas = VacunaRn::where('id_niño', $nino->id)->first();
             
             // Obtener CNV (Recién Nacido)
-            $cnv = RecienNacido::where('id_niño', $ninoId)->first();
+            $cnv = RecienNacido::where('id_niño', $nino->id)->first();
             
             // Obtener visitas domiciliarias
-            $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
+            $visitas = VisitaDomiciliaria::where('id_niño', $nino->id)->get();
             
             $ninosDetallados[] = [
                 'nino' => [
-                    'id_niño' => $nino->id_niño,
+                    'id_niño' => $nino->id,
                     'apellidos_nombres' => $nino->apellidos_nombres,
                     'numero_doc' => $nino->numero_doc,
                     'tipo_doc' => $nino->tipo_doc,
@@ -443,41 +443,69 @@ class ImportControlesController extends Controller
                     'domicilio' => $madre->domicilio,
                     'referencia_direccion' => $madre->referencia_direccion,
                 ] : null,
-                'controles_rn' => $controlesRn->map(function($control) {
+                'controles_rn' => $controlesRn->map(function($control) use ($nino) {
+                    // Calcular edad y estado dinámicamente
+                    $edadDias = null;
+                    $estado = 'SEGUIMIENTO';
+                    
+                    if ($nino && $nino->fecha_nacimiento && $control->fecha) {
+                        $fechaNacimiento = \Carbon\Carbon::parse($nino->fecha_nacimiento);
+                        $fechaControl = \Carbon\Carbon::parse($control->fecha);
+                        $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                        
+                        // Calcular estado usando RangosCredService
+                        $validacion = \App\Services\RangosCredService::validarControl(
+                            $control->numero_control, 
+                            $edadDias, 
+                            'recien_nacido'
+                        );
+                        $estado = $validacion['estado'];
+                    }
+                    
                     return [
                         'numero_control' => $control->numero_control,
                         'fecha' => $control->fecha,
-                        'edad' => $control->edad,
-                        'estado' => $control->estado,
-                        'peso' => $control->peso,
-                        'talla' => $control->talla,
-                        'perimetro_cefalico' => $control->perimetro_cefalico,
+                        'edad' => $edadDias, // Calculado dinámicamente
+                        'estado' => $estado, // Calculado dinámicamente
+                        // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
                     ];
                 }),
-                'controles_cred' => $controlesCred->map(function($control) {
+                'controles_cred' => $controlesCred->map(function($control) use ($nino) {
+                    // Calcular edad y estado dinámicamente
+                    $edadDias = null;
+                    $estado = 'SEGUIMIENTO';
+                    
+                    if ($nino && $nino->fecha_nacimiento && $control->fecha) {
+                        $fechaNacimiento = \Carbon\Carbon::parse($nino->fecha_nacimiento);
+                        $fechaControl = \Carbon\Carbon::parse($control->fecha);
+                        $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                        
+                        // Calcular estado usando RangosCredService
+                        $validacion = \App\Services\RangosCredService::validarControl(
+                            $control->numero_control, 
+                            $edadDias, 
+                            'cred'
+                        );
+                        $estado = $validacion['estado'];
+                    }
+                    
                     return [
                         'numero_control' => $control->numero_control,
                         'fecha' => $control->fecha,
-                        'edad' => $control->edad,
-                        'estado' => $control->estado,
-                        'peso' => $control->peso,
-                        'talla' => $control->talla,
-                        'perimetro_cefalico' => $control->perimetro_cefalico,
+                        'edad' => $edadDias, // Calculado dinámicamente
+                        'estado' => $estado, // Calculado dinámicamente
+                        // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
                     ];
                 }),
                 'tamizaje' => $tamizaje ? [
                     'fecha_tam_neo' => $tamizaje->fecha_tam_neo,
-                    'edad_tam_neo' => $tamizaje->edad_tam_neo,
-                    'cumple_tam_neo' => $tamizaje->cumple_tam_neo,
+                    'galen_fecha_tam_feo' => $tamizaje->galen_fecha_tam_feo,
+                    // edad_tam_neo y cumple_tam_neo se calculan dinámicamente - no se almacenan
                 ] : null,
                 'vacunas' => $vacunas ? [
                     'fecha_bcg' => $vacunas->fecha_bcg,
-                    'edad_bcg' => $vacunas->edad_bcg,
-                    'estado_bcg' => $vacunas->estado_bcg,
                     'fecha_hvb' => $vacunas->fecha_hvb,
-                    'edad_hvb' => $vacunas->edad_hvb,
-                    'estado_hvb' => $vacunas->estado_hvb,
-                    'cumple_BCG_HVB' => $vacunas->cumple_BCG_HVB,
+                    // edad_bcg, estado_bcg, edad_hvb, estado_hvb y cumple_BCG_HVB se calculan dinámicamente - no se almacenan
                 ] : null,
                 'cnv' => $cnv ? [
                     'peso' => $cnv->peso,
@@ -486,9 +514,9 @@ class ImportControlesController extends Controller
                 ] : null,
                 'visitas' => $visitas->map(function($visita) {
                     return [
-                        'grupo_visita' => $visita->grupo_visita,
+                        'control_de_visita' => $visita->control_de_visita,
                         'fecha_visita' => $visita->fecha_visita,
-                        'numero_visitas' => $visita->numero_visitas,
+                        // grupo_visita y numero_visitas fueron reemplazados por control_de_visita
                     ];
                 }),
             ];

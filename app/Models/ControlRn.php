@@ -9,9 +9,9 @@ class ControlRn extends Model
 {
     use HasFactory;
 
-    protected $table = 'controles_rn';
+    protected $table = 'control_rns';
     
-    protected $primaryKey = 'id_crn';
+    protected $primaryKey = 'id';
     
     public $incrementing = true;
     
@@ -19,15 +19,13 @@ class ControlRn extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_crn', // Permitir asignar ID personalizado
+        'id', // Permitir asignar ID personalizado
         'id_niño',
         'numero_control',
         'fecha',
-        'edad',
-        'estado',
-        'peso',
-        'talla',
-        'perimetro_cefalico',
+        // edad eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha del control
+        // estado eliminado - se calcula dinámicamente con RangosCredService
+        // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
     ];
 
     protected $casts = [
@@ -36,6 +34,6 @@ class ControlRn extends Model
 
     public function nino()
     {
-        return $this->belongsTo(Nino::class, 'id_niño');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id');
     }
 }

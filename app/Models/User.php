@@ -12,6 +12,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    // Deshabilitar timestamps - campos eliminados de la base de datos
+    public $timestamps = false;
+
     /**
      * The attributes that are mass assignable.
      *

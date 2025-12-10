@@ -50,7 +50,7 @@ class ExtraImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         $existe = DatosExtra::where('id_niño', $ninoId)->exists();
 

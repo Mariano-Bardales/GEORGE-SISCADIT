@@ -35,7 +35,7 @@ class CNVController extends Controller
      */
     private function findNino($id)
     {
-        return Nino::where('id_niño', $id)->firstOrFail();
+        return Nino::findOrFail($id);
     }
 
     /**
@@ -45,17 +45,18 @@ class CNVController extends Controller
     {
         $ninoId = $request->query('nino_id');
         if ($ninoId) {
-            $cnv = RecienNacido::where('id_niño', $ninoId)->first();
-            
-            // Si no hay CNV real, generar datos de ejemplo
-            if (!$cnv) {
-                try {
-                    $nino = $this->findNino($ninoId);
-                    $ninoIdReal = $this->getNinoId($nino);
+            try {
+                // Buscar el niño primero para obtener el id correcto
+                $nino = $this->findNino($ninoId);
+                $ninoIdReal = $this->getNinoId($nino);
+                $cnv = RecienNacido::where('id_niño', $ninoIdReal)->first();
+                
+                // Si no hay CNV real, generar datos de ejemplo
+                if (!$cnv) {
                     $cnv = $this->generarDatosEjemploCNV($nino, $ninoIdReal);
-                } catch (\Exception $e) {
-                    $cnv = null;
                 }
+            } catch (\Exception $e) {
+                $cnv = null;
             }
         } else {
             $cnv = RecienNacido::all();

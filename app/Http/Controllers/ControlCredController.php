@@ -34,7 +34,7 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar CRED mensual.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         $rangos = [
             1 => ['min' => 29, 'max' => 59],
@@ -54,7 +54,7 @@ class ControlCredController extends Controller
 
         // Buscar control existente si se está editando
         $control = null;
-        $ninoIdReal = $nino->id_niño;
+        $ninoIdReal = $nino->id;
         
         if ($controlId) {
             $control = DB::table('controles_menor1')
@@ -98,7 +98,7 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar control Recién Nacido.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         $rangos = [
             1 => ['min' => 2, 'max' => 6],
@@ -111,7 +111,7 @@ class ControlCredController extends Controller
 
         // Buscar control existente
         $control = DB::table('controles_rn')
-            ->where('id_niño', $nino->id_niño)
+            ->where('id_niño', $nino->id)
             ->where('numero_control', $numeroControl)
             ->first();
 
@@ -136,11 +136,11 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar Tamizaje.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         // Buscar tamizaje existente
         $tamizaje = DB::table('tamizaje_neonatal')
-            ->where('id_niño', $nino->id_niño)
+            ->where('id_niño', $nino->id)
             ->first();
 
         return view('controles.form-tamizaje', [
@@ -161,11 +161,11 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar CNV.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         // Buscar CNV existente (está en la tabla recien_nacidos)
         $cnv = DB::table('recien_nacidos')
-            ->where('id_niño', $nino->id_niño)
+            ->where('id_niño', $nino->id)
             ->first();
 
         return view('controles.form-cnv', [
@@ -187,7 +187,7 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar Visita Domiciliaria.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         $periodos = [
             '28d' => ['texto' => '28 días', 'min' => 28, 'max' => 28],
@@ -204,7 +204,7 @@ class ControlCredController extends Controller
 
         // Buscar visita existente
         $visita = DB::table('visitas_domiciliarias')
-            ->where('id_niño', $nino->id_niño)
+            ->where('id_niño', $nino->id)
             ->where('grupo_visita', $periodo)
             ->first();
 
@@ -230,11 +230,11 @@ class ControlCredController extends Controller
                 ->with('error', 'Parámetros inválidos para registrar Vacuna.');
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->firstOrFail();
+        $nino = Nino::findOrFail($ninoId);
 
         // Buscar vacuna existente
         $vacuna = DB::table('vacuna_rn')
-            ->where('id_niño', $nino->id_niño)
+            ->where('id_niño', $nino->id)
             ->first();
 
         $fechaVacuna = null;
@@ -263,27 +263,62 @@ class ControlCredController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate the request
+        // Validate the request - TODOS LOS CAMPOS SON REQUERIDOS
         $validator = Validator::make($request->all(), [
+            // Datos del Niño
+            'Nombre_Establecimiento' => 'required|string|max:150',
             'Id_Tipo_Documento' => 'required|integer|between:1,6',
             'Numero_Documento' => 'required|string|max:20',
             'Apellidos_Nombres' => 'required|string|max:150',
-            'Fecha_Nacimiento' => 'required|date',
+            'Fecha_Nacimiento' => 'required|date|before_or_equal:today',
             'Genero' => 'required|in:M,F',
+            
+            // Datos Extras
             'Codigo_Red' => 'required',
             'Codigo_Microred' => 'required',
             'Id_Establecimiento' => 'required',
+            'Distrito' => 'required|string|max:100',
+            'Provincia' => 'required|string|max:100',
+            'Departamento' => 'required|string|max:100',
+            'Seguro' => 'required|in:SIS,ESSALUD,PRIVADO,SIN_SEGURO',
+            'Programa' => 'required|in:CRED,PIANE,PIM,JUNTOS,PAIS',
+            
+            // Datos de la Madre
+            'DNI_Madre' => 'required|string|max:20',
+            'Apellidos_Nombres_Madre' => 'required|string|max:150',
+            'Celular_Madre' => 'required|string|max:20',
+            'Domicilio_Madre' => 'required|string|max:255',
+            'Referencia_Direccion' => 'required|string|max:255',
         ], [
+            // Datos del Niño
+            'Nombre_Establecimiento.required' => 'El nombre del establecimiento es obligatorio',
             'Id_Tipo_Documento.required' => 'El tipo de documento es obligatorio',
             'Numero_Documento.required' => 'El número de documento es obligatorio',
             'Apellidos_Nombres.required' => 'Los apellidos y nombres son obligatorios',
             'Fecha_Nacimiento.required' => 'La fecha de nacimiento es obligatoria',
             'Fecha_Nacimiento.date' => 'La fecha de nacimiento debe ser una fecha válida',
+            'Fecha_Nacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser una fecha futura',
             'Genero.required' => 'El género es obligatorio',
             'Genero.in' => 'El género debe ser Masculino (M) o Femenino (F)',
+            
+            // Datos Extras
             'Codigo_Red.required' => 'Debe seleccionar una red',
             'Codigo_Microred.required' => 'Debe seleccionar una microred',
             'Id_Establecimiento.required' => 'Debe seleccionar un establecimiento',
+            'Distrito.required' => 'El distrito es obligatorio',
+            'Provincia.required' => 'La provincia es obligatoria',
+            'Departamento.required' => 'El departamento es obligatorio',
+            'Seguro.required' => 'Debe seleccionar un seguro',
+            'Seguro.in' => 'El seguro seleccionado no es válido',
+            'Programa.required' => 'Debe seleccionar un programa',
+            'Programa.in' => 'El programa seleccionado no es válido',
+            
+            // Datos de la Madre
+            'DNI_Madre.required' => 'El DNI de la madre es obligatorio',
+            'Apellidos_Nombres_Madre.required' => 'Los apellidos y nombres de la madre son obligatorios',
+            'Celular_Madre.required' => 'El celular de la madre es obligatorio',
+            'Domicilio_Madre.required' => 'El domicilio de la madre es obligatorio',
+            'Referencia_Direccion.required' => 'La referencia de dirección es obligatoria',
         ]);
 
         if ($validator->fails()) {
@@ -329,29 +364,17 @@ class ControlCredController extends Controller
             ]);
             
             // Obtener el ID del niño creado
-            $ninoId = $nino->id_niño;
+            $ninoId = $nino->id;
 
-            // SEGUNDO: Crear la madre con referencia al niño
-            if ($request->filled('DNI_Madre') || $request->filled('Apellidos_Nombres_Madre')) {
-                Madre::create([
-                    'id_niño' => $ninoId,
-                    'dni' => $request->DNI_Madre ?? null,
-                    'apellidos_nombres' => $request->Apellidos_Nombres_Madre ?? 'Sin especificar',
-                    'celular' => $request->Celular_Madre ?? null,
-                    'domicilio' => $request->Domicilio_Madre ?? null,
-                    'referencia_direccion' => $request->Referencia_Direccion ?? null,
-                ]);
-            } else {
-                // Crear madre por defecto con referencia al niño
-                Madre::create([
-                    'id_niño' => $ninoId,
-                    'dni' => null,
-                    'apellidos_nombres' => 'Sin especificar',
-                    'celular' => null,
-                    'domicilio' => null,
-                    'referencia_direccion' => null,
-                ]);
-            }
+            // SEGUNDO: Crear la madre con referencia al niño (todos los campos son requeridos)
+            Madre::create([
+                'id_niño' => $ninoId,
+                'dni' => $request->DNI_Madre,
+                'apellidos_nombres' => $request->Apellidos_Nombres_Madre,
+                'celular' => $request->Celular_Madre,
+                'domicilio' => $request->Domicilio_Madre,
+                'referencia_direccion' => $request->Referencia_Direccion,
+            ]);
 
             // Obtener el nombre de la red y microred seleccionadas
             $nombreRed = null;
@@ -376,17 +399,20 @@ class ControlCredController extends Controller
             // La microred viene como texto del select, no como código
             $nombreMicrored = $request->Codigo_Microred ?? null;
 
-            // Create datos_extras
+            // Obtener el nombre del establecimiento para eess_nacimiento
+            $eessNacimiento = $request->Nombre_Establecimiento ?? $nombreEstablecimiento;
+            
+            // Create datos_extras (todos los campos son requeridos)
             DatosExtra::create([
                 'id_niño' => $ninoId,
                 'red' => $nombreRed,
                 'microred' => $nombreMicrored,
-                'eess_nacimiento' => $request->Id_Establecimiento ?? null,
-                'distrito' => $request->Distrito ?? null,
-                'provincia' => $request->Provincia ?? null,
-                'departamento' => $request->Departamento ?? null,
-                'seguro' => $request->Seguro ?? null,
-                'programa' => $request->Programa ?? null,
+                'eess_nacimiento' => $eessNacimiento,
+                'distrito' => $request->Distrito,
+                'provincia' => $request->Provincia,
+                'departamento' => $request->Departamento,
+                'seguro' => $request->Seguro,
+                'programa' => $request->Programa,
             ]);
 
             DB::commit();

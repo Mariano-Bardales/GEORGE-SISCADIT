@@ -40,17 +40,31 @@ class ImportMultiHojas
                 throw new \Exception("El archivo no existe: {$filePath}");
             }
             
-            // Intentar usar PhpSpreadsheet primero (compatible con PHP 8)
-            if (class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+            // Usar PhpSpreadsheet (compatible con PHP 8) - REQUERIDO
+            if (!class_exists('\PhpOffice\PhpSpreadsheet\IOFactory')) {
+                throw new \Exception("PhpSpreadsheet no está disponible. Por favor, ejecute: composer require phpoffice/phpspreadsheet");
+            }
+            
+            // Verificar que ZipArchive esté disponible (requerido por PhpSpreadsheet)
+            if (!class_exists('ZipArchive')) {
+                throw new \Exception("La extensión ZipArchive de PHP no está habilitada. Por favor, habilite extension=zip en php.ini y reinicie Apache.");
+            }
+            
+            // Intentar importar con PhpSpreadsheet
+            try {
                 return $this->importWithPhpSpreadsheet($filePath);
+            } catch (\Exception $e) {
+                // Si falla, mostrar error claro
+                $errorMessage = "Error al importar archivo Excel con PhpSpreadsheet: " . $e->getMessage();
+                
+                // Si el error menciona ZipArchive, dar instrucciones específicas
+                if (stripos($e->getMessage(), 'ZipArchive') !== false || stripos($e->getMessage(), 'zip') !== false) {
+                    $errorMessage .= "\n\nSOLUCIÓN: La extensión ZipArchive no está habilitada. ";
+                    $errorMessage .= "Habilite extension=zip en C:\\xampp82\\php\\php.ini y reinicie Apache.";
+                }
+                
+                throw new \Exception($errorMessage);
             }
-            
-            // Fallback a PHPExcel si PhpSpreadsheet no está disponible
-            if (class_exists('\PHPExcel_IOFactory')) {
-                return $this->importWithPHPExcel($filePath);
-            }
-            
-            throw new \Exception("No se encontró ninguna biblioteca de Excel disponible. Por favor, instale PhpSpreadsheet: composer require phpoffice/phpspreadsheet");
             
         } catch (\Exception $e) {
             throw new \Exception("Error al procesar archivo Excel: " . $e->getMessage());
@@ -63,6 +77,11 @@ class ImportMultiHojas
     protected function importWithPhpSpreadsheet($filePath)
     {
         try {
+            // Verificar que ZipArchive esté disponible antes de cargar
+            if (!class_exists('ZipArchive')) {
+                throw new \Exception("La extensión ZipArchive de PHP no está habilitada. Habilite extension=zip en php.ini y reinicie Apache.");
+            }
+            
             // Cargar archivo Excel con PhpSpreadsheet
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
             
@@ -172,7 +191,7 @@ class ImportMultiHojas
             // Si hay hojas no reconocidas, agregar advertencia
             if (!empty($hojasNoReconocidas)) {
                 $this->addWarning("Las siguientes hojas no fueron reconocidas y fueron omitidas: " . implode(', ', $hojasNoReconocidas) . 
-                    ". Hojas válidas: 'Niños', 'Datos Extra' (o 'Extra'), 'Madre', 'Controles RN', 'Controles CRED', 'Tamizaje', 'Vacunas', 'Visitas', 'Recien Nacido'");
+                    ". Hojas válidas: 'Niños', 'Datos Extra' (o 'Extra'), 'Madre', 'Controles RN', 'Controles CRED', 'Tamizaje', 'Vacunas', 'Visitas', 'Recién Nacidos' (o 'Recien Nacidos', 'CNV')");
             }
             
         } catch (\Exception $e) {
@@ -194,7 +213,7 @@ class ImportMultiHojas
             'tamizaje', 'tamisaje', 'tamizaje neonatal',
             'vacunas', 'vacuna', 'vacuna_rn', 'vacuna rn',
             'visitas', 'visita', 'visita domiciliaria',
-            'recien nacido', 'recien_nacido', 'recién nacido', 'recién_nacido', 'cnv'
+            'recien nacido', 'recien_nacido', 'recién nacido', 'recién_nacido', 'recién nacidos', 'recien nacidos', 'recién_nacidos', 'recien_nacidos', 'cnv'
         ];
         
         return in_array($sheetNameLower, $hojasValidas);
@@ -303,6 +322,10 @@ class ImportMultiHojas
             case 'recien_nacido':
             case 'recién nacido':
             case 'recién_nacido':
+            case 'recién nacidos':
+            case 'recien nacidos':
+            case 'recién_nacidos':
+            case 'recien_nacidos':
             case 'cnv':
                 $this->processSheet($this->recienNacidoImport, $rows);
                 break;

@@ -70,14 +70,32 @@ class ControlRnController extends Controller
                 if ($controles->isEmpty()) {
                     $controles = $this->generarDatosEjemploRecienNacido($nino, $ninoIdReal);
                 } else {
-                    $controles = $controles->map(function($control) {
+                    $controles = $controles->map(function($control) use ($nino) {
+                        // Calcular edad y estado dinámicamente
+                        $edadDias = null;
+                        $estado = 'SEGUIMIENTO';
+                        
+                        if ($nino && $nino->fecha_nacimiento && $control->fecha) {
+                            $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                            $fechaControl = Carbon::parse($control->fecha);
+                            $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                            
+                            // Calcular estado usando RangosCredService
+                            $validacion = \App\Services\RangosCredService::validarControl(
+                                $control->numero_control, 
+                                $edadDias, 
+                                'recien_nacido'
+                            );
+                            $estado = $validacion['estado'];
+                        }
+                        
                         return [
                             'id' => $control->id,
                             'id_niño' => $control->id_niño,
                             'numero_control' => $control->numero_control,
                             'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
-                            'edad' => $control->edad,
-                            'estado' => $control->estado,
+                            'edad' => $edadDias, // Calculado dinámicamente
+                            'estado' => $estado, // Calculado dinámicamente
                             'es_ejemplo' => false,
                         ];
                     });
@@ -89,7 +107,7 @@ class ControlRnController extends Controller
             $controles = ControlRn::all();
         }
         
-        return response()->json(['success' => true, 'data' => $controles]);
+        return response()->json(['success' => true, 'data' => ['controles' => $controles]]);
     }
 
     /**

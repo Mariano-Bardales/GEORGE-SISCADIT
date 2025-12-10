@@ -13,7 +13,9 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        //
+        \App\Models\Nino::class => \App\Policies\NinoPolicy::class,
+        \App\Models\Solicitud::class => \App\Policies\SolicitudPolicy::class,
+        \App\Models\User::class => \App\Policies\UsuarioPolicy::class,
     ];
 
     /**

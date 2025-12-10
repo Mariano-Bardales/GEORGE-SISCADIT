@@ -9,17 +9,17 @@ class DatosExtra extends Model
 {
     use HasFactory;
 
-    protected $table = 'datos_extra';
+    protected $table = 'datos_extras';
     
-    protected $primaryKey = 'id_extra';
+    protected $primaryKey = 'id';
     
     public $incrementing = true;
 
-    // Deshabilitar timestamps porque la tabla no tiene created_at y updated_at
+    // Deshabilitar timestamps - campos eliminados de la base de datos
     public $timestamps = false;
 
     protected $fillable = [
-        'id_extra', // Permitir asignar ID personalizado
+        'id', // Permitir asignar ID personalizado
         'id_niño',
         'red',
         'microred',
@@ -33,6 +33,6 @@ class DatosExtra extends Model
 
     public function nino()
     {
-        return $this->belongsTo(Nino::class, 'id_niño');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id');
     }
 }

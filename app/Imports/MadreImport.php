@@ -38,7 +38,7 @@ class MadreImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
         // Buscar madre existente por DNI o por id_niño
         $madre = null;

@@ -9,24 +9,24 @@ class VacunaRn extends Model
 {
     use HasFactory;
 
-    protected $table = 'vacuna_rn';
+    protected $table = 'vacuna_rns';
     
     protected $primaryKey = 'id_vacuna';
     
     public $incrementing = true;
     
-    // Deshabilitar timestamps porque la tabla no tiene created_at y updated_at
+    // Deshabilitar timestamps - campos eliminados de la base de datos
     public $timestamps = false;
 
     protected $fillable = [
         'id_niño',
         'fecha_bcg',
-        'edad_bcg',
-        'estado_bcg',
+        // edad_bcg eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha_bcg
+        // estado_bcg eliminado - se puede determinar por fecha_bcg (si existe = aplicada)
         'fecha_hvb',
-        'edad_hvb',
-        'estado_hvb',
-        'cumple_BCG_HVB',
+        // edad_hvb eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha_hvb
+        // estado_hvb eliminado - se puede determinar por fecha_hvb (si existe = aplicada)
+        // cumple_BCG_HVB eliminado - se calcula dinámicamente (ambas fechas existen)
     ];
 
     protected $casts = [

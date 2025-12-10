@@ -15,7 +15,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('recien_nacido', function (Blueprint $table) {
+        Schema::table('recien_nacidos', function (Blueprint $table) {
             // Cambiar de DECIMAL(5,2) a SMALLINT para almacenar pesos en gramos
             // SMALLINT puede almacenar valores de 0 a 32,767 gramos (32.7 kg)
             $table->smallInteger('peso')->nullable()->change();
@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('recien_nacido', function (Blueprint $table) {
+        Schema::table('recien_nacidos', function (Blueprint $table) {
             // Revertir a DECIMAL(5,2)
             $table->decimal('peso', 5, 2)->nullable()->change();
         });

@@ -11,15 +11,15 @@ class Madre extends Model
 
     protected $table = 'madres';
     
-    protected $primaryKey = 'id_madre';
+    protected $primaryKey = 'id';
     
     public $incrementing = true;
 
-    // Deshabilitar timestamps porque la tabla no tiene created_at y updated_at
+    // Deshabilitar timestamps - campos eliminados de la base de datos
     public $timestamps = false;
 
     protected $fillable = [
-        'id_madre', // Permitir asignar ID personalizado
+        'id', // Permitir asignar ID personalizado
         'id_niño',
         'dni',
         'apellidos_nombres',
@@ -30,10 +30,10 @@ class Madre extends Model
 
     /**
      * Relación con el niño
-     * La madre pertenece a un niño (tiene id_niño)
+     * Una madre pertenece a un niño (madres.id_niño -> ninos.id)
      */
     public function nino()
     {
-        return $this->belongsTo(Nino::class, 'id_niño', 'id_niño');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id');
     }
 }

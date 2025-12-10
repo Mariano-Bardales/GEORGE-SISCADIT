@@ -38,44 +38,69 @@ class RecienNacidoImport
             return;
         }
         
-        $ninoId = $nino->id_niño;
+        $ninoId = $nino->id;
 
-        // Preparar datos - aceptar 'peso', 'edad_gestacional', 'clasificacion'
-        // Nota: 'peso' ahora es SMALLINT (entero) para almacenar gramos (valores de 500 a 5000+)
+        // Preparar datos - aceptar 'peso', 'peso_nacer', 'peso_rn', 'edad_gestacional', 'clasificacion'
+        // Convertir peso de gramos a kg si viene en gramos (valores > 10 probablemente son gramos)
+        $peso = $row['peso_nacer'] ?? $row['peso_rn'] ?? $row['peso'] ?? null;
+        if ($peso && is_numeric($peso)) {
+            $pesoFloat = (float)$peso;
+            // Si el valor es > 10, probablemente está en gramos, convertir a kg
+            if ($pesoFloat > 10) {
+                $peso = $pesoFloat / 1000; // Convertir gramos a kg
+            } else {
+                $peso = $pesoFloat; // Ya está en kg
+            }
+        } else {
+            $peso = null;
+        }
+        
         $data = [
             'id_niño' => $ninoId,
-            'peso' => !empty($row['peso']) ? (int)$row['peso'] : null, // Convertir a entero (gramos)
+            'peso' => $peso, // Decimal (kg)
             'edad_gestacional' => !empty($row['edad_gestacional']) ? (int)$row['edad_gestacional'] : null,
             'clasificacion' => $row['clasificacion'] ?? null,
         ];
-
-        // Verificar si hay ID personalizado del Excel
-        $idRnPersonalizado = $row['id_rn'] ?? null;
         
+        // Validar que todos los campos requeridos estén presentes
+        $camposFaltantes = [];
+        if (empty($peso)) $camposFaltantes[] = 'Peso al Nacer';
+        if (empty($data['edad_gestacional'])) $camposFaltantes[] = 'Edad Gestacional';
+        if (empty($data['clasificacion'])) $camposFaltantes[] = 'Clasificación';
+        
+        if (!empty($camposFaltantes)) {
+            $this->errors[] = "CNV incompleto para niño ID: {$ninoId}. Faltan: " . implode(', ', $camposFaltantes);
+            return;
+        }
+        
+        // Validar clasificación
+        $clasificacionesValidas = ['Normal', 'Bajo Peso al Nacer y/o Prematuro'];
+        if (!in_array($data['clasificacion'], $clasificacionesValidas)) {
+            $this->errors[] = "Clasificación inválida para niño ID: {$ninoId}. Debe ser 'Normal' o 'Bajo Peso al Nacer y/o Prematuro'. Valor recibido: " . ($data['clasificacion'] ?? 'NULL');
+            return;
+        }
+
         $existe = RecienNacido::where('id_niño', $ninoId)->first();
         
         if ($existe) {
-            RecienNacido::where('id_niño', $ninoId)->update($data);
+            // Actualizar registro existente
+            $existe->update($data);
             $this->stats['actualizados']++;
             $this->success[] = "Recién nacido actualizado para niño ID: {$ninoId}";
         } else {
-            // Si hay ID personalizado y no existe, crear con ese ID
-            if ($idRnPersonalizado && is_numeric($idRnPersonalizado)) {
-                $existeConId = RecienNacido::where('id_rn', $idRnPersonalizado)->exists();
-                if (!$existeConId) {
-                    $data['id_rn'] = (int)$idRnPersonalizado;
-                    \Illuminate\Support\Facades\DB::table('recien_nacido')->insert($data);
-                    $this->stats['recien_nacido']++;
-                    $this->success[] = "Recién nacido creado con ID personalizado (ID: {$idRnPersonalizado}) para niño ID: {$ninoId}";
-                } else {
-                    RecienNacido::create($data);
-                    $this->stats['recien_nacido']++;
-                    $this->success[] = "Recién nacido creado para niño ID: {$ninoId}";
-                }
-            } else {
+            // Crear nuevo registro
+            try {
                 RecienNacido::create($data);
                 $this->stats['recien_nacido']++;
                 $this->success[] = "Recién nacido creado para niño ID: {$ninoId}";
+            } catch (\Exception $e) {
+                $this->errors[] = "Error al crear recién nacido para niño ID: {$ninoId}. Error: " . $e->getMessage();
+                \Log::error('Error al crear RecienNacido', [
+                    'nino_id' => $ninoId,
+                    'data' => $data,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
         }
     }

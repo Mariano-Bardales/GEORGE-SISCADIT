@@ -94,7 +94,6 @@
                                 <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Cargo</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Celular</th>
                                 <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Motivo</th>
-                                <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha</th>
                                 <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acciones</th>
                               </tr>
                             </thead>
@@ -456,22 +455,6 @@
                   </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div class="modal-usuario-form-group">
-                    <label class="modal-usuario-label required">
-                      Correo Electrónico
-                    </label>
-                    <input type="email" id="correoUsuario" name="email" 
-                      class="modal-usuario-input" 
-                      placeholder="ejemplo@correo.com" required>
-                    <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 16v-4"></path>
-                        <path d="M12 8h.01"></path>
-                      </svg>
-                      Se usará el correo de la solicitud por defecto
-                    </p>
-                  </div>
                   <div class="modal-usuario-form-group">
                     <label class="modal-usuario-label required">
                       Rol/Permiso
@@ -929,25 +912,6 @@
             ⚠️ Esta acción no se puede deshacer
           </p>
         </div>
-        
-        <!-- Campo para motivo de rechazo (opcional) -->
-        <div style="margin-top: 1.5rem;">
-          <label for="motivoRechazo" style="display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem;">
-            Motivo de rechazo <span style="color: #9ca3af; font-weight: 400;">(Opcional)</span>
-          </label>
-          <textarea 
-            id="motivoRechazo" 
-            name="motivoRechazo" 
-            rows="3" 
-            placeholder="Ingrese el motivo del rechazo de la solicitud..."
-            style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.875rem; color: #374151; resize: vertical; transition: border-color 0.2s;"
-            onfocus="this.style.borderColor='#667eea'; this.style.outline='none';"
-            onblur="this.style.borderColor='#d1d5db';"
-          ></textarea>
-          <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem;">
-            Este motivo puede ser útil para referencia futura.
-          </p>
-        </div>
       </div>
       
       <!-- Footer del Modal -->
@@ -1190,7 +1154,6 @@
 
 
       tbody.innerHTML = solicitudesPendientes.map(solicitud => {
-        const fecha = new Date(solicitud.created_at).toLocaleDateString('es-PE');
         const tipoDoc = tiposDocumento[solicitud.id_tipo_documento] || 'N/A';
         const nombreRed = nombresRedes[solicitud.codigo_red] || `Red ${solicitud.codigo_red}`;
         const nombreMicrored = solicitud.codigo_microred || 'N/A';
@@ -1237,7 +1200,6 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.cargo}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">${solicitud.celular}</td>
             <td class="px-6 py-4 text-sm text-slate-900">${solicitud.motivo.substring(0, 50)}${solicitud.motivo.length > 50 ? '...' : ''}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">${fecha}</td>
             <td class="px-6 py-4 whitespace-nowrap">${btnAccion}</td>
           </tr>
         `;
@@ -2004,12 +1966,6 @@
       // Mostrar el DNI en el modal
       document.getElementById('numeroDocSolicitudRechazar').textContent = numeroDoc;
       
-      // Limpiar el campo de motivo
-      const motivoInput = document.getElementById('motivoRechazo');
-      if (motivoInput) {
-        motivoInput.value = '';
-      }
-      
       // Abrir el modal
       const modal = document.getElementById('modalConfirmarRechazar');
       if (modal) {
@@ -2035,10 +1991,6 @@
         console.error('No hay solicitud seleccionada para rechazar');
         return;
       }
-
-      // Obtener el motivo de rechazo (opcional)
-      const motivoInput = document.getElementById('motivoRechazo');
-      const motivo = motivoInput ? motivoInput.value.trim() : '';
 
       // Obtener los botones para deshabilitarlos y mostrar loading
       const btnRechazar = document.querySelector('#modalConfirmarRechazar button[onclick*="confirmarRechazarSolicitud"]');
@@ -2071,9 +2023,7 @@
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            motivo: motivo
-          })
+          body: JSON.stringify({})
         });
 
         const data = await response.json();
@@ -2473,10 +2423,7 @@
           passwordUsuarioInput.value = '';
         }
 
-        const correoUsuarioInput = document.getElementById('correoUsuario');
-        if (correoUsuarioInput) {
-          correoUsuarioInput.value = solicitud.correo || '';
-        }
+        // El correo se muestra en la sección Contacto (id="correo"), no necesita prellenarse aquí
 
         const rolUsuarioInput = document.getElementById('rolUsuario');
         if (rolUsuarioInput) rolUsuarioInput.value = ''; // Resetear rol
@@ -2698,19 +2645,22 @@
       document.getElementById('reniecError').classList.add('hidden');
       document.getElementById('nameUsuario').value = '';
       document.getElementById('passwordUsuario').value = '';
-      document.getElementById('correoUsuario').value = '';
       document.getElementById('rolUsuario').value = '';
     }
 
     function crearUsuario(event) {
       event.preventDefault();
       
+      // Obtener el correo de la sección Contacto (campo readonly)
+      const correoContacto = document.getElementById('correo');
+      const email = correoContacto ? correoContacto.value : '';
+      
       const formData = new FormData(event.target);
       const data = {
         solicitud_id: formData.get('solicitud_id'),
         name: formData.get('name'),
         password: formData.get('password'),
-        email: formData.get('email'),
+        email: email, // Usar el correo de la sección Contacto
         role: formData.get('role')
       };
 
@@ -2721,7 +2671,7 @@
       }
 
       if (!data.email || data.email.trim() === '') {
-        alert('Por favor, ingrese el correo electrónico');
+        alert('Error: No se encontró el correo electrónico de la solicitud');
         return;
       }
 

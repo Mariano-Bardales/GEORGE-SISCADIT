@@ -9,9 +9,9 @@ class ControlMenor1 extends Model
 {
     use HasFactory;
 
-    protected $table = 'controles_menor1';
+    protected $table = 'control_menor1s';
     
-    protected $primaryKey = 'id_cred';
+    protected $primaryKey = 'id';
     
     public $incrementing = true;
     
@@ -19,14 +19,15 @@ class ControlMenor1 extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_cred', // Permitir asignar ID personalizado
+        'id', // Permitir asignar ID personalizado
         'id_niño',
         'numero_control',
         'fecha',
-        'edad',
-        'estado',
-        'estado_cred_once',
-        'estado_cred_final',
+        // edad eliminado - se calcula dinámicamente desde fecha_nacimiento y fecha del control
+        // estado eliminado - se calcula dinámicamente con EstadoControlService
+        // estado_cred_once eliminado - campo innecesario
+        // estado_cred_final eliminado - campo innecesario
+        // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
     ];
 
     protected $casts = [
@@ -35,6 +36,6 @@ class ControlMenor1 extends Model
 
     public function nino()
     {
-        return $this->belongsTo(Nino::class, 'id_niño', 'id_niño');
+        return $this->belongsTo(Nino::class, 'id_niño', 'id');
     }
 }

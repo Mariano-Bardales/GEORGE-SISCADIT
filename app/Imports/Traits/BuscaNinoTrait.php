@@ -27,7 +27,7 @@ trait BuscaNinoTrait
         }
         
         if ($idNino) {
-            $nino = Nino::where('id_niño', $idNino)->first();
+            $nino = Nino::where('id', $idNino)->first();
             if ($nino) {
                 return $nino;
             }
@@ -75,7 +75,7 @@ trait BuscaNinoTrait
     protected function obtenerIdNino($row)
     {
         $nino = $this->buscarNino($row);
-        return $nino ? $nino->id_niño : null;
+        return $nino ? $nino->id : null;
     }
 }
 

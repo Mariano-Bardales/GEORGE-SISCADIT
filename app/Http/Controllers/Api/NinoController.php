@@ -101,8 +101,7 @@ class NinoController extends Controller
                     'edad_meses' => $nino->edad_meses ?? null,
                     'edad_dias' => $nino->edad_dias ?? null,
                     'datos_extras' => $nino->datos_extras ?? null,
-                    'created_at' => null,
-                    'updated_at' => null,
+                    // created_at y updated_at eliminados - campos no existen en la base de datos
                 ];
             });
             
@@ -210,19 +209,35 @@ class NinoController extends Controller
             $vacunas = VacunaRn::where('id_niño', $ninoIdReal)->first();
             
             // Formatear controles recién nacido
-            $controlesRnFormateados = $controlesRn->map(function($control) {
+            $controlesRnFormateados = $controlesRn->map(function($control) use ($nino) {
+                // Calcular edad y estado dinámicamente
+                $edadDias = null;
+                $estado = 'SEGUIMIENTO';
+                
+                if ($nino && $nino->fecha_nacimiento && $control->fecha) {
+                    $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+                    $fechaControl = Carbon::parse($control->fecha);
+                    $edadDias = $fechaNacimiento->diffInDays($fechaControl);
+                    
+                    // Calcular estado usando RangosCredService
+                    $validacion = \App\Services\RangosCredService::validarControl(
+                        $control->numero_control, 
+                        $edadDias, 
+                        'recien_nacido'
+                    );
+                    $estado = $validacion['estado'];
+                }
+                
                 return [
                     'id' => $control->id_crn ?? $control->id,
                     'id_niño' => $control->id_niño,
                     'numero_control' => $control->numero_control,
                     'fecha' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
                     'fecha_control' => $control->fecha ? $control->fecha->format('Y-m-d') : null,
-                    'edad' => $control->edad,
-                    'edad_dias' => $control->edad,
-                    'estado' => $control->estado,
-                    'peso' => $control->peso ?? null,
-                    'talla' => $control->talla ?? null,
-                    'perimetro_cefalico' => $control->perimetro_cefalico ?? null,
+                    'edad' => $edadDias, // Calculado dinámicamente
+                    'edad_dias' => $edadDias, // Calculado dinámicamente
+                    'estado' => $estado, // Calculado dinámicamente
+                    // peso, talla, perimetro_cefalico eliminados - campos médicos innecesarios
                     'es_ejemplo' => false,
                 ];
             });
@@ -277,8 +292,7 @@ class NinoController extends Controller
                     'edad' => $edadDias,
                     'edad_dias' => $edadDias,
                     'estado' => $estadoRecalculado,
-                    'estado_cred_once' => $control->estado_cred_once ?? null,
-                    'estado_cred_final' => $control->estado_cred_final ?? null,
+                    // estado_cred_once y estado_cred_final eliminados - campos innecesarios
                     'es_ejemplo' => false,
                 ];
             });
