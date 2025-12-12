@@ -309,12 +309,17 @@
   }
   
   .tab-content.active .info-row,
-  .tab-content.active .visita-item,
+  .tab-content.active .visitas-list .visita-item,
   .tab-content.active .vacuna-item,
   .tab-content.active .vacuna-card {
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Las filas de tabla no deben usar flex */
+  .tab-content.active table .visita-item {
+    display: table-row !important;
   }
   
   .tab-content.active .btn-registrar-full {
@@ -345,7 +350,7 @@
   .tab-content.active .info-card,
   .tab-content.active .info-row,
   .tab-content.active .visitas-list,
-  .tab-content.active .visita-item,
+  .tab-content.active .visitas-list .visita-item,
   .tab-content.active .vacunas-grid,
   .tab-content.active .vacuna-card,
   .tab-content.active .vacuna-header,
@@ -355,6 +360,11 @@
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Las filas de tabla no deben usar flex */
+  .tab-content.active table .visita-item {
+    display: table-row !important;
   }
   
   .tab-content.active .control-card-body .control-info-item {
@@ -729,30 +739,43 @@
   }
   
   .estado-badge {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    min-width: 110px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
   }
   
   .estado-badge.pendiente {
     background: #fb923c;
     color: white;
     border: none;
-    font-weight: 600;
   }
   
   .estado-badge.cumple {
-    background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
-    color: #22543d;
+    background: #22c55e;
+    color: white;
+    border: none;
   }
   
   .estado-badge.no-cumple {
-    background: #f87171;
+    background: #ef4444;
     color: white;
     border: none;
-    font-weight: 600;
+  }
+  
+  .estado-badge.estado-seguimiento,
+  .estado-badge.estado-seguimiento,
+  .estado-badge.seguimiento {
+    background: #e2e8f0;
+    color: #475569;
+    border: 1px solid #cbd5e1;
   }
   
   .clasificacion-badge {
@@ -818,7 +841,8 @@
     opacity: 1;
   }
   
-  .visita-item {
+  /* Estilos para visita-item solo cuando está en una lista, no en una tabla */
+  .visitas-list .visita-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -830,25 +854,41 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
   
-  .visita-item:hover {
+  .visitas-list .visita-item:hover {
     border-color: #5B6CC4;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
   
-  .visita-periodo {
+  /* Las filas de tabla con clase visita-item no deben tener estos estilos */
+  table .visita-item {
+    display: table-row !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  
+  table .visita-item:hover {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  
+  /* Estilos solo para visitas en lista, no en tabla */
+  .visitas-list .visita-periodo {
     font-size: 14px;
     font-weight: 600;
     color: #2d3748;
     flex: 1;
   }
   
-  .visita-actions {
+  .visitas-list .visita-actions {
     display: flex;
     align-items: center;
     gap: 12px;
   }
   
-  .visita-estado-badge {
+  .visitas-list .visita-estado-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -863,7 +903,7 @@
     padding: 0 12px;
   }
   
-  .visita-estado-badge.pendiente {
+  .visitas-list .visita-estado-badge.pendiente {
     background: #fb923c;
     color: white;
     border: 2px solid white;

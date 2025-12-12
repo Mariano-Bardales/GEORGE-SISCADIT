@@ -94,7 +94,8 @@ class ApiController extends Controller
             // Alertas de controles recién nacido
             if ($edadDias <= 28) {
                 $ninoId = $this->getNinoId($nino);
-                $controlesRn = ControlRn::where('id_niño', $ninoId)->count();
+                // Usar relación del modelo para evitar problemas de codificación
+                $controlesRn = $nino->controlesRn()->count();
                 $controlesEsperados = 0;
                 
                 $rangosRN = [
@@ -120,7 +121,8 @@ class ApiController extends Controller
             // Alertas de CRED mensual
             if ($edadDias >= 29 && $edadDias <= 359) {
                 $ninoId = $this->getNinoId($nino);
-                $controlesCred = ControlMenor1::where('id_niño', $ninoId)->count();
+                // Usar relación del modelo para evitar problemas de codificación
+                $controlesCred = $nino->controlesMenor1()->count();
                 $controlesEsperados = 0;
                 
                 $rangosCred = [
@@ -153,7 +155,8 @@ class ApiController extends Controller
             // Alertas de tamizaje
             if ($edadDias >= 1 && $edadDias <= 29) {
                 $ninoId = $this->getNinoId($nino);
-                $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+                // Usar relación del modelo para evitar problemas de codificación
+                $tamizaje = $nino->tamizajeNeonatal;
                 if (!$tamizaje) {
                     $totalAlertas++;
                 }
@@ -162,7 +165,8 @@ class ApiController extends Controller
             // Alertas de vacunas
             if ($edadDias <= 30) {
                 $ninoId = $this->getNinoId($nino);
-                $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
+                // Usar relación del modelo para evitar problemas de codificación
+                $vacunas = $nino->vacunaRn;
                 if (!$vacunas || !$vacunas->fecha_bcg || !$vacunas->fecha_hvb) {
                     $totalAlertas++;
                 }
@@ -1080,30 +1084,31 @@ class ApiController extends Controller
         $edadDias = $fechaNacimiento->diffInDays($hoy);
         
         $visitasEjemplo = collect();
-        $periodos = [
-            '28d' => ['dias' => 28, 'descripcion' => 'Visita domiciliaria a los 28 días de vida'],
-            '60-150d' => ['dias' => 105, 'descripcion' => 'Visita domiciliaria entre 60 a 150 días'],
-            '151-240d' => ['dias' => 195, 'descripcion' => 'Visita domiciliaria entre 151 a 240 días'],
-            '241-330d' => ['dias' => 285, 'descripcion' => 'Visita domiciliaria entre 241 a 330 días'],
+        // Controles de visita con sus rangos (1-4)
+        $controlesVisita = [
+            1 => ['dias' => 28, 'min' => 28, 'max' => 28, 'descripcion' => 'Visita domiciliaria Control 1 (28 días)'],
+            2 => ['dias' => 105, 'min' => 60, 'max' => 150, 'descripcion' => 'Visita domiciliaria Control 2 (60-150 días)'],
+            3 => ['dias' => 210, 'min' => 180, 'max' => 240, 'descripcion' => 'Visita domiciliaria Control 3 (180-240 días)'],
+            4 => ['dias' => 300, 'min' => 270, 'max' => 330, 'descripcion' => 'Visita domiciliaria Control 4 (270-330 días)'],
         ];
         
         $seed = $ninoIdReal % 100;
-        $numeroVisita = 1;
         
-        foreach ($periodos as $periodo => $info) {
-            if ($edadDias >= $info['dias'] - 15) { // Generar si ya pasó o está cerca
-                $fechaVisita = $fechaNacimiento->copy()->addDays($info['dias'] + (($seed + $numeroVisita) % 7) - 3);
+        foreach ($controlesVisita as $controlNumero => $info) {
+            if ($edadDias >= $info['min'] - 15) { // Generar si ya pasó o está cerca
+                $diasEnRango = rand($info['min'], min($info['max'], $edadDias));
+                $fechaVisita = $fechaNacimiento->copy()->addDays($diasEnRango + (($seed + $controlNumero) % 7) - 3);
                 
                 $visitasEjemplo->push([
                     'id' => null,
                     'id_niño' => $ninoIdReal,
-                    'grupo_visita' => $periodo,
+                    'control_de_visita' => $controlNumero,
+                    'numero_control' => $controlNumero,
+                    'numero_visitas' => $controlNumero,
                     'fecha_visita' => $fechaVisita->format('Y-m-d'),
-                    'numero_visitas' => $numeroVisita,
-                    'estado' => ($edadDias >= $info['dias']) ? 'cumple' : 'pendiente',
+                    'estado' => ($edadDias >= $info['min'] && $edadDias <= $info['max']) ? 'cumple' : 'pendiente',
                     'es_ejemplo' => true,
                 ]);
-                $numeroVisita++;
             }
         }
         
@@ -1509,6 +1514,10 @@ class ApiController extends Controller
             if ($edadDias <= 28) {
                 $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
                 $controlesRegistrados = $controlesRn->pluck('numero_control')->toArray();
+                $controlesRegistradosMap = [];
+                foreach ($controlesRn as $control) {
+                    $controlesRegistradosMap[$control->numero_control] = $control;
+                }
                 
                 $rangosRN = [
                     1 => ['min' => 2, 'max' => 6, 'nombre' => 'Control 1'],
@@ -1519,6 +1528,43 @@ class ApiController extends Controller
                 
                 $controlesFaltantes = [];
                 $controlesFueraRango = [];
+                $controlesAnterioresFaltantes = [];
+                
+                // Encontrar el control más alto registrado con fecha
+                $controlMasAltoConFecha = null;
+                $numeroControlMasAlto = 0;
+                foreach ($controlesRegistradosMap as $num => $control) {
+                    if ($control && $control->fecha && $num > $numeroControlMasAlto) {
+                        $numeroControlMasAlto = $num;
+                        $controlMasAltoConFecha = $control;
+                    }
+                }
+                
+                // Si hay un control registrado con fecha, verificar controles anteriores faltantes
+                if ($controlMasAltoConFecha) {
+                    for ($numAnterior = 1; $numAnterior < $numeroControlMasAlto; $numAnterior++) {
+                        if (!isset($controlesRegistradosMap[$numAnterior]) || 
+                            !$controlesRegistradosMap[$numAnterior] || 
+                            !$controlesRegistradosMap[$numAnterior]->fecha) {
+                            // Control anterior faltante
+                            $rangoAnterior = $rangosRN[$numAnterior];
+                            $fechaControlAlto = Carbon::parse($controlMasAltoConFecha->fecha);
+                            $edadDiasControlAlto = $fechaNacimiento->diffInDays($fechaControlAlto);
+                            
+                            // Calcular días fuera del rango
+                            $diasFuera = $edadDiasControlAlto > $rangoAnterior['max'] 
+                                ? ($edadDiasControlAlto - $rangoAnterior['max']) 
+                                : 0;
+                            
+                            $controlesAnterioresFaltantes[] = [
+                                'nombre' => $rangoAnterior['nombre'],
+                                'dias_fuera' => $diasFuera,
+                                'rango' => $rangoAnterior,
+                                'control_referencia' => $rangosRN[$numeroControlMasAlto]['nombre']
+                            ];
+                        }
+                    }
+                }
                 
                 foreach ($rangosRN as $num => $rango) {
                     $debeTener = false;
@@ -1529,13 +1575,24 @@ class ApiController extends Controller
                     }
                     
                     if ($debeTener && !in_array($num, $controlesRegistrados)) {
-                        // Control faltante
-                        $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
-                        $controlesFaltantes[] = [
-                            'nombre' => $rango['nombre'],
-                            'dias_fuera' => $diasFuera,
-                            'rango' => $rango
-                        ];
+                        // Verificar si ya fue detectado como control anterior faltante
+                        $yaDetectado = false;
+                        foreach ($controlesAnterioresFaltantes as $controlAnterior) {
+                            if ($controlAnterior['nombre'] == $rango['nombre']) {
+                                $yaDetectado = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$yaDetectado) {
+                            // Control faltante
+                            $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
+                            $controlesFaltantes[] = [
+                                'nombre' => $rango['nombre'],
+                                'dias_fuera' => $diasFuera,
+                                'rango' => $rango
+                            ];
+                        }
                     } else if (in_array($num, $controlesRegistrados)) {
                         // Verificar si está fuera de rango
                         $control = $controlesRn->where('numero_control', $num)->first();
@@ -1554,6 +1611,33 @@ class ApiController extends Controller
                             }
                         }
                     }
+                }
+                
+                // Crear alerta consolidada para controles anteriores faltantes
+                if (!empty($controlesAnterioresFaltantes)) {
+                    $nombresFaltantes = array_column($controlesAnterioresFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesAnterioresFaltantes);
+                    $controlReferencia = $controlesAnterioresFaltantes[0]['control_referencia'] ?? 'un control posterior';
+                    
+                    $mensaje = $totalFaltantes === 1
+                        ? "El niño tiene el {$controlReferencia} registrado, pero falta el {$nombresFaltantes[0]} que debió realizarse antes."
+                        : "El niño tiene el {$controlReferencia} registrado, pero faltan los controles " . implode(', ', $nombresFaltantes) . " que debieron realizarse antes ({$totalFaltantes} control" . ($totalFaltantes > 1 ? 'es' : '') . " faltantes).";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_recien_nacido',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles RN',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                        'control_referencia' => $controlReferencia,
+                    ];
                 }
                 
                 // Crear alerta consolidada para controles faltantes
@@ -1611,8 +1695,9 @@ class ApiController extends Controller
                 }
             }
             
-            // Alertas de CRED mensual (29-359 días) - CONSOLIDADAS
-            if ($edadDias >= 29 && $edadDias <= 359) {
+            // Alertas de CRED mensual (29 días o más) - CONSOLIDADAS
+            // También verifica si tiene controles registrados aunque tenga más de 359 días
+            if ($edadDias >= 29) {
                 $controlesCred = ControlMenor1::where('id_niño', $ninoId)->get();
                 $controlesRegistradosMap = [];
                 foreach ($controlesCred as $control) {
@@ -1636,6 +1721,43 @@ class ApiController extends Controller
                 $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
                 $controlesFaltantes = [];
                 $controlesFueraRango = [];
+                $controlesAnterioresFaltantes = [];
+                
+                // Encontrar el control más alto registrado con fecha
+                $controlMasAltoConFecha = null;
+                $numeroControlMasAlto = 0;
+                foreach ($controlesRegistradosMap as $num => $control) {
+                    if ($control && $control->fecha && $num > $numeroControlMasAlto) {
+                        $numeroControlMasAlto = $num;
+                        $controlMasAltoConFecha = $control;
+                    }
+                }
+                
+                // Si hay un control registrado con fecha, verificar controles anteriores faltantes
+                if ($controlMasAltoConFecha) {
+                    for ($mesAnterior = 1; $mesAnterior < $numeroControlMasAlto; $mesAnterior++) {
+                        if (!isset($controlesRegistradosMap[$mesAnterior]) || 
+                            !$controlesRegistradosMap[$mesAnterior] || 
+                            !$controlesRegistradosMap[$mesAnterior]->fecha) {
+                            // Control anterior faltante
+                            $rangoAnterior = $rangosCred[$mesAnterior];
+                            $fechaControlAlto = Carbon::parse($controlMasAltoConFecha->fecha);
+                            $edadDiasControlAlto = $fechaNacimiento->diffInDays($fechaControlAlto);
+                            
+                            // Calcular días fuera del rango
+                            $diasFuera = $edadDiasControlAlto > $rangoAnterior['max'] 
+                                ? ($edadDiasControlAlto - $rangoAnterior['max']) 
+                                : 0;
+                            
+                            $controlesAnterioresFaltantes[] = [
+                                'nombre' => $rangoAnterior['nombre'],
+                                'dias_fuera' => $diasFuera,
+                                'rango' => $rangoAnterior,
+                                'control_referencia' => $rangosCred[$numeroControlMasAlto]['nombre']
+                            ];
+                        }
+                    }
+                }
                 
                 foreach ($rangosCred as $mes => $rango) {
                     $debeTener = false;
@@ -1662,14 +1784,52 @@ class ApiController extends Controller
                             ];
                         }
                     } else if ($debeTener && !$control) {
-                        // Control faltante
-                        $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
-                        $controlesFaltantes[] = [
-                            'nombre' => $rango['nombre'],
-                            'dias_fuera' => $diasFuera,
-                            'rango' => $rango
-                        ];
+                        // Verificar si ya fue detectado como control anterior faltante
+                        $yaDetectado = false;
+                        foreach ($controlesAnterioresFaltantes as $controlAnterior) {
+                            if ($controlAnterior['nombre'] == $rango['nombre']) {
+                                $yaDetectado = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$yaDetectado) {
+                            // Control faltante
+                            $diasFuera = $edadDias > $rango['max'] ? ($edadDias - $rango['max']) : 0;
+                            $controlesFaltantes[] = [
+                                'nombre' => $rango['nombre'],
+                                'dias_fuera' => $diasFuera,
+                                'rango' => $rango
+                            ];
+                        }
                     }
+                }
+                
+                // Crear alerta consolidada para controles anteriores faltantes
+                if (!empty($controlesAnterioresFaltantes)) {
+                    $nombresFaltantes = array_column($controlesAnterioresFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesAnterioresFaltantes);
+                    $controlReferencia = $controlesAnterioresFaltantes[0]['control_referencia'] ?? 'un control posterior';
+                    
+                    $mensaje = $totalFaltantes === 1
+                        ? "El niño tiene el {$controlReferencia} registrado, pero falta el {$nombresFaltantes[0]} que debió realizarse antes."
+                        : "El niño tiene el {$controlReferencia} registrado, pero faltan los controles " . implode(', ', $nombresFaltantes) . " que debieron realizarse antes ({$totalFaltantes} control" . ($totalFaltantes > 1 ? 'es' : '') . " faltantes).";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_cred_mensual',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles CRED',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                        'control_referencia' => $controlReferencia,
+                    ];
                 }
                 
                 // Crear alerta consolidada para controles faltantes
@@ -2574,47 +2734,31 @@ class ApiController extends Controller
             
             // Formatear visitas
             $visitasFormateadas = $visitas->map(function($visita) use ($nino) {
-                $numeroControl = $visita->numero_control ?? 1;
+                // Usar control_de_visita directamente, o numero_control como fallback
+                $numeroControl = $visita->control_de_visita ?? $visita->numero_control ?? $visita->numero_visitas ?? 1;
                 
-                // Calcular edad en días de la visita para determinar el grupo
-                $grupoVisita = null;
-                $periodoTexto = "Visita {$numeroControl}";
-                
+                // Calcular edad en días de la visita si hay fecha
+                $edadDias = null;
                 if ($visita->fecha_visita && $nino->fecha_nacimiento) {
                     $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
                     $fechaVisita = Carbon::parse($visita->fecha_visita);
                     $edadDias = $fechaNacimiento->diffInDays($fechaVisita);
-                    
-                    // Determinar grupo basado en edad en días
-                    if ($edadDias >= 28 && $edadDias <= 35) {
-                        $grupoVisita = 'A';
-                        $periodoTexto = '28 días de vida';
-                    } elseif ($edadDias >= 60 && $edadDias <= 150) {
-                        $grupoVisita = 'B';
-                        $periodoTexto = '2-5 meses';
-                    } elseif ($edadDias >= 180 && $edadDias <= 240) {
-                        $grupoVisita = 'C';
-                        $periodoTexto = '6-8 meses';
-                    } elseif ($edadDias >= 270 && $edadDias <= 330) {
-                        $grupoVisita = 'D';
-                        $periodoTexto = '9-11 meses';
-                    } else {
-                        // Si no coincide con ningún rango, usar el numero_control
-                        $grupoVisita = $numeroControl <= 4 ? chr(64 + $numeroControl) : 'A'; // A, B, C, D
-                    }
-                } else {
-                    // Si no hay fecha, usar numero_control para determinar grupo
-                    $grupoVisita = $numeroControl <= 4 ? chr(64 + $numeroControl) : 'A'; // A, B, C, D
                 }
+                
+                // Mantener compatibilidad con código antiguo que usa grupo_visita y periodo
+                $grupoVisita = $numeroControl <= 4 ? chr(64 + $numeroControl) : 'A'; // A, B, C, D
+                $periodoTexto = "Control {$numeroControl}";
                 
                 return [
                     'id' => $visita->id_visita ?? $visita->id,
                     'id_niño' => $visita->id_niño,
                     'fecha_visita' => $visita->fecha_visita ? Carbon::parse($visita->fecha_visita)->format('Y-m-d') : null,
-                    'grupo_visita' => $grupoVisita,
-                    'periodo' => $periodoTexto,
+                    'control_de_visita' => $numeroControl,
                     'numero_control' => $numeroControl,
                     'numero_visitas' => $numeroControl, // Alias para compatibilidad
+                    'grupo_visita' => $grupoVisita, // Mantener para compatibilidad
+                    'periodo' => $periodoTexto, // Mantener para compatibilidad
+                    'edad_dias' => $edadDias,
                     'es_ejemplo' => false,
                 ];
             });

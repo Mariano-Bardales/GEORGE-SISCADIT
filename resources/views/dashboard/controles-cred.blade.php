@@ -3775,10 +3775,10 @@
 
       // ========== VISITAS DOMICILIARIAS (con validación de rango) ==========
       const rangosVisitas = {
-        '28 días': { min: 28, max: 35 },
-        '2-5 meses': { min: 60, max: 150 },
-        '6-8 meses': { min: 180, max: 240 },
-        '9-11 meses': { min: 270, max: 330 }
+        1: { min: 28, max: 28 },
+        2: { min: 60, max: 150 },
+        3: { min: 180, max: 240 },
+        4: { min: 270, max: 330 }
       };
 
       console.log('🔍 Validando visitas domiciliarias. Edad actual:', edadDiasActual, 'días');
@@ -3794,27 +3794,26 @@
       
       // Validar cada item de visita
       visitaItems.forEach(item => {
-        const periodoElement = item.querySelector('.visita-periodo');
-        const estadoBadge = item.querySelector('.visita-estado-badge');
+        const controlNumero = parseInt(item.getAttribute('data-control-visita')) || parseInt(item.querySelector('.visita-control-numero')?.textContent.trim());
+        const estadoBadge = item.querySelector('.estado-badge');
         const button = item.querySelector('button[onclick*="abrirModalVisita"]');
         
-        if (!periodoElement || !estadoBadge) {
-          console.warn('⚠️ Item de visita sin período o badge:', item);
+        if (!controlNumero || !estadoBadge) {
+          console.warn('⚠️ Item de visita sin número de control o badge:', item);
           return;
         }
         
-        const periodo = periodoElement.textContent.trim();
-        const rango = rangosVisitas[periodo];
+        const rango = rangosVisitas[controlNumero];
         
         if (!rango) {
-          console.warn('⚠️ No se encontró rango para período:', periodo);
+          console.warn('⚠️ No se encontró rango para control de visita:', controlNumero);
           return;
         }
         
         const rangoMin = rango.min;
         const rangoMax = rango.max;
         
-        console.log(`📝 Validando visita ${periodo}: edad actual=${edadDiasActual}, rango=${rangoMin}-${rangoMax}, badge="${estadoBadge.textContent}"`);
+        console.log(`📝 Validando visita Control ${controlNumero}: edad actual=${edadDiasActual}, rango=${rangoMin}-${rangoMax}, badge="${estadoBadge.textContent}"`);
         
         // Verificar si tiene visita registrada (fecha en formato DD/MM/YYYY)
         const textoBadge = estadoBadge.textContent.trim();
@@ -3838,12 +3837,8 @@
         // Esto debe ejecutarse SIEMPRE, incluso si el badge ya dice SEGUIMIENTO o PENDIENTE
         if (!tieneVisitaRegistrada && edadDiasActual > rangoMax) {
           console.log(`  → Actualizando badge a NO CUMPLE (no tiene visita registrada y edad ${edadDiasActual} > ${rangoMax})`);
-          estadoBadge.className = 'visita-estado-badge no-cumple';
+          estadoBadge.className = 'estado-badge no-cumple';
           estadoBadge.textContent = 'NO CUMPLE';
-          estadoBadge.style.background = '#fee2e2';
-          estadoBadge.style.color = '#dc2626';
-          estadoBadge.style.fontWeight = '600';
-          estadoBadge.style.border = '1px solid #dc2626';
           estadoBadge.removeAttribute('data-fecha');
           console.log(`✅ Badge actualizado a NO CUMPLE para visita ${periodo} (edad: ${edadDiasActual} días > rango max: ${rangoMax} días, badge anterior: "${textoBadge}")`);
         } else if (esNoCumple && tieneVisitaRegistrada) {
@@ -3923,10 +3918,8 @@
               
               // Asegurar que el badge muestre NO CUMPLE
               if (estadoBadge && estadoBadge.textContent !== 'NO CUMPLE') {
-                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.className = 'estado-badge no-cumple';
                 estadoBadge.textContent = 'NO CUMPLE';
-                estadoBadge.style.background = '#fee2e2';
-                estadoBadge.style.color = '#dc2626';
               }
               
               button.onclick = function(e) {
@@ -3994,12 +3987,9 @@
             
             // SIEMPRE actualizar badge de estado a NO CUMPLE si no tiene visita registrada
             if (estadoBadge && !tieneVisita) {
-              estadoBadge.className = 'visita-estado-badge no-cumple';
+              estadoBadge.className = 'estado-badge no-cumple';
               estadoBadge.textContent = 'NO CUMPLE';
-              estadoBadge.style.background = '#fee2e2';
-              estadoBadge.style.color = '#dc2626';
-              estadoBadge.style.fontWeight = '600';
-              console.log(`✅ Badge actualizado a NO CUMPLE para visita ${periodo} (edad: ${edadDiasActual} días, rango max: ${rangoMax} días)`);
+              console.log(`✅ Badge actualizado a NO CUMPLE para visita Control ${controlNumero} (edad: ${edadDiasActual} días, rango max: ${rangoMax} días)`);
             }
             
             button.onclick = function(e) {
@@ -5633,7 +5623,6 @@
         const fechaElement = document.getElementById(`control-${numeroControl}-fecha`);
         const edadElement = document.getElementById(`control-${numeroControl}-edad`);
         const estadoElement = document.getElementById(`control-${numeroControl}-estado`);
-        const accionElement = document.getElementById(`control-${numeroControl}-accion`);
 
         if (!fechaElement || !edadElement || !estadoElement) {
           console.error(`❌ No se encontraron los elementos del control ${numeroControl}:`, {
@@ -5687,51 +5676,6 @@
         }
 
         console.log(`✅ Control ${numeroControl} actualizado en tabla`);
-
-        // Actualizar botones de acción (si existe el elemento)
-        if (accionElement && control.id) {
-          // Si hay control registrado, mostrar botones de editar y eliminar
-          const rangoMin = numeroControl === 1 ? 2 : numeroControl === 2 ? 7 : numeroControl === 3 ? 14 : 21;
-          const rangoMax = numeroControl === 1 ? 6 : numeroControl === 2 ? 13 : numeroControl === 3 ? 20 : 28;
-
-          accionElement.innerHTML = `
-            <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
-              <button onclick="editarControlRecienNacido(${control.id}, ${numeroControl}, ${rangoMin}, ${rangoMax})"
-                class="btn-editar-control"
-                title="Editar control"
-                style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                Editar Control
-              </button>
-              <button onclick="eliminarControlRecienNacido(${control.id}, ${numeroControl})"
-                class="btn-eliminar-control"
-                title="Eliminar control"
-                style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-                Eliminar
-              </button>
-            </div>
-          `;
-        } else if (accionElement) {
-          // Si no hay control, mostrar botón de registrar
-          const rangoMin = numeroControl === 1 ? 2 : numeroControl === 2 ? 7 : numeroControl === 3 ? 14 : 21;
-          const rangoMax = numeroControl === 1 ? 6 : numeroControl === 2 ? 13 : numeroControl === 3 ? 20 : 28;
-          accionElement.innerHTML = `
-            <button class="btn-registrar" onclick="abrirModalRegistro(${numeroControl}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
-                <path d="M5 12h14"></path>
-                <path d="M12 5v14"></path>
-              </svg>
-              Registrar Control
-            </button>
-          `;
-        }
       }
 
       // ========== FUNCIONES PARA EDITAR Y ELIMINAR CONTROLES ==========
@@ -6855,26 +6799,12 @@
               const fechaEl = document.getElementById(`control-${num}-fecha`);
               const edadEl = document.getElementById(`control-${num}-edad`);
               const estadoEl = document.getElementById(`control-${num}-estado`);
-              const accionEl = document.getElementById(`control-${num}-accion`);
 
               if (fechaEl) fechaEl.textContent = '-';
               if (edadEl) edadEl.textContent = '-';
               if (estadoEl) {
                 estadoEl.className = 'estado-badge estado-seguimiento';
                 estadoEl.textContent = 'SEGUIMIENTO';
-              }
-              if (accionEl) {
-                const rangoMin = [2, 7, 14, 21][num - 1];
-                const rangoMax = [6, 13, 20, 28][num - 1];
-                accionEl.innerHTML = `
-                  <button class="btn-registrar" onclick="abrirModalRegistro(${num}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
-                      <path d="M5 12h14"></path>
-                      <path d="M12 5v14"></path>
-                    </svg>
-                    Registrar Control
-                  </button>
-                `;
               }
             }
 
@@ -6892,25 +6822,12 @@
               const fechaEl = document.getElementById(`control-${num}-fecha`);
               const edadEl = document.getElementById(`control-${num}-edad`);
               const estadoEl = document.getElementById(`control-${num}-estado`);
-              const accionEl = document.getElementById(`control-${num}-accion`);
+
               if (fechaEl) fechaEl.textContent = '-';
               if (edadEl) edadEl.textContent = '-';
               if (estadoEl) {
                 estadoEl.className = 'estado-badge estado-seguimiento';
                 estadoEl.textContent = 'SEGUIMIENTO';
-              }
-              if (accionEl) {
-                const rangoMin = [2, 7, 14, 21][num - 1];
-                const rangoMax = [6, 13, 20, 28][num - 1];
-                accionEl.innerHTML = `
-                  <button class="btn-registrar" onclick="abrirModalRegistro(${num}, ${rangoMin}, ${rangoMax})" style="padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;">
-                      <path d="M5 12h14"></path>
-                      <path d="M12 5v14"></path>
-                    </svg>
-                    Registrar Control
-                  </button>
-                `;
               }
             }
           }
@@ -7079,7 +6996,6 @@
             const fechaElement = document.getElementById(`fo_cred_${mes}`);
             const edadElement = document.getElementById(`edad_cred_${mes}`);
             const estadoElement = document.getElementById(`estado_cred_${mes}`);
-            const btnElement = document.getElementById(`btn-cred-${mes}`);
 
             let estadoFinal = 'SEGUIMIENTO'; // Por defecto
             let fechaControlStr = '-';
@@ -7123,46 +7039,6 @@
                 totalSeguimiento++;
               }
 
-              // Actualizar botones a "Editar Control" y "Eliminar" si hay registro
-              if (btnElement && control.id) {
-                // Crear contenedor para los botones
-                const btnContainer = document.createElement('div');
-                btnContainer.style.cssText = 'display: flex; gap: 0.5rem; justify-content: center; align-items: center;';
-                
-                // Botón Editar
-                const btnEditar = document.createElement('button');
-                btnEditar.setAttribute('onclick', `abrirModalCredMensual(${mes}, ${control.id})`);
-                btnEditar.setAttribute('title', 'Editar control');
-                btnEditar.innerHTML = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  Editar
-                `;
-                btnEditar.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;';
-                
-                // Botón Eliminar
-                const btnEliminar = document.createElement('button');
-                btnEliminar.setAttribute('onclick', `eliminarControlCredMensual(${control.id}, ${mes})`);
-                btnEliminar.setAttribute('title', 'Eliminar control');
-                btnEliminar.innerHTML = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                  </svg>
-                  Eliminar
-                `;
-                btnEliminar.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;';
-                
-                btnContainer.appendChild(btnEditar);
-                btnContainer.appendChild(btnEliminar);
-                
-                // Reemplazar el contenido del botón original con el contenedor
-                btnElement.innerHTML = '';
-                btnElement.appendChild(btnContainer);
-                btnElement.style.cssText = 'padding: 0; background: transparent; border: none;';
-              }
             } else {
               // Si NO HAY control registrado (REGLA 3)
               // Verificar si ya pasó el límite máximo del rango
@@ -7175,19 +7051,6 @@
                 // Aún está dentro del rango o no ha llegado, EN SEGUIMIENTO
                 estadoFinal = 'SEGUIMIENTO';
                 totalSeguimiento++;
-              }
-              
-              // Crear botón "Registrar Control" si no hay control
-              if (btnElement) {
-                btnElement.setAttribute('onclick', `abrirModalCredMensual(${mes})`);
-                btnElement.innerHTML = `
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px;">
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5v14"></path>
-                  </svg>
-                  Registrar Control
-                `;
-                btnElement.style.cssText = 'padding: 6px 12px; font-size: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; font-weight: 500;';
               }
             }
 
@@ -7436,30 +7299,33 @@
                          String(hoy.getDate()).padStart(2, '0');
           const edadDiasActual = fechaNacimientoISO ? calcularEdadDias(fechaNacimientoISO, hoyISO) : 0;
 
-          // Rangos por período
+          // Rangos por número de control
           const rangosVisitas = {
-            '28 días': { min: 28, max: 35 },
-            '2-5 meses': { min: 60, max: 150 },
-            '6-8 meses': { min: 180, max: 240 },
-            '9-11 meses': { min: 270, max: 330 }
+            1: { min: 28, max: 28 },
+            2: { min: 60, max: 150 },
+            3: { min: 180, max: 240 },
+            4: { min: 270, max: 330 }
           };
 
           const visitasRegistradas = data.success && data.data && data.data.visitas ? data.data.visitas : [];
-          const periodosConVisita = visitasRegistradas.map(v => v.periodo);
+          const controlesConVisita = visitasRegistradas.map(v => v.control_de_visita || v.numero_control || v.numero_visitas);
 
           // Procesar todas las visitas (registradas y no registradas)
           visitaItems.forEach(item => {
-            const periodoElement = item.querySelector('.visita-periodo');
-            const estadoBadge = item.querySelector('.visita-estado-badge');
+            const controlNumero = parseInt(item.getAttribute('data-control-visita')) || parseInt(item.querySelector('.visita-control-numero')?.textContent.trim());
+            const estadoBadge = item.querySelector('.estado-badge');
             const button = item.querySelector('.btn-registrar-visita');
             
-            if (!periodoElement || !estadoBadge) return;
+            if (!controlNumero || !estadoBadge) return;
             
-            const periodo = periodoElement.textContent.trim();
-            const rango = rangosVisitas[periodo];
+            const rango = rangosVisitas[controlNumero];
             if (!rango) return;
 
-            const visita = visitasRegistradas.find(v => v.periodo === periodo);
+            // Buscar visita por número de control
+            const visita = visitasRegistradas.find(v => {
+              const vControl = v.control_de_visita || v.numero_control || v.numero_visitas;
+              return vControl == controlNumero;
+            });
             
             if (visita && visita.fecha_visita && fechaNacimientoISO) {
               // Hay visita registrada - verificar si cumple
@@ -7474,23 +7340,15 @@
               });
 
               if (cumpleRango) {
-                estadoBadge.className = 'visita-estado-badge cumple';
-                estadoBadge.textContent = fechaVisita;
-                estadoBadge.style.background = '#d1fae5';
-                estadoBadge.style.color = '#065f46';
-                estadoBadge.style.fontWeight = '';
-                estadoBadge.style.border = '';
+                estadoBadge.className = 'estado-badge cumple';
+                estadoBadge.textContent = 'CUMPLE';
               } else {
                 // Visita registrada pero NO CUMPLE
-                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.className = 'estado-badge no-cumple';
                 estadoBadge.textContent = 'NO CUMPLE';
-                estadoBadge.style.background = '#fee2e2';
-                estadoBadge.style.color = '#dc2626';
-                estadoBadge.style.fontWeight = '600';
-                estadoBadge.style.border = '1px solid #dc2626';
                 // Guardar la fecha en un atributo data para que validarRangosYHabilitarBotones pueda acceder a ella
                 estadoBadge.setAttribute('data-fecha', fechaVisitaISO);
-                console.log(`❌ Visita ${periodo} NO CUMPLE: realizada a los ${edadDiasVisita} días (rango: ${rango.min}-${rango.max} días)`);
+                console.log(`❌ Visita Control ${controlNumero} NO CUMPLE: realizada a los ${edadDiasVisita} días (rango: ${rango.min}-${rango.max} días)`);
               }
 
               if (button) {
@@ -7506,40 +7364,24 @@
               // NO hay visita registrada - verificar según la edad actual
               if (fechaNacimientoISO && edadDiasActual > rango.max) {
                 // YA PASÓ el rango - NO CUMPLE
-                estadoBadge.className = 'visita-estado-badge no-cumple';
+                estadoBadge.className = 'estado-badge no-cumple';
                 estadoBadge.textContent = 'NO CUMPLE';
-                estadoBadge.style.background = '#fee2e2';
-                estadoBadge.style.color = '#dc2626';
-                estadoBadge.style.fontWeight = '600';
-                estadoBadge.style.border = '1px solid #dc2626';
                 estadoBadge.removeAttribute('data-fecha');
-                console.log(`❌ Visita ${periodo} NO CUMPLE: no registrada y ya pasó el rango (edad: ${edadDiasActual} días > rango max: ${rango.max} días)`);
+                console.log(`❌ Visita Control ${controlNumero} NO CUMPLE: no registrada y ya pasó el rango (edad: ${edadDiasActual} días > rango max: ${rango.max} días)`);
               } else if (fechaNacimientoISO && edadDiasActual < rango.min) {
                 // Aún no llega al rango
-                estadoBadge.className = 'visita-estado-badge pendiente';
-                estadoBadge.textContent = 'PENDIENTE';
-                estadoBadge.style.background = '';
-                estadoBadge.style.color = '';
-                estadoBadge.style.fontWeight = '';
-                estadoBadge.style.border = '';
+                estadoBadge.className = 'estado-badge estado-seguimiento';
+                estadoBadge.textContent = 'SEGUIMIENTO';
                 estadoBadge.removeAttribute('data-fecha');
               } else if (fechaNacimientoISO && edadDiasActual >= rango.min && edadDiasActual <= rango.max) {
                 // Dentro del rango - puede registrar
-                estadoBadge.className = 'visita-estado-badge pendiente';
-                estadoBadge.textContent = 'PENDIENTE';
-                estadoBadge.style.background = '';
-                estadoBadge.style.color = '';
-                estadoBadge.style.fontWeight = '';
-                estadoBadge.style.border = '';
+                estadoBadge.className = 'estado-badge estado-seguimiento';
+                estadoBadge.textContent = 'SEGUIMIENTO';
                 estadoBadge.removeAttribute('data-fecha');
               } else {
                 // Sin fecha de nacimiento - mostrar SEGUIMIENTO
-                estadoBadge.className = 'visita-estado-badge pendiente';
+                estadoBadge.className = 'estado-badge estado-seguimiento';
                 estadoBadge.textContent = 'SEGUIMIENTO';
-                estadoBadge.style.background = '';
-                estadoBadge.style.color = '';
-                estadoBadge.style.fontWeight = '';
-                estadoBadge.style.border = '';
                 estadoBadge.removeAttribute('data-fecha');
               }
               
@@ -8134,10 +7976,10 @@
           .then(response => response.json())
           .then(data => {
             const rangosVisitas = {
-              '28 días': { min: 28, max: 35 },
-              '2-5 meses': { min: 60, max: 150 },
-              '6-8 meses': { min: 180, max: 240 },
-              '9-11 meses': { min: 270, max: 330 }
+              1: { min: 28, max: 28 },
+              2: { min: 60, max: 150 },
+              3: { min: 180, max: 240 },
+              4: { min: 270, max: 330 }
             };
 
             const visitas = data.success && data.data && data.data.visitas ? data.data.visitas : [];
@@ -8155,21 +7997,26 @@
               }
             }
 
-            // Verificar cada período de visita
-            Object.keys(rangosVisitas).forEach(periodo => {
-              const rango = rangosVisitas[periodo];
-              const visita = visitas.find(v => v.periodo === periodo);
+            // Verificar cada control de visita (1-4)
+            Object.keys(rangosVisitas).forEach(controlNumero => {
+              const controlNum = parseInt(controlNumero);
+              const rango = rangosVisitas[controlNum];
+              // Buscar visita por número de control
+              const visita = visitas.find(v => {
+                const vControl = v.control_de_visita || v.numero_control || v.numero_visitas;
+                return vControl == controlNum;
+              });
               
               if (visita && visita.fecha_visita && fechaNacimientoISO) {
                 // Calcular edad en días al momento de la visita
                 const edadDiasVisita = calcularEdadDias(fechaNacimientoISO, visita.fecha_visita);
                 if (edadDiasVisita < rango.min || edadDiasVisita > rango.max) {
-                  visitasNoCumplen.push(`${periodo} (realizada a los ${edadDiasVisita} días, rango: ${rango.min}-${rango.max} días)`);
+                  visitasNoCumplen.push(`Control ${controlNum} (realizada a los ${edadDiasVisita} días, rango: ${rango.min}-${rango.max} días)`);
                   tieneVisitasNoCumplen = true;
                 }
               } else if (edadDias > rango.max) {
                 // Ya pasó el rango y no hay visita registrada
-                visitasFaltantes.push(`${periodo} (rango: ${rango.min}-${rango.max} días)`);
+                visitasFaltantes.push(`Control ${controlNum} (rango: ${rango.min}-${rango.max} días)`);
                 tieneVisitasNoCumplen = true;
               }
             });
@@ -8509,10 +8356,10 @@
 
         // 6. Simular visitas domiciliarias basadas en fecha de nacimiento
         const visitasSimuladas = [
-          { periodo: '28 días de vida', edadDias: 28, fechaId: 'fecha-visita-28', estadoId: 'estado-visita-28' },
-          { periodo: '2-5 meses', edadDias: 90, fechaId: 'fecha-visita-2-5', estadoId: 'estado-visita-2-5' }, // 3 meses = 90 días
-          { periodo: '6-8 meses', edadDias: 210, fechaId: 'fecha-visita-6-8', estadoId: 'estado-visita-6-8' }, // 7 meses = 210 días
-          { periodo: '9-11 meses', edadDias: 300, fechaId: 'fecha-visita-9-11', estadoId: 'estado-visita-9-11' } // 10 meses = 300 días
+          { controlNumero: 1, edadDias: 28, fechaId: 'visita-fecha-1', estadoId: 'visita-estado-1' },
+          { controlNumero: 2, edadDias: 90, fechaId: 'visita-fecha-2', estadoId: 'visita-estado-2' }, // 3 meses = 90 días
+          { controlNumero: 3, edadDias: 210, fechaId: 'visita-fecha-3', estadoId: 'visita-estado-3' }, // 7 meses = 210 días
+          { controlNumero: 4, edadDias: 300, fechaId: 'visita-fecha-4', estadoId: 'visita-estado-4' } // 10 meses = 300 días
         ];
 
         visitasSimuladas.forEach(visita => {
@@ -8537,7 +8384,7 @@
           }
 
           if (estadoEl) {
-            estadoEl.className = 'visita-estado-badge cumple';
+            estadoEl.className = 'estado-badge cumple';
             estadoEl.textContent = 'CUMPLE';
           }
         });
@@ -8711,28 +8558,35 @@
               console.warn(`⚠️ Control ${num} fuera de rango: ${edadDiasControl} días (rango: ${rango.min}-${rango.max})`);
             }
           } else {
-            // Usar el estado que viene del control si no se puede calcular la edad
-            if (control.estado === 'cumple') {
-              estadoFinal = 'CUMPLE';
-            } else if (control.estado === 'no_cumple' || control.estado === 'no cumple') {
-              estadoFinal = 'NO CUMPLE';
+            // Si no se puede calcular la edad
+            if (fechaControlStr !== '-') {
+              // Hay fecha registrada pero no se pudo calcular edad
+              // Intentar usar el estado del backend, pero si no está disponible, validar según edad actual
+              if (control.estado === 'cumple') {
+                estadoFinal = 'CUMPLE';
+              } else if (control.estado === 'no_cumple' || control.estado === 'no cumple') {
+                estadoFinal = 'NO CUMPLE';
+              } else {
+                // Si no hay estado del backend, validar según edad actual
+                if (edadActualDias > rango.max) {
+                  estadoFinal = 'NO CUMPLE';
+                  console.warn(`⚠️ Control ${num} con fecha pero sin edad calculada y ya pasó el límite (máx: ${rango.max} días, actual: ${edadActualDias} días)`);
+                } else {
+                  estadoFinal = 'SEGUIMIENTO';
+                }
+              }
             } else {
+              // No hay fecha registrada, siempre mostrar SEGUIMIENTO
+              // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
               estadoFinal = 'SEGUIMIENTO';
             }
           }
 
           console.log(`✅ Control ${num} registrado: ${fechaControlStr} (${edadDiasStr} días) - ${estadoFinal}`);
         } else {
-          // Si NO HAY control registrado
-          // Verificar si ya pasó el límite máximo del rango
-          if (edadActualDias > rango.max) {
-            // Ya pasó el límite, NO CUMPLE (falta el control y ya venció)
-            estadoFinal = 'NO CUMPLE';
-            console.warn(`⚠️ Control ${num} no registrado y ya pasó el límite (máx: ${rango.max} días, actual: ${edadActualDias} días)`);
-          } else {
-            // Aún está dentro del rango o no ha llegado, EN SEGUIMIENTO
-            estadoFinal = 'SEGUIMIENTO';
-          }
+          // Si NO HAY control registrado, siempre mostrar SEGUIMIENTO
+          // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
+          estadoFinal = 'SEGUIMIENTO';
         }
 
         // Actualizar elementos en la tabla
@@ -8765,6 +8619,7 @@
           }
         }
       }
+      
 
       console.log('✅ Controles recién nacido procesados correctamente');
 
@@ -8785,6 +8640,21 @@
       }
 
       // 3. Procesar controles CRED mensual
+      // Rangos para CRED mensual
+      const rangosCredMensual = {
+        1: { min: 29, max: 59 },
+        2: { min: 60, max: 89 },
+        3: { min: 90, max: 119 },
+        4: { min: 120, max: 149 },
+        5: { min: 150, max: 179 },
+        6: { min: 180, max: 209 },
+        7: { min: 210, max: 239 },
+        8: { min: 240, max: 269 },
+        9: { min: 270, max: 299 },
+        10: { min: 300, max: 329 },
+        11: { min: 330, max: 359 }
+      };
+      
       if (datos.controles_cred_mensual && datos.controles_cred_mensual.controles) {
         console.log('🔄 Procesando controles CRED mensual:', datos.controles_cred_mensual.controles);
         
@@ -8843,11 +8713,20 @@
           }
           
           if (estadoEl) {
-            const estado = control.estado || 'SEGUIMIENTO';
-            if (estado === 'CUMPLE' || estado === 'cumple') {
+            const rango = rangosCredMensual[mes];
+            let estadoFinal = control.estado || 'SEGUIMIENTO';
+            
+            // Si no hay fecha registrada, siempre mostrar SEGUIMIENTO
+            // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
+            if (!fechaControl) {
+              estadoFinal = 'SEGUIMIENTO';
+            }
+            
+            // Aplicar el estado final
+            if (estadoFinal === 'CUMPLE' || estadoFinal === 'cumple') {
               estadoEl.className = 'estado-badge cumple';
               estadoEl.textContent = 'CUMPLE';
-            } else if (estado === 'NO CUMPLE' || estado === 'no_cumple' || estado === 'no cumple') {
+            } else if (estadoFinal === 'NO CUMPLE' || estadoFinal === 'no_cumple' || estadoFinal === 'no cumple') {
               estadoEl.className = 'estado-badge no-cumple';
               estadoEl.textContent = 'NO CUMPLE';
             } else {
@@ -8859,6 +8738,7 @@
           console.log(`✅ Control CRED ${mes} procesado: fecha=${fechaControl}, edad=${edadDias}, estado=${control.estado}`);
         });
       }
+      
 
       // 4. Procesar tamizaje
       const rangoTamizajeMin = 1;
@@ -8977,21 +8857,22 @@
         }
       }
       
+      // Validar tamizaje Neonatal sin fecha registrada
       if (!fechaTamizajeNeo) {
-        // Si NO hay tamizaje registrado, evaluar según edad actual
+        // Si NO hay tamizaje registrado, siempre mostrar SEGUIMIENTO
+        // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
         if (cumpleTamizajeEl) {
-          if (edadActualDiasTamizaje > rangoTamizajeMax) {
-            // Ya pasó el límite (más de 29 días) y no está registrado → NO CUMPLE
-            cumpleTamizajeEl.className = 'estado-badge no-cumple';
-            cumpleTamizajeEl.textContent = 'NO CUMPLE';
-            console.log(`⚠️ Tamizaje Neonatal: No registrado y ya pasó el límite (${edadActualDiasTamizaje} días > ${rangoTamizajeMax} días) → NO CUMPLE`);
-          } else {
-            // Aún está dentro del rango o no ha llegado → SEGUIMIENTO
-            cumpleTamizajeEl.className = 'estado-badge estado-seguimiento';
-            cumpleTamizajeEl.textContent = 'SEGUIMIENTO';
-            console.log(`ℹ️ Tamizaje Neonatal: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
-          }
+          cumpleTamizajeEl.className = 'estado-badge estado-seguimiento';
+          cumpleTamizajeEl.textContent = 'SEGUIMIENTO';
+          console.log(`ℹ️ Tamizaje Neonatal: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
         }
+      }
+      
+      // Validar tamizaje Galen sin fecha registrada - siempre mostrar SEGUIMIENTO
+      if (!fechaTamizajeGalen && cumpleTamizajeGalenEl) {
+        cumpleTamizajeGalenEl.className = 'estado-badge estado-seguimiento';
+        cumpleTamizajeGalenEl.textContent = 'SEGUIMIENTO';
+        console.log(`ℹ️ Tamizaje Galen: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
       }
 
       // Procesar Tamizaje Galen (si existe)
@@ -9173,34 +9054,20 @@
         const estadoBcg = document.getElementById('estado-bcg');
         const estadoHvb = document.getElementById('estado-hvb');
 
-        // Evaluar BCG
+        // Evaluar BCG - si no está registrada, siempre mostrar PENDIENTE
+        // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
         if (!tieneBcg && estadoBcg) {
-          if (edadActualDias > rangoMax) {
-            // Ya pasó el límite (más de 2 días) y no está aplicada → NO CUMPLE
-            estadoBcg.className = 'estado-badge no-cumple';
-            estadoBcg.textContent = 'NO CUMPLE';
-            console.log(`⚠️ Vacuna BCG: No registrada y ya pasó el límite (${edadActualDias} días > ${rangoMax} días) → NO CUMPLE`);
-          } else {
-            // Aún está dentro del rango o no ha llegado → PENDIENTE
-            estadoBcg.className = 'estado-badge estado-seguimiento';
-            estadoBcg.textContent = 'PENDIENTE';
-            console.log(`ℹ️ Vacuna BCG: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
-          }
+          estadoBcg.className = 'estado-badge estado-seguimiento';
+          estadoBcg.textContent = 'PENDIENTE';
+          console.log(`ℹ️ Vacuna BCG: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
         }
 
-        // Evaluar HVB
+        // Evaluar HVB - si no está registrada, siempre mostrar PENDIENTE
+        // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
         if (!tieneHvb && estadoHvb) {
-          if (edadActualDias > rangoMax) {
-            // Ya pasó el límite (más de 2 días) y no está aplicada → NO CUMPLE
-            estadoHvb.className = 'estado-badge no-cumple';
-            estadoHvb.textContent = 'NO CUMPLE';
-            console.log(`⚠️ Vacuna HVB: No registrada y ya pasó el límite (${edadActualDias} días > ${rangoMax} días) → NO CUMPLE`);
-          } else {
-            // Aún está dentro del rango o no ha llegado → PENDIENTE
-            estadoHvb.className = 'estado-badge estado-seguimiento';
-            estadoHvb.textContent = 'PENDIENTE';
-            console.log(`ℹ️ Vacuna HVB: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
-          }
+          estadoHvb.className = 'estado-badge estado-seguimiento';
+          estadoHvb.textContent = 'PENDIENTE';
+          console.log(`ℹ️ Vacuna HVB: No registrada, edad actual: ${edadActualDias} días → PENDIENTE`);
         }
       }
 
@@ -9265,25 +9132,53 @@
       }
 
       // 7. Procesar visitas
+      // Rangos para visitas domiciliarias
+      const rangosVisitas = {
+        1: { min: 0, max: 28 },
+        2: { min: 60, max: 150 },
+        3: { min: 180, max: 240 },
+        4: { min: 270, max: 330 }
+      };
+      
+      // Calcular edad actual del niño para visitas
+      let edadDiasActualVisitas = 0;
+      if (datos.nino && datos.nino.fecha_nacimiento) {
+        try {
+          const fechaNacVisitas = crearFechaLocal(datos.nino.fecha_nacimiento);
+          const hoyVisitas = new Date();
+          edadDiasActualVisitas = Math.floor((hoyVisitas - fechaNacVisitas) / (1000 * 60 * 60 * 24));
+        } catch (e) {
+          console.error('❌ Error al calcular edad actual para visitas:', e);
+        }
+      }
+      
+      // Mapear números de control (1-4) a IDs de elementos (orden: fecha, edad, estado)
+      const controlMap = {
+        1: { fecha: 'visita-fecha-1', edad: 'visita-edad-1', estado: 'visita-estado-1' },
+        2: { fecha: 'visita-fecha-2', edad: 'visita-edad-2', estado: 'visita-estado-2' },
+        3: { fecha: 'visita-fecha-3', edad: 'visita-edad-3', estado: 'visita-estado-3' },
+        4: { fecha: 'visita-fecha-4', edad: 'visita-edad-4', estado: 'visita-estado-4' }
+      };
+      
       if (datos.visitas && datos.visitas.length > 0 && datos.nino && datos.nino.fecha_nacimiento) {
         const fechaNacimientoStr = datos.nino.fecha_nacimiento;
         const fechaNacimiento = crearFechaLocal(fechaNacimientoStr);
 
         datos.visitas.forEach(visita => {
           const fechaVisitaISO = visita.fecha_visita || '';
-          const grupoVisita = visita.grupo_visita || ''; // A, B, C, D
-          
-          // Mapear grupos de visita a IDs de elementos
-          const grupoMap = {
-            'A': { fecha: 'visita-fecha-28d', edad: 'visita-edad-28d', estado: 'visita-estado-28d' },
-            'B': { fecha: 'visita-fecha-2-5m', edad: 'visita-edad-2-5m', estado: 'visita-estado-2-5m' },
-            'C': { fecha: 'visita-fecha-6-8m', edad: 'visita-edad-6-8m', estado: 'visita-estado-6-8m' },
-            'D': { fecha: 'visita-fecha-9-11m', edad: 'visita-edad-9-11m', estado: 'visita-estado-9-11m' }
-          };
+          // Usar control_de_visita o numero_control (1-4) en lugar de grupo_visita
+          const numeroControl = visita.control_de_visita || visita.numero_control || visita.numero_visitas || null;
 
-          const mapItem = grupoMap[grupoVisita];
+          // Si viene grupo_visita (A, B, C, D), mapearlo a número de control
+          let controlNumero = numeroControl;
+          if (!controlNumero && visita.grupo_visita) {
+            const grupoToNumero = { 'A': 1, 'B': 2, 'C': 3, 'D': 4 };
+            controlNumero = grupoToNumero[visita.grupo_visita];
+          }
+
+          const mapItem = controlMap[controlNumero];
           
-          if (mapItem && fechaVisitaISO) {
+          if (mapItem && fechaVisitaISO && controlNumero) {
             try {
               const fechaVisita = crearFechaLocal(fechaVisitaISO);
               const fechaVisitaFormateada = fechaVisita.toLocaleDateString('es-PE', {
@@ -9313,16 +9208,36 @@
               }
 
               if (estadoEl) {
-                estadoEl.className = 'estado-badge cumple';
-                estadoEl.textContent = 'CUMPLE';
+                const rango = rangosVisitas[controlNumero];
+                if (rango && edadDias >= rango.min && edadDias <= rango.max) {
+                  estadoEl.className = 'estado-badge cumple';
+                  estadoEl.textContent = 'CUMPLE';
+                } else {
+                  estadoEl.className = 'estado-badge no-cumple';
+                  estadoEl.textContent = 'NO CUMPLE';
+                }
               }
 
-              console.log(`✅ Visita ${grupoVisita} actualizada: ${fechaVisitaFormateada} (${edadDias} días)`);
+              console.log(`✅ Visita Control ${controlNumero} actualizada: ${fechaVisitaFormateada} (${edadDias} días)`);
             } catch (e) {
-              console.error(`❌ Error al procesar visita ${grupoVisita}:`, e);
+              console.error(`❌ Error al procesar visita Control ${controlNumero}:`, e);
             }
           }
         });
+      }
+      
+      // Validar visitas sin fecha registrada - siempre mostrar SEGUIMIENTO
+      // NO CUMPLE solo se muestra cuando hay una fecha registrada que está fuera del rango
+      for (let numControl = 1; numControl <= 4; numControl++) {
+        const mapItem = controlMap[numControl];
+        const fechaEl = document.getElementById(mapItem.fecha);
+        const estadoEl = document.getElementById(mapItem.estado);
+        
+        // Si no tiene fecha registrada, mantener SEGUIMIENTO
+        if (fechaEl && estadoEl && fechaEl.textContent === '-') {
+          estadoEl.className = 'estado-badge estado-seguimiento';
+          estadoEl.textContent = 'SEGUIMIENTO';
+        }
       }
 
       // Actualizar fecha de nacimiento en todas las tabs

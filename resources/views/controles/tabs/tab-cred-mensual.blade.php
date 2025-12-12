@@ -53,7 +53,6 @@
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -64,7 +63,6 @@
             <td style="padding: 12px; color: #64748b;" id="fo_cred_1">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad_cred_1">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado_cred_1">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="btn-cred-1"></td>
           </tr>
           <!-- Mes 2 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">

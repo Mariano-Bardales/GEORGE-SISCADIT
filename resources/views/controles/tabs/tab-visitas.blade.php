@@ -34,11 +34,10 @@
           </svg>
         </div>
         <div style="flex: 1;">
-          <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">¿Cómo saber si una visita cumple?</div>
           <div style="font-size: 12px; color: #1e293b; line-height: 1.6;">
-            <strong>CUMPLE:</strong> Si la visita se realizó dentro del rango de edad establecido (ver columna "Rango Estimado")<br>
-            <strong>NO CUMPLE:</strong> Si la visita se realizó fuera del rango establecido<br>
-            <strong>SEGUIMIENTO:</strong> Si la visita aún no ha sido registrada
+            <strong>CUMPLE:</strong> Control registrado dentro del rango permitido<br>
+            <strong>NO CUMPLE:</strong> Control fuera del rango o control faltante que ya venció<br>
+            <strong>SEGUIMIENTO:</strong> Control no registrado pero aún dentro del plazo
           </div>
         </div>
       </div>
@@ -47,50 +46,50 @@
     <!-- Tabla de Visitas Domiciliarias -->
     <div style="margin-top: 24px; overflow-x: auto;">
       <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <thead>
-            <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Período</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango Estimado</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha de Visita</th>
-              <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Visita 28 días -->
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b; font-weight: 600;">28 días</td>
-              <td style="padding: 12px; color: #64748b;">28 días</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-edad-28d">-</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-fecha-28d">-</td>
-              <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-28d">SEGUIMIENTO</span></td>
-            </tr>
-            <!-- Visita 2-5 meses -->
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b; font-weight: 600;">2-5 meses</td>
-              <td style="padding: 12px; color: #64748b;">60 a 150 días</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-edad-2-5m">-</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-fecha-2-5m">-</td>
-              <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-2-5m">SEGUIMIENTO</span></td>
-            </tr>
-            <!-- Visita 6-8 meses -->
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b; font-weight: 600;">6-8 meses</td>
-              <td style="padding: 12px; color: #64748b;">180 a 240 días</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-edad-6-8m">-</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-fecha-6-8m">-</td>
-              <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-6-8m">SEGUIMIENTO</span></td>
-            </tr>
-            <!-- Visita 9-11 meses -->
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-              <td style="padding: 12px; color: #1e293b; font-weight: 600;">9-11 meses</td>
-              <td style="padding: 12px; color: #64748b;">270 a 330 días</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-edad-9-11m">-</td>
-              <td style="padding: 12px; color: #64748b;" id="visita-fecha-9-11m">-</td>
-              <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-9-11m">SEGUIMIENTO</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <thead>
+          <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Control Estimado</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango Estimado</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Control de Visita 1 -->
+          <tr class="visita-item" style="border-bottom: 1px solid #e5e7eb;" data-control-visita="1">
+            <td style="padding: 12px; color: #1e293b;">Control 1</td>
+            <td style="padding: 12px; color: #64748b;">28 días</td>
+            <td id="visita-fecha-1" style="padding: 12px; color: #64748b;">-</td>
+            <td id="visita-edad-1" style="padding: 12px; color: #64748b;">-</td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-1">SEGUIMIENTO</span></td>
+          </tr>
+          <!-- Control de Visita 2 -->
+          <tr class="visita-item" style="border-bottom: 1px solid #e5e7eb;" data-control-visita="2">
+            <td style="padding: 12px; color: #1e293b;">Control 2</td>
+            <td style="padding: 12px; color: #64748b;">60 a 150 días</td>
+            <td id="visita-fecha-2" style="padding: 12px; color: #64748b;">-</td>
+            <td id="visita-edad-2" style="padding: 12px; color: #64748b;">-</td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-2">SEGUIMIENTO</span></td>
+          </tr>
+          <!-- Control de Visita 3 -->
+          <tr class="visita-item" style="border-bottom: 1px solid #e5e7eb;" data-control-visita="3">
+            <td style="padding: 12px; color: #1e293b;">Control 3</td>
+            <td style="padding: 12px; color: #64748b;">180 a 240 días</td>
+            <td id="visita-fecha-3" style="padding: 12px; color: #64748b;">-</td>
+            <td id="visita-edad-3" style="padding: 12px; color: #64748b;">-</td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-3">SEGUIMIENTO</span></td>
+          </tr>
+          <!-- Control de Visita 4 -->
+          <tr class="visita-item" style="border-bottom: 1px solid #e5e7eb;" data-control-visita="4">
+            <td style="padding: 12px; color: #1e293b;">Control 4</td>
+            <td style="padding: 12px; color: #64748b;">270 a 330 días</td>
+            <td id="visita-fecha-4" style="padding: 12px; color: #64748b;">-</td>
+            <td id="visita-edad-4" style="padding: 12px; color: #64748b;">-</td>
+            <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-4">SEGUIMIENTO</span></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

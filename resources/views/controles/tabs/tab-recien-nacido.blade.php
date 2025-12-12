@@ -34,11 +34,10 @@
           </svg>
         </div>
         <div style="flex: 1;">
-          <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">¿Cómo saber si un control cumple?</div>
           <div style="font-size: 12px; color: #1e293b; line-height: 1.6;">
-            <strong>CUMPLE:</strong> Si la edad en días está dentro del rango establecido (ej: Control 1 entre 2-6 días)<br>
-            <strong>NO CUMPLE:</strong> Si la edad en días está fuera del rango establecido<br>
-            <strong>SEGUIMIENTO:</strong> Si el control aún no ha sido registrado
+            <strong>CUMPLE:</strong> Control registrado dentro del rango permitido<br>
+            <strong>NO CUMPLE:</strong> Control fuera del rango o control faltante que ya venció<br>
+            <strong>SEGUIMIENTO:</strong> Control no registrado pero aún dentro del plazo
           </div>
         </div>
       </div>
@@ -49,12 +48,11 @@
       <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <thead>
           <tr style="background: linear-gradient(to right, #3b82f6, #2563eb); color: white;">
-            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Control</th>
-            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango de Días</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Control Estimado</th>
+            <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Rango Estimado</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Fecha del Control</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Edad en Días</th>
             <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase;">Estado</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 13px; text-transform: uppercase;">Acción</th>
           </tr>
         </thead>
         <tbody>
@@ -65,7 +63,6 @@
             <td style="padding: 12px; color: #64748b;" id="control-1-fecha">-</td>
             <td style="padding: 12px; color: #64748b;" id="control-1-edad">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="control-1-estado">SEGUIMIENTO</span></td>
-            <td style="padding: 12px; text-align: center;" id="control-1-accion"></td>
           </tr>
           <!-- Control 2 -->
           <tr style="border-bottom: 1px solid #e5e7eb;">

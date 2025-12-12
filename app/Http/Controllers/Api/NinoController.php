@@ -67,8 +67,8 @@ class NinoController extends Controller
                 });
             }
             
-            // Ordenar por id_niño (más recientes primero)
-            $query->orderBy('id_niño', 'desc');
+            // Ordenar por id (más recientes primero)
+            $query->orderBy('id', 'desc');
             
             // Paginación
             $perPage = $request->get('per_page', 25);
