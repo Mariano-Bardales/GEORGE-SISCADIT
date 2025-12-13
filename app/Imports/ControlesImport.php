@@ -492,12 +492,12 @@ class ControlesImport
         
         // Descripción del período para mensajes
         $periodoDesc = [
-            1 => '28 días',
+            1 => '28 a 30 días',
             2 => '2-5 meses',
             3 => '6-8 meses',
             4 => '9-11 meses',
         ];
-        $periodoFinal = $periodoDesc[$controlDeVisita] ?? '28 días';
+        $periodoFinal = $periodoDesc[$controlDeVisita] ?? '28 a 30 días';
 
         // Verificar si ya existe una visita para este control
         $existe = VisitaDomiciliaria::where('id_niño', $ninoId)
@@ -634,12 +634,16 @@ class ControlesImport
             return null;
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->first();
+        // $ninoId es el ID de la tabla ninos (campo 'id'), no 'id_niño'
+        $nino = Nino::find($ninoId);
         if (!$nino || !$nino->fecha_nacimiento) {
             return null;
         }
 
         $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+        // Usar startOfDay para evitar problemas con horas y asegurar cálculo correcto de días
+        $fechaNacimiento->startOfDay();
+        $fechaControl->startOfDay();
         return $fechaNacimiento->diffInDays($fechaControl);
     }
 

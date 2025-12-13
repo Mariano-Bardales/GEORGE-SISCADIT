@@ -54,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/controles-cred/visitas/registrar', [ControlCredController::class, 'formVisita'])->name('controles-cred.visitas.form');
     Route::get('/controles-cred/vacunas/registrar', [ControlCredController::class, 'formVacuna'])->name('controles-cred.vacunas.form');
     Route::get('/alertas-cred', function () { return view('dashboard.alertas-cred'); })->name('alertas-cred');
+    Route::get('/alertas-cred/explicacion-pdf', [ApiController::class, 'generarPdfExplicacionAlertas'])->name('alertas-cred.explicacion-pdf');
     
     // Importar controles desde Excel (solo admin)
     Route::middleware(['auth', 'role:admin'])->group(function () {

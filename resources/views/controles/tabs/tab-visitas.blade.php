@@ -59,7 +59,7 @@
           <!-- Control de Visita 1 -->
           <tr class="visita-item" style="border-bottom: 1px solid #e5e7eb;" data-control-visita="1">
             <td style="padding: 12px; color: #1e293b;">Control 1</td>
-            <td style="padding: 12px; color: #64748b;">28 días</td>
+            <td style="padding: 12px; color: #64748b;">28 a 30 días</td>
             <td id="visita-fecha-1" style="padding: 12px; color: #64748b;">-</td>
             <td id="visita-edad-1" style="padding: 12px; color: #64748b;">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="visita-estado-1">SEGUIMIENTO</span></td>

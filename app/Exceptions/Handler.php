@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Illuminate\Session\TokenMismatchException;
 use Throwable;
 use Illuminate\Support\Facades\Log;
 
@@ -78,8 +79,13 @@ class Handler extends ExceptionHandler
         }
 
         // Manejar excepciones 403
-        if ($e instanceof AccessDeniedHttpException || $e->getStatusCode() === 403) {
+        if ($e instanceof AccessDeniedHttpException || (method_exists($e, 'getStatusCode') && $e->getStatusCode() === 403)) {
             return $this->handleAccessDeniedException($request, $e);
+        }
+
+        // Manejar excepciones de token CSRF expirado (419)
+        if ($e instanceof TokenMismatchException) {
+            return $this->handleTokenMismatchException($request, $e);
         }
 
         // Para peticiones AJAX/API, retornar JSON
@@ -164,6 +170,25 @@ class Handler extends ExceptionHandler
         }
 
         return parent::render($request, $e);
+    }
+
+    /**
+     * Manejar excepciones de token CSRF expirado (419)
+     */
+    protected function handleTokenMismatchException($request, TokenMismatchException $e)
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Su sesión ha expirado. Por favor, recargue la página e intente nuevamente.',
+                'error' => 'token_expired',
+            ], 419);
+        }
+
+        // Redirigir a la página anterior con un mensaje de error
+        return redirect()->back()
+            ->withInput($request->except('password', '_token'))
+            ->withErrors(['csrf' => 'Su sesión ha expirado. Por favor, recargue la página e intente nuevamente.']);
     }
 
     /**

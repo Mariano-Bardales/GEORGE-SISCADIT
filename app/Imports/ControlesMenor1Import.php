@@ -318,12 +318,16 @@ class ControlesMenor1Import
             return null;
         }
 
-        $nino = Nino::where('id_niño', $ninoId)->first();
+        // $ninoId es el ID de la tabla ninos (campo 'id'), no 'id_niño'
+        $nino = Nino::find($ninoId);
         if (!$nino || !$nino->fecha_nacimiento) {
             return null;
         }
 
         $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
+        // Usar startOfDay para evitar problemas con horas y asegurar cálculo correcto de días
+        $fechaNacimiento->startOfDay();
+        $fechaControl->startOfDay();
         return $fechaNacimiento->diffInDays($fechaControl);
     }
 

@@ -190,7 +190,7 @@ class ControlCredController extends Controller
         $nino = Nino::findOrFail($ninoId);
 
         $periodos = [
-            '28d' => ['texto' => '28 días', 'min' => 28, 'max' => 28],
+            '28d' => ['texto' => '28 a 30 días', 'min' => 28, 'max' => 30],
             '2-5m' => ['texto' => '2-5 meses', 'min' => 60, 'max' => 150],
             '6-8m' => ['texto' => '6-8 meses', 'min' => 180, 'max' => 240],
             '9-11m' => ['texto' => '9-11 meses', 'min' => 270, 'max' => 330],

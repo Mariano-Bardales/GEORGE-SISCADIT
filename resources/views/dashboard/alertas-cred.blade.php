@@ -236,9 +236,12 @@
               Alertas CRED
             </h1>
             <p>Niños con controles pendientes o fuera del rango establecido</p>
-            <div style="margin-top: 1rem;">
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
               <button onclick="limpiarCacheYRecargar()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
                 🔄 Limpiar Caché y Recargar
+              </button>
+              <button onclick="window.open('/alertas-cred/explicacion-pdf?print=true', '_blank')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 600; transition: all 0.2s;">
+                📄 Ver Guía de Alertas (PDF)
               </button>
             </div>
           </div>
@@ -265,6 +268,9 @@
                 </label>
                 <select id="filtroTipo" class="filtro-select" onchange="filtrarAlertas()">
                   <option value="">Todos los tipos</option>
+                  <option value="datos_faltantes_nino">Datos Faltantes del Niño</option>
+                  <option value="datos_faltantes_madre">Datos Faltantes de la Madre</option>
+                  <option value="datos_faltantes_extras">Datos Faltantes Extras</option>
                   <option value="control_recien_nacido">Control Recién Nacido</option>
                   <option value="control_cred_mensual">CRED Mensual</option>
                   <option value="tamizaje">Tamizaje</option>
@@ -283,17 +289,14 @@
                 <tr>
                   <th>Niño</th>
                   <th>DNI</th>
-                  <th>Tipo de Control</th>
                   <th>Control</th>
-                  <th>Edad Actual</th>
-                  <th>Rango Esperado</th>
                   <th>Problema Detectado</th>
                   <th>Acción</th>
                 </tr>
               </thead>
               <tbody id="tablaAlertas">
                 <tr>
-                  <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+                  <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; display: block; opacity: 0.5;">
                       <circle cx="12" cy="12" r="10"></circle>
                       <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -358,7 +361,7 @@
         } else {
           document.getElementById('tablaAlertas').innerHTML = `
             <tr>
-              <td colspan="8" style="text-align: center; padding: 2rem; color: #64748b;">
+              <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">
                 No se pudieron cargar las alertas
               </td>
             </tr>
@@ -368,7 +371,7 @@
         console.error('Error al cargar alertas:', error);
         document.getElementById('tablaAlertas').innerHTML = `
           <tr>
-            <td colspan="8" style="text-align: center; padding: 2rem; color: rgb(102, 126, 234);">
+            <td colspan="5" style="text-align: center; padding: 2rem; color: rgb(102, 126, 234);">
               Error al cargar las alertas. Por favor, recarga la página.
             </td>
           </tr>
@@ -401,7 +404,7 @@
       if (alertas.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align: center; padding: 2rem; color: #10b981;">
+            <td colspan="5" style="text-align: center; padding: 2rem; color: #10b981;">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem; display: block;">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
@@ -417,35 +420,13 @@
       tbody.innerHTML = alertas.map(alerta => {
         const tipoClass = alerta.tipo.replace(/_/g, '-');
         const prioridadClass = alerta.prioridad;
-        const edadActual = alerta.edad_dias || 0;
-        const rangoMin = alerta.rango_min || 0;
-        const rangoMax = alerta.rango_max || 0;
         const diasFuera = alerta.dias_fuera || 0;
         
         return `
           <tr>
             <td style="font-weight: 600;">${alerta.nino_nombre || '-'}</td>
             <td>${alerta.nino_dni || '-'}</td>
-            <td>
-              <span class="badge-tipo ${tipoClass}">
-                ${alerta.tipo === 'control_recien_nacido' ? 'Control RN' : 
-                  alerta.tipo === 'control_cred_mensual' ? 'CRED Mensual' : 
-                  alerta.tipo === 'tamizaje' ? 'Tamizaje' : 
-                  alerta.tipo === 'cnv' ? 'CNV' :
-                  alerta.tipo === 'visita' ? 'Visitas' : 'Vacuna'}
-              </span>
-            </td>
             <td style="font-weight: 600;">${alerta.control || '-'}</td>
-            <td>
-              <div class="rango-info">
-                <span class="edad-actual">${edadActual} días</span>
-              </div>
-            </td>
-            <td>
-              <div class="rango-info">
-                <span class="rango-esperado">${rangoMin}-${rangoMax} días</span>
-              </div>
-            </td>
             <td style="max-width: 400px;">
               <div class="mensaje-alerta">
                 ${alerta.mensaje || 'Control pendiente de realizar'}

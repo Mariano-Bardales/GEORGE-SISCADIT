@@ -38,8 +38,12 @@ class EdadService
             }
 
             $fechaCtrl = $fechaControl 
-                ? (is_string($fechaControl) ? Carbon::parse($fechaControl) : $fechaControl)
+                ? (is_string($fechaControl) ? Carbon::parse($fechaControl) : $fechaControl->copy())
                 : Carbon::now();
+
+            // Normalizar fechas a inicio del día para evitar problemas con horas
+            $fechaNac->startOfDay();
+            $fechaCtrl->startOfDay();
 
             return $fechaNac->diffInDays($fechaCtrl);
         } catch (\Exception $e) {

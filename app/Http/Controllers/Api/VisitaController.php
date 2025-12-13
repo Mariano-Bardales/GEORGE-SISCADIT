@@ -74,7 +74,7 @@ class VisitaController extends Controller
         
         $visitasEjemplo = collect();
         $periodos = [
-            '28d' => ['dias' => 28, 'descripcion' => 'Visita domiciliaria a los 28 días de vida'],
+            '28d' => ['dias' => 28, 'descripcion' => 'Visita domiciliaria entre 28 a 30 días de vida'],
             '60-150d' => ['dias' => 105, 'descripcion' => 'Visita domiciliaria entre 60 a 150 días'],
             '151-240d' => ['dias' => 195, 'descripcion' => 'Visita domiciliaria entre 151 a 240 días'],
             '241-330d' => ['dias' => 285, 'descripcion' => 'Visita domiciliaria entre 241 a 330 días'],

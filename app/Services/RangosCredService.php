@@ -69,7 +69,7 @@ class RangosCredService
             if (is_string($fechaNacimiento)) {
                 $fechaNac = Carbon::parse($fechaNacimiento);
             } elseif ($fechaNacimiento instanceof Carbon) {
-                $fechaNac = $fechaNacimiento;
+                $fechaNac = $fechaNacimiento->copy();
             } else {
                 return null;
             }
@@ -77,11 +77,15 @@ class RangosCredService
             if (is_string($fechaControl)) {
                 $fechaCtrl = Carbon::parse($fechaControl);
             } elseif ($fechaControl instanceof Carbon) {
-                $fechaCtrl = $fechaControl;
+                $fechaCtrl = $fechaControl->copy();
             } else {
                 return null;
             }
 
+            // Normalizar fechas a inicio del día para evitar problemas con horas
+            $fechaNac->startOfDay();
+            $fechaCtrl->startOfDay();
+            
             return $fechaNac->diffInDays($fechaCtrl);
         } catch (\Exception $e) {
             return null;

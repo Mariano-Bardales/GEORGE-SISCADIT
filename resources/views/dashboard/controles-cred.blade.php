@@ -3357,7 +3357,7 @@
         }
       });
 
-      // ========== RANGO PARA VACUNAS RN (0-30 días) ==========
+      // ========== RANGO PARA VACUNAS RN (0-2 días) ==========
       const botonesVacunaBCG = document.querySelectorAll('button[onclick*="abrirModalVacuna(\'BCG\')"]');
       const botonesVacunaHVB = document.querySelectorAll('button[onclick*="abrirModalVacuna(\'HVB\')"]');
       const estadoBCG = document.getElementById('estado-bcg');
@@ -3376,7 +3376,7 @@
         if (fechaMatch) {
           const fechaBCGISO = `${fechaMatch[3]}-${fechaMatch[2]}-${fechaMatch[1]}`;
           edadDiasBCG = calcularEdadDias(fechaNacimientoISO, fechaBCGISO);
-          cumpleBCG = edadDiasBCG >= 0 && edadDiasBCG <= 30;
+          cumpleBCG = edadDiasBCG >= 0 && edadDiasBCG <= 2;
         }
       }
 
@@ -3389,7 +3389,7 @@
         if (fechaMatch) {
           const fechaHVBISO = `${fechaMatch[3]}-${fechaMatch[2]}-${fechaMatch[1]}`;
           edadDiasHVB = calcularEdadDias(fechaNacimientoISO, fechaHVBISO);
-          cumpleHVB = edadDiasHVB >= 0 && edadDiasHVB <= 30;
+          cumpleHVB = edadDiasHVB >= 0 && edadDiasHVB <= 2;
         }
       }
 
@@ -3410,7 +3410,7 @@
         if (tieneBCG && edadDiasBCG !== null) {
           if (cumpleBCG) {
             // Si cumple y ya pasó el tiempo límite, deshabilitar
-            if (edadDiasActual > 30) {
+            if (edadDiasActual > 2) {
               btn.disabled = false;
               btn.classList.add('btn-registrar-cumple');
               btn.onclick = function(e) {
@@ -3422,9 +3422,9 @@
                     <p><strong>Estado:</strong> <span class="text-green-600 font-semibold">✅ CUMPLE</span></p>
                     <p><strong>Fecha de aplicación:</strong> ${fechaBCGEl ? fechaBCGEl.textContent : '-'}</p>
                     <p><strong>Edad al momento de aplicación:</strong> ${edadDiasBCG} días</p>
-                    <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                    <p><strong>Rango válido:</strong> 0 - 2 días</p>
                     <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200">
-                      <strong>⚠️ Nota:</strong> Esta vacuna ya está registrada y cumple con el rango establecido. El tiempo límite ya pasó (${edadDiasActual} días > 30 días), por lo que no se pueden agregar más datos manualmente.
+                      <strong>⚠️ Nota:</strong> Esta vacuna ya está registrada y cumple con el rango establecido. El tiempo límite ya pasó (${edadDiasActual} días > 2 días), por lo que no se pueden agregar más datos manualmente.
                     </p>
                   </div>`
                 );
@@ -3442,7 +3442,7 @@
                     <p><strong>Estado:</strong> <span class="text-green-600 font-semibold">✅ CUMPLE</span></p>
                     <p><strong>Fecha de aplicación:</strong> ${fechaBCGEl ? fechaBCGEl.textContent : '-'}</p>
                     <p><strong>Edad al momento de aplicación:</strong> ${edadDiasBCG} días</p>
-                    <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                    <p><strong>Rango válido:</strong> 0 - 2 días</p>
                     <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200">
                       Puede editar esta vacuna.
                     </p>
@@ -3453,7 +3453,7 @@
                   ModalManager.registrarTimeout(timeoutId);
                 }
               };
-              btn.title = `✅ Vacuna BCG aplicada y CUMPLE con el rango (0-30 días). Fue aplicada a los ${edadDiasBCG} días.`;
+              btn.title = `✅ Vacuna BCG aplicada y CUMPLE con el rango (0-2 días). Fue aplicada a los ${edadDiasBCG} días.`;
             }
           } else {
             btn.disabled = false;
@@ -3467,7 +3467,7 @@
                   <p><strong>Estado:</strong> <span class="text-red-600 font-semibold">❌ NO CUMPLE</span></p>
                   <p><strong>Fecha de aplicación:</strong> ${fechaBCGEl ? fechaBCGEl.textContent : '-'}</p>
                   <p><strong>Edad al momento de aplicación:</strong> ${edadDiasBCG} días</p>
-                  <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                  <p><strong>Rango válido:</strong> 0 - 2 días</p>
                   <p class="text-xs text-red-600 mt-3 pt-3 border-t border-red-200">
                     Esta vacuna fue aplicada fuera del rango establecido. Puede editar los datos.
                   </p>
@@ -3478,9 +3478,9 @@
                 ModalManager.registrarTimeout(timeoutId);
               }
             };
-            btn.title = `❌ Vacuna BCG aplicada pero NO CUMPLE con el rango (0-30 días). Fue aplicada a los ${edadDiasBCG} días.`;
+            btn.title = `❌ Vacuna BCG aplicada pero NO CUMPLE con el rango (0-2 días). Fue aplicada a los ${edadDiasBCG} días.`;
           }
-        } else if (edadDiasActual <= 30) {
+        } else if (edadDiasActual <= 2) {
           btn.disabled = false;
           btn.classList.add('btn-registrar-pendiente');
           btn.onclick = function(e) {
@@ -3499,7 +3499,7 @@
               mostrarModalInfoVacuna(contenido, 'BCG');
             }
           };
-          btn.title = `✅ Dentro del rango (0-30 días). El niño tiene ${edadDiasActual} días.`;
+          btn.title = `✅ Dentro del rango (0-2 días). El niño tiene ${edadDiasActual} días.`;
         } else if (!tieneBCG) {
           btn.disabled = false;
           btn.classList.add('btn-registrar-rango-pasado');
@@ -3511,7 +3511,7 @@
               `<div class="space-y-2">
                 <p><strong>Estado:</strong> <span class="text-orange-600 font-semibold">⚠️ RANGO PASADO</span></p>
                 <p><strong>Edad actual del niño:</strong> ${edadDiasActual} días</p>
-                <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                <p><strong>Rango válido:</strong> 0 - 2 días</p>
                 <p class="text-xs text-orange-600 mt-3 pt-3 border-t border-orange-200">
                   El rango óptimo para esta vacuna ya pasó. Aún puede registrarla, pero se recomienda hacerlo lo antes posible.
                 </p>
@@ -3522,7 +3522,7 @@
               ModalManager.registrarTimeout(timeoutId);
             }
           };
-          btn.title = `⚠️ Rango pasado (0-30 días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
+          btn.title = `⚠️ Rango pasado (0-2 días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
         }
       });
 
@@ -3543,7 +3543,7 @@
         if (tieneHVB && edadDiasHVB !== null) {
           if (cumpleHVB) {
             // Si cumple y ya pasó el tiempo límite, deshabilitar
-            if (edadDiasActual > 30) {
+            if (edadDiasActual > 2) {
               btn.disabled = false;
               btn.classList.add('btn-registrar-cumple');
               btn.onclick = function(e) {
@@ -3555,9 +3555,9 @@
                     <p><strong>Estado:</strong> <span class="text-green-600 font-semibold">✅ CUMPLE</span></p>
                     <p><strong>Fecha de aplicación:</strong> ${fechaHVBEl ? fechaHVBEl.textContent : '-'}</p>
                     <p><strong>Edad al momento de aplicación:</strong> ${edadDiasHVB} días</p>
-                    <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                    <p><strong>Rango válido:</strong> 0 - 2 días</p>
                     <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200">
-                      <strong>⚠️ Nota:</strong> Esta vacuna ya está registrada y cumple con el rango establecido. El tiempo límite ya pasó (${edadDiasActual} días > 30 días), por lo que no se pueden agregar más datos manualmente.
+                      <strong>⚠️ Nota:</strong> Esta vacuna ya está registrada y cumple con el rango establecido. El tiempo límite ya pasó (${edadDiasActual} días > 2 días), por lo que no se pueden agregar más datos manualmente.
                     </p>
                   </div>`
                 );
@@ -3575,7 +3575,7 @@
                     <p><strong>Estado:</strong> <span class="text-green-600 font-semibold">✅ CUMPLE</span></p>
                     <p><strong>Fecha de aplicación:</strong> ${fechaHVBEl ? fechaHVBEl.textContent : '-'}</p>
                     <p><strong>Edad al momento de aplicación:</strong> ${edadDiasHVB} días</p>
-                    <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                    <p><strong>Rango válido:</strong> 0 - 2 días</p>
                     <p class="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-200">
                       Puede editar esta vacuna.
                     </p>
@@ -3586,7 +3586,7 @@
                   ModalManager.registrarTimeout(timeoutId);
                 }
               };
-              btn.title = `✅ Vacuna HVB aplicada y CUMPLE con el rango (0-30 días). Fue aplicada a los ${edadDiasHVB} días.`;
+              btn.title = `✅ Vacuna HVB aplicada y CUMPLE con el rango (0-2 días). Fue aplicada a los ${edadDiasHVB} días.`;
             }
           } else {
             btn.disabled = false;
@@ -3600,7 +3600,7 @@
                   <p><strong>Estado:</strong> <span class="text-red-600 font-semibold">❌ NO CUMPLE</span></p>
                   <p><strong>Fecha de aplicación:</strong> ${fechaHVBEl ? fechaHVBEl.textContent : '-'}</p>
                   <p><strong>Edad al momento de aplicación:</strong> ${edadDiasHVB} días</p>
-                  <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                  <p><strong>Rango válido:</strong> 0 - 2 días</p>
                   <p class="text-xs text-red-600 mt-3 pt-3 border-t border-red-200">
                     Esta vacuna fue aplicada fuera del rango establecido. Puede editar los datos.
                   </p>
@@ -3611,9 +3611,9 @@
                 ModalManager.registrarTimeout(timeoutId);
               }
             };
-            btn.title = `❌ Vacuna HVB aplicada pero NO CUMPLE con el rango (0-30 días). Fue aplicada a los ${edadDiasHVB} días.`;
+            btn.title = `❌ Vacuna HVB aplicada pero NO CUMPLE con el rango (0-2 días). Fue aplicada a los ${edadDiasHVB} días.`;
           }
-        } else if (edadDiasActual <= 30) {
+        } else if (edadDiasActual <= 2) {
           btn.disabled = false;
           btn.classList.add('btn-registrar-pendiente');
           btn.onclick = function(e) {
@@ -3632,7 +3632,7 @@
               mostrarModalInfoVacuna(contenido, 'HVB');
             }
           };
-          btn.title = `✅ Dentro del rango (0-30 días). El niño tiene ${edadDiasActual} días.`;
+          btn.title = `✅ Dentro del rango (0-2 días). El niño tiene ${edadDiasActual} días.`;
         } else if (!tieneHVB) {
           btn.disabled = false;
           btn.classList.add('btn-registrar-rango-pasado');
@@ -3644,7 +3644,7 @@
               `<div class="space-y-2">
                 <p><strong>Estado:</strong> <span class="text-orange-600 font-semibold">⚠️ RANGO PASADO</span></p>
                 <p><strong>Edad actual del niño:</strong> ${edadDiasActual} días</p>
-                <p><strong>Rango válido:</strong> 0 - 30 días</p>
+                <p><strong>Rango válido:</strong> 0 - 2 días</p>
                 <p class="text-xs text-orange-600 mt-3 pt-3 border-t border-orange-200">
                   El rango óptimo para esta vacuna ya pasó. Aún puede registrarla, pero se recomienda hacerlo lo antes posible.
                 </p>
@@ -3655,7 +3655,7 @@
               ModalManager.registrarTimeout(timeoutId);
             }
           };
-          btn.title = `⚠️ Rango pasado (0-30 días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
+          btn.title = `⚠️ Rango pasado (0-2 días). El niño tiene ${edadDiasActual} días. Se puede registrar con advertencia.`;
         }
       });
 
@@ -3775,7 +3775,7 @@
 
       // ========== VISITAS DOMICILIARIAS (con validación de rango) ==========
       const rangosVisitas = {
-        1: { min: 28, max: 28 },
+        1: { min: 28, max: 30 },
         2: { min: 60, max: 150 },
         3: { min: 180, max: 240 },
         4: { min: 270, max: 330 }
@@ -3820,11 +3820,14 @@
         const textoBadgeUpper = textoBadge.toUpperCase();
         const tieneFecha = /^\d{2}\/\d{2}\/\d{4}$/.test(textoBadge);
         const esNoCumple = textoBadgeUpper.includes('NO CUMPLE');
+        const esCumple = textoBadgeUpper.includes('CUMPLE');
         const esSeguimiento = textoBadgeUpper.includes('SEGUIMIENTO') || textoBadgeUpper.includes('PENDIENTE') || textoBadge === '-' || textoBadge === '';
         
-        // Tiene visita SOLO si tiene fecha válida (NO si dice NO CUMPLE sin fecha)
-        // Si dice NO CUMPLE pero tiene data-fecha, significa que hay visita pero fuera de rango
-        const tieneVisitaRegistrada = tieneFecha || (esNoCumple && estadoBadge.getAttribute('data-fecha'));
+        // Tiene visita si:
+        // 1. Tiene fecha válida en formato DD/MM/YYYY
+        // 2. Dice CUMPLE y tiene data-fecha (visita registrada que cumple)
+        // 3. Dice NO CUMPLE y tiene data-fecha (visita registrada pero fuera de rango)
+        const tieneVisitaRegistrada = tieneFecha || (esCumple && estadoBadge.getAttribute('data-fecha')) || (esNoCumple && estadoBadge.getAttribute('data-fecha'));
         
         console.log(`  - Badge texto: "${textoBadge}"`);
         console.log(`  - Tiene fecha: ${tieneFecha}`);
@@ -3833,9 +3836,14 @@
         console.log(`  - Tiene visita registrada: ${tieneVisitaRegistrada}`);
         console.log(`  - Edad actual: ${edadDiasActual} días, Rango max: ${rangoMax} días`);
         
-        // PRIORIDAD 1: Si NO tiene visita registrada y ya pasó el rango, SIEMPRE actualizar badge a NO CUMPLE
+        // PRIORIDAD 1: Si tiene visita registrada y CUMPLE, mantener el estado CUMPLE
+        if (esCumple && tieneVisitaRegistrada) {
+          // Ya está marcado como CUMPLE y tiene visita registrada - mantenerlo así
+          console.log(`  → Badge ya está marcado como CUMPLE con visita registrada, manteniendo estado`);
+        }
+        // PRIORIDAD 2: Si NO tiene visita registrada y ya pasó el rango, SIEMPRE actualizar badge a NO CUMPLE
         // Esto debe ejecutarse SIEMPRE, incluso si el badge ya dice SEGUIMIENTO o PENDIENTE
-        if (!tieneVisitaRegistrada && edadDiasActual > rangoMax) {
+        else if (!tieneVisitaRegistrada && edadDiasActual > rangoMax) {
           console.log(`  → Actualizando badge a NO CUMPLE (no tiene visita registrada y edad ${edadDiasActual} > ${rangoMax})`);
           estadoBadge.className = 'estado-badge no-cumple';
           estadoBadge.textContent = 'NO CUMPLE';
@@ -7301,7 +7309,7 @@
 
           // Rangos por número de control
           const rangosVisitas = {
-            1: { min: 28, max: 28 },
+            1: { min: 28, max: 30 },
             2: { min: 60, max: 150 },
             3: { min: 180, max: 240 },
             4: { min: 270, max: 330 }
@@ -7342,12 +7350,25 @@
               if (cumpleRango) {
                 estadoBadge.className = 'estado-badge cumple';
                 estadoBadge.textContent = 'CUMPLE';
+                // Guardar la fecha en un atributo data para que validarRangosYHabilitarBotones pueda acceder a ella
+                estadoBadge.setAttribute('data-fecha', fechaVisitaISO);
+                // También actualizar el elemento de fecha y edad
+                const fechaEl = document.getElementById(`visita-fecha-${controlNumero}`);
+                const edadEl = document.getElementById(`visita-edad-${controlNumero}`);
+                if (fechaEl) fechaEl.textContent = fechaVisita;
+                if (edadEl) edadEl.textContent = edadDiasVisita + ' días';
+                console.log(`✅ Visita Control ${controlNumero} CUMPLE: realizada a los ${edadDiasVisita} días (rango: ${rango.min}-${rango.max} días)`);
               } else {
                 // Visita registrada pero NO CUMPLE
                 estadoBadge.className = 'estado-badge no-cumple';
                 estadoBadge.textContent = 'NO CUMPLE';
                 // Guardar la fecha en un atributo data para que validarRangosYHabilitarBotones pueda acceder a ella
                 estadoBadge.setAttribute('data-fecha', fechaVisitaISO);
+                // También actualizar el elemento de fecha y edad
+                const fechaEl = document.getElementById(`visita-fecha-${controlNumero}`);
+                const edadEl = document.getElementById(`visita-edad-${controlNumero}`);
+                if (fechaEl) fechaEl.textContent = fechaVisita;
+                if (edadEl) edadEl.textContent = edadDiasVisita + ' días';
                 console.log(`❌ Visita Control ${controlNumero} NO CUMPLE: realizada a los ${edadDiasVisita} días (rango: ${rango.min}-${rango.max} días)`);
               }
 
@@ -7976,7 +7997,7 @@
           .then(response => response.json())
           .then(data => {
             const rangosVisitas = {
-              1: { min: 28, max: 28 },
+              1: { min: 28, max: 30 },
               2: { min: 60, max: 150 },
               3: { min: 180, max: 240 },
               4: { min: 270, max: 330 }
@@ -8064,7 +8085,7 @@
         const alerta = document.getElementById('alertaVacunas');
         if (!alerta) return;
 
-        if (edadDias <= 30) {
+        if (edadDias <= 2) {
           // TODO: Verificar vacunas registradas
           alerta.style.display = 'block';
           document.getElementById('datosPacienteVacunas').textContent = datosPaciente;
@@ -8842,18 +8863,32 @@
 
           if (cumpleTamizajeGalenEl) {
             // Evaluar si cumple con el rango (1-29 días)
+            // Si tiene datos y está dentro del rango, siempre mostrar CUMPLE
             if (edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax) {
               cumpleTamizajeGalenEl.className = 'estado-badge cumple';
               cumpleTamizajeGalenEl.textContent = 'CUMPLE';
+              console.log(`✅ Tamizaje Galen: ${fechaFormateadaGalen} (${edadDiasGalen} días) - CUMPLE (dentro del rango ${rangoTamizajeMin}-${rangoTamizajeMax} días)`);
             } else {
               cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
               cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
+              console.log(`⚠️ Tamizaje Galen: ${fechaFormateadaGalen} (${edadDiasGalen} días) - NO CUMPLE (fuera del rango ${rangoTamizajeMin}-${rangoTamizajeMax} días)`);
             }
           }
-
-          console.log(`✅ Tamizaje Galen: ${fechaFormateadaGalen} (${edadDiasGalen} días) - ${edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax ? 'CUMPLE' : 'NO CUMPLE'}`);
         } catch (e) {
           console.error('❌ Error al procesar tamizaje Galen:', e);
+        }
+      } else {
+        // Validar tamizaje Galen sin fecha registrada
+        if (cumpleTamizajeGalenEl) {
+          // Solo mostrar NO CUMPLE si ya pasó el rango máximo y no hay fecha registrada
+          if (edadActualDiasTamizaje > rangoTamizajeMax) {
+            cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
+            cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
+          } else {
+            cumpleTamizajeGalenEl.className = 'estado-badge estado-seguimiento';
+            cumpleTamizajeGalenEl.textContent = 'SEGUIMIENTO';
+          }
+          console.log(`ℹ️ Tamizaje Galen: No registrado, edad actual: ${edadActualDiasTamizaje} días → ${edadActualDiasTamizaje > rangoTamizajeMax ? 'NO CUMPLE' : 'SEGUIMIENTO'}`);
         }
       }
       
@@ -8867,75 +8902,12 @@
           console.log(`ℹ️ Tamizaje Neonatal: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
         }
       }
-      
-      // Validar tamizaje Galen sin fecha registrada - siempre mostrar SEGUIMIENTO
-      if (!fechaTamizajeGalen && cumpleTamizajeGalenEl) {
-        cumpleTamizajeGalenEl.className = 'estado-badge estado-seguimiento';
-        cumpleTamizajeGalenEl.textContent = 'SEGUIMIENTO';
-        console.log(`ℹ️ Tamizaje Galen: No registrado, edad actual: ${edadActualDiasTamizaje} días → SEGUIMIENTO`);
-      }
-
-      // Procesar Tamizaje Galen (si existe)
-      if (datos.tamizaje && datos.tamizaje.fecha_tamizaje_galen && datos.nino && datos.nino.fecha_nacimiento) {
-        const fechaTamizajeGalenEl = document.getElementById('fecha-tamizaje-galen');
-        const edadTamizajeGalenEl = document.getElementById('edad-tamizaje-galen');
-        const cumpleTamizajeGalenEl = document.getElementById('cumple-tamizaje-galen');
-
-        try {
-          const fechaTamizajeGalen = crearFechaLocal(datos.tamizaje.fecha_tamizaje_galen);
-          const fechaNacTamizajeGalen = crearFechaLocal(datos.nino.fecha_nacimiento);
-          const fechaFormateadaGalen = fechaTamizajeGalen.toLocaleDateString('es-PE', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-          });
-
-          const diffTimeGalen = fechaTamizajeGalen - fechaNacTamizajeGalen;
-          const edadDiasGalen = Math.floor(diffTimeGalen / (1000 * 60 * 60 * 24));
-
-          if (fechaTamizajeGalenEl) {
-            fechaTamizajeGalenEl.textContent = fechaFormateadaGalen;
-            fechaTamizajeGalenEl.style.color = '#1e293b';
-            fechaTamizajeGalenEl.style.fontWeight = '500';
-          }
-
-          if (edadTamizajeGalenEl) {
-            edadTamizajeGalenEl.textContent = edadDiasGalen + ' días';
-            edadTamizajeGalenEl.style.color = '#1e293b';
-            edadTamizajeGalenEl.style.fontWeight = '500';
-          }
-
-          if (cumpleTamizajeGalenEl) {
-            if (edadDiasGalen >= rangoTamizajeMin && edadDiasGalen <= rangoTamizajeMax) {
-              cumpleTamizajeGalenEl.className = 'estado-badge cumple';
-              cumpleTamizajeGalenEl.textContent = 'CUMPLE';
-            } else {
-              cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
-              cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
-            }
-          }
-        } catch (e) {
-          console.error('❌ Error al procesar tamizaje Galen:', e);
-        }
-      } else {
-        // Si NO hay tamizaje Galen registrado
-        const cumpleTamizajeGalenEl = document.getElementById('cumple-tamizaje-galen');
-        if (cumpleTamizajeGalenEl) {
-          if (edadActualDiasTamizaje > rangoTamizajeMax) {
-            cumpleTamizajeGalenEl.className = 'estado-badge no-cumple';
-            cumpleTamizajeGalenEl.textContent = 'NO CUMPLE';
-          } else {
-            cumpleTamizajeGalenEl.className = 'estado-badge estado-seguimiento';
-            cumpleTamizajeGalenEl.textContent = 'SEGUIMIENTO';
-          }
-        }
-      }
 
       // 5. Procesar vacunas
       if (datos.nino && datos.nino.fecha_nacimiento) {
         const fechaNacimientoStr = datos.nino.fecha_nacimiento;
         const fechaNacimiento = crearFechaLocal(fechaNacimientoStr);
-        const rangoMin = 1; // Mínimo 1 día
+        const rangoMin = 0; // Mínimo 0 días
         const rangoMax = 2; // Máximo 2 días
 
         // Calcular edad actual del niño en días
@@ -8985,7 +8957,7 @@
                 }
 
                 if (estadoBcg) {
-                  // Evaluar si cumple con el rango (1-2 días)
+                  // Evaluar si cumple con el rango (0-2 días)
                   if (edadDias >= rangoMin && edadDias <= rangoMax) {
                     estadoBcg.className = 'estado-badge cumple';
                     estadoBcg.textContent = 'CUMPLE';
@@ -9032,7 +9004,7 @@
                 }
 
                 if (estadoHvb) {
-                  // Evaluar si cumple con el rango (1-2 días)
+                  // Evaluar si cumple con el rango (0-2 días)
                   if (edadDias >= rangoMin && edadDias <= rangoMax) {
                     estadoHvb.className = 'estado-badge cumple';
                     estadoHvb.textContent = 'CUMPLE';
@@ -9134,7 +9106,7 @@
       // 7. Procesar visitas
       // Rangos para visitas domiciliarias
       const rangosVisitas = {
-        1: { min: 0, max: 28 },
+        1: { min: 28, max: 30 },
         2: { min: 60, max: 150 },
         3: { min: 180, max: 240 },
         4: { min: 270, max: 330 }

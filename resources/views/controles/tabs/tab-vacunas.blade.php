@@ -36,7 +36,7 @@
         <div style="flex: 1;">
           <div style="font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 6px;">¿Cómo saber si una vacuna cumple?</div>
           <div style="font-size: 12px; color: #1e293b; line-height: 1.6;">
-            <strong>CUMPLE:</strong> Si la vacuna fue aplicada entre 1 y 2 días de vida<br>
+            <strong>CUMPLE:</strong> Si la vacuna fue aplicada entre 0 y 2 días de vida<br>
             <strong>NO CUMPLE:</strong> Si la vacuna fue aplicada después de los 2 días de vida<br>
             <strong>PENDIENTE:</strong> Si la vacuna aún no ha sido aplicada
           </div>
@@ -60,7 +60,7 @@
           <!-- Vacuna BCG -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
             <td style="padding: 12px; color: #1e293b; font-weight: 600;">BCG</td>
-            <td style="padding: 12px; color: #64748b;">1 a 2 días</td>
+            <td style="padding: 12px; color: #64748b;">0 a 2 días</td>
             <td style="padding: 12px; color: #64748b;" id="fecha-bcg">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad-bcg">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado-bcg">PENDIENTE</span></td>
@@ -68,7 +68,7 @@
           <!-- Vacuna HVB -->
           <tr style="border-bottom: 1px solid #e5e7eb;">
             <td style="padding: 12px; color: #1e293b; font-weight: 600;">HVB (Hepatitis B)</td>
-            <td style="padding: 12px; color: #64748b;">1 a 2 días</td>
+            <td style="padding: 12px; color: #64748b;">0 a 2 días</td>
             <td style="padding: 12px; color: #64748b;" id="fecha-hvb">-</td>
             <td style="padding: 12px; color: #64748b;" id="edad-hvb">-</td>
             <td style="padding: 12px;"><span class="estado-badge estado-seguimiento" id="estado-hvb">PENDIENTE</span></td>
