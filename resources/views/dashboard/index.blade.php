@@ -79,7 +79,7 @@
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-sm text-slate-600 font-medium">Alertas Detectadas</p>
-                    <h3 class="text-4xl font-bold text-slate-800 mt-2">0</h3>
+                    <h3 id="contadorAlertasDashboard" class="text-4xl font-bold text-slate-800 mt-2">0</h3>
                     <p class="text-xs text-slate-500 mt-2">Errores en registros</p>
                   </div>
                   <div class="p-3 bg-amber-50 rounded-lg">
@@ -200,7 +200,52 @@
       controlesCred: '{{ route("api.controles-cred-mensual") }}',
       tamizaje: '{{ route("api.tamizaje") }}',
       vacunas: '{{ route("api.vacunas") }}',
+      alertasTotal: '{{ route("api.alertas.total") }}',
     };
+
+    // Función para cargar el contador de alertas en el dashboard
+    function cargarContadorAlertasDashboard() {
+      const contadorElement = document.getElementById('contadorAlertasDashboard');
+      if (!contadorElement) return;
+      
+      const url = window.dashboardRoutes.alertasTotal;
+      
+      fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success && data.total !== undefined) {
+          const total = data.total;
+          contadorElement.textContent = total;
+        } else {
+          contadorElement.textContent = '0';
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar contador de alertas:', error);
+        contadorElement.textContent = '0';
+      });
+    }
+
+    // Cargar contador de alertas al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarContadorAlertasDashboard();
+      
+      // Actualizar cada 5 minutos
+      setInterval(cargarContadorAlertasDashboard, 300000);
+    });
   </script>
   <script src="{{ asset('JS/dashbord.js') }}"></script>
 </body>
