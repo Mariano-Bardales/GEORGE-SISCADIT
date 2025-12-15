@@ -38,6 +38,27 @@ class UsuarioController extends Controller
         // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)
         $query->orderBy('id', 'desc');
 
+        // Aplicar filtros según el rol del usuario (red/microred)
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $query->whereHas('solicitud', function($q) use ($codigoRed) {
+                        $q->where('codigo_red', $codigoRed);
+                    });
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $query->whereHas('solicitud', function($q) use ($codigoMicrored) {
+                        $q->where('codigo_microred', $codigoMicrored);
+                    });
+                }
+            }
+        }
+        
         // Cargar relación con solicitud
         $query->with('solicitud');
 
@@ -58,6 +79,23 @@ class UsuarioController extends Controller
 
         // Cargar solicitudes para la pestaña
         $querySolicitudes = Solicitud::query();
+        
+        // Aplicar filtros según el rol del usuario (red/microred)
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $querySolicitudes->where('codigo_red', $codigoRed);
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $querySolicitudes->where('codigo_microred', $codigoMicrored);
+                }
+            }
+        }
         
         // Filtro por estado
         if ($request->has('estado') && $request->estado !== '') {
@@ -183,6 +221,27 @@ class UsuarioController extends Controller
                 $q->where('name', 'like', "%{$buscar}%")
                   ->orWhere('email', 'like', "%{$buscar}%");
             });
+        }
+
+        // Aplicar filtros según el rol del usuario (red/microred)
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $query->whereHas('solicitud', function($q) use ($codigoRed) {
+                        $q->where('codigo_red', $codigoRed);
+                    });
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $query->whereHas('solicitud', function($q) use ($codigoMicrored) {
+                        $q->where('codigo_microred', $codigoMicrored);
+                    });
+                }
+            }
         }
 
         // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)

@@ -53,6 +53,9 @@ class NinoController extends Controller
         try {
             $query = Nino::with(['datosExtra', 'madre']);
             
+            // Aplicar filtros según el rol del usuario (red/microred)
+            $query = $this->applyRedMicroredFilter($query, 'datosExtra');
+            
             // Filtro por género
             if ($request->has('genero') && $request->genero !== '') {
                 $query->where('genero', $request->genero);
@@ -142,12 +145,15 @@ class NinoController extends Controller
 
         try {
             // Buscar el niño por número de documento
-            $nino = Nino::where('numero_doc', $documento)->first();
+            // Buscar el niño por número de documento aplicando filtros según el rol
+            $query = Nino::where('numero_doc', $documento);
+            $query = $this->applyRedMicroredFilter($query, 'datosExtra');
+            $nino = $query->first();
             
             if (!$nino) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Niño no encontrado'
+                    'message' => 'Niño no encontrado o no tiene acceso a este registro'
                 ], 404);
             }
 

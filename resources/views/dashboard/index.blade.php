@@ -22,19 +22,42 @@
       <main class="flex-1 overflow-auto">
         <div class="p-8">
           <div class="space-y-8" data-testid="dashboard-page">
+            <div class="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 class="text-4xl font-bold text-slate-800">Dashboard General</h1>
               <p class="text-slate-600 mt-2">Nivel de acceso: <span class="font-semibold">
-                @if(auth()->user()->role === 'admin' || auth()->user()->role === 'ADMIN')
+                  @php
+                    $role = strtolower(auth()->user()->role ?? '');
+                  @endphp
+                  @if($role === 'admin')
                   Administrador DIRESA
-                @elseif(auth()->user()->role === 'jefe_red' || auth()->user()->role === 'JefeDeRed')
+                  @elseif($role === 'jefe_red' || $role === 'jefedered' || $role === 'jefe_microred')
                   Jefe de Red
-                @elseif(auth()->user()->role === 'coordinador_microred' || auth()->user()->role === 'CoordinadorDeMicroRed')
-                  Coordinador de Microred
+                  @elseif($role === 'coordinador_microred' || $role === 'coordinadordemicrored' || $role === 'coordinador_red')
+                    Coordinador de Micro Red
                 @else
                   {{ ucfirst(auth()->user()->role ?? 'Usuario') }}
                 @endif
               </span></p>
+              </div>
+              @php
+                $userRole = strtolower(auth()->user()->role ?? '');
+                $isAdmin = ($userRole === 'admin' || $userRole === 'administrator');
+              @endphp
+              @if($isAdmin)
+              <button onclick="confirmarEliminarTodosDatos(event)" 
+                style="background-color: #dc2626; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; border: none; cursor: pointer; font-size: 16px;"
+                onmouseover="this.style.backgroundColor='#b91c1c'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'"
+                onmouseout="this.style.backgroundColor='#dc2626'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                Eliminar Datos Registrados de los Niños
+              </button>
+              @endif
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div data-testid="stat-card-total-registrados"
@@ -189,6 +212,195 @@
       height: 40px;
       animation: spin 1s linear infinite;
     }
+
+    /* Estilos para modales personalizados */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-header.warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-bottom: 2px solid #f59e0b;
+    }
+
+    .modal-header.success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-bottom: 2px solid #10b981;
+    }
+
+    .modal-header.error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-bottom: 2px solid #ef4444;
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .modal-icon.warning {
+      background: #fbbf24;
+      color: white;
+    }
+
+    .modal-icon.success {
+      background: #10b981;
+      color: white;
+    }
+
+    .modal-icon.error {
+      background: #ef4444;
+      color: white;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-message {
+      color: #4b5563;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .modal-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+
+    .modal-list li {
+      padding: 8px 0;
+      padding-left: 24px;
+      position: relative;
+      color: #374151;
+    }
+
+    .modal-list li:before {
+      content: "•";
+      position: absolute;
+      left: 8px;
+      color: #dc2626;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-top: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .modal-input:focus {
+      outline: none;
+      border-color: #dc2626;
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .modal-button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .modal-button-primary {
+      background: #dc2626;
+      color: white;
+    }
+
+    .modal-button-primary:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-button-secondary {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .modal-button-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .modal-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
   <script>
     // Definir rutas como variables globales
@@ -237,6 +449,290 @@
         console.error('Error al cargar contador de alertas:', error);
         contadorElement.textContent = '0';
       });
+    }
+
+    // Función para crear modal personalizado
+    function crearModal(tipo, titulo, mensaje, opciones = {}) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        
+        const container = document.createElement('div');
+        container.className = 'modal-container';
+        
+        const header = document.createElement('div');
+        header.className = `modal-header ${tipo}`;
+        
+        const icon = document.createElement('div');
+        icon.className = `modal-icon ${tipo}`;
+        if (tipo === 'warning') icon.innerHTML = '⚠️';
+        else if (tipo === 'success') icon.innerHTML = '✅';
+        else if (tipo === 'error') icon.innerHTML = '❌';
+        
+        const title = document.createElement('h3');
+        title.className = 'modal-title';
+        title.textContent = titulo;
+        
+        header.appendChild(icon);
+        header.appendChild(title);
+        
+        const body = document.createElement('div');
+        body.className = 'modal-body';
+        
+        const message = document.createElement('p');
+        message.className = 'modal-message';
+        message.innerHTML = mensaje;
+        body.appendChild(message);
+        
+        // Si hay lista de items
+        if (opciones.items) {
+          const list = document.createElement('ul');
+          list.className = 'modal-list';
+          opciones.items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+          });
+          body.appendChild(list);
+        }
+        
+        // Si necesita input
+        let inputElement = null;
+        if (opciones.necesitaInput) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'modal-input';
+          input.placeholder = opciones.placeholder || '';
+          input.autocomplete = 'off';
+          inputElement = input;
+          body.appendChild(input);
+        }
+        
+        const footer = document.createElement('div');
+        footer.className = 'modal-footer';
+        
+        const btnCancelar = document.createElement('button');
+        btnCancelar.className = 'modal-button modal-button-secondary';
+        btnCancelar.textContent = opciones.textoCancelar || 'Cancelar';
+        btnCancelar.onclick = () => {
+          document.body.removeChild(overlay);
+          resolve(false);
+        };
+        
+        const btnConfirmar = document.createElement('button');
+        btnConfirmar.className = 'modal-button modal-button-primary';
+        btnConfirmar.textContent = opciones.textoConfirmar || 'Confirmar';
+        btnConfirmar.onclick = () => {
+          if (opciones.necesitaInput) {
+            if (inputElement.value.trim() === opciones.textoEsperado) {
+              document.body.removeChild(overlay);
+              resolve(true);
+            } else {
+              inputElement.style.borderColor = '#ef4444';
+              inputElement.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+              // Mostrar mensaje de error temporal
+              const errorMsg = document.createElement('p');
+              errorMsg.style.color = '#ef4444';
+              errorMsg.style.fontSize = '14px';
+              errorMsg.style.marginTop = '8px';
+              errorMsg.style.marginBottom = '0';
+              errorMsg.textContent = '❌ El texto no coincide. Debe escribir exactamente: ' + opciones.textoEsperado;
+              
+              // Remover mensaje anterior si existe
+              const errorAnterior = body.querySelector('.error-message');
+              if (errorAnterior) {
+                body.removeChild(errorAnterior);
+              }
+              
+              errorMsg.className = 'error-message';
+              body.appendChild(errorMsg);
+              
+              inputElement.focus();
+              inputElement.select();
+            }
+          } else {
+            document.body.removeChild(overlay);
+            resolve(true);
+          }
+        };
+        
+        footer.appendChild(btnCancelar);
+        footer.appendChild(btnConfirmar);
+        
+        container.appendChild(header);
+        container.appendChild(body);
+        container.appendChild(footer);
+        overlay.appendChild(container);
+        
+        document.body.appendChild(overlay);
+        
+        // Focus en input si existe
+        if (inputElement) {
+          setTimeout(() => inputElement.focus(), 100);
+        }
+        
+        // Cerrar con ESC
+        const handleEsc = (e) => {
+          if (e.key === 'Escape') {
+            document.body.removeChild(overlay);
+            document.removeEventListener('keydown', handleEsc);
+            resolve(false);
+          }
+        };
+        document.addEventListener('keydown', handleEsc);
+      });
+    }
+
+    // Función para confirmar y eliminar todos los datos
+    async function confirmarEliminarTodosDatos(event) {
+      if (event) {
+        event.preventDefault();
+      }
+
+      // Primera confirmación
+      const primeraConfirmacion = await crearModal(
+        'warning',
+        '⚠️ ADVERTENCIA CRÍTICA',
+        'Está a punto de eliminar <strong>TODOS</strong> los datos registrados de los niños. Esta acción <strong>NO SE PUEDE DESHACER</strong>.',
+        {
+          items: [
+            'Todos los niños registrados',
+            'Todos los controles (RN y CRED)',
+            'Todas las madres',
+            'Todos los datos extras',
+            'Todos los tamizajes',
+            'Todas las vacunas',
+            'Todas las visitas domiciliarias',
+            'Todos los CNV'
+          ],
+          textoCancelar: 'Cancelar',
+          textoConfirmar: 'Continuar'
+        }
+      );
+
+      if (!primeraConfirmacion) {
+        return;
+      }
+
+      // Segunda confirmación con texto que debe escribir
+      const segundaConfirmacion = await crearModal(
+        'warning',
+        '🔒 Confirmación Requerida',
+        'Para confirmar esta acción destructiva, escriba exactamente el siguiente texto:<br><br><strong style="color: #dc2626; font-size: 18px; letter-spacing: 1px;">ELIMINAR TODO</strong>',
+        {
+          necesitaInput: true,
+          placeholder: 'Escriba: ELIMINAR TODO',
+          textoEsperado: 'ELIMINAR TODO',
+          textoCancelar: 'Cancelar',
+          textoConfirmar: 'Verificar'
+        }
+      );
+
+      if (!segundaConfirmacion) {
+        return;
+      }
+
+      // Tercera confirmación final
+      const confirmacionFinal = await crearModal(
+        'error',
+        '🚨 ÚLTIMA CONFIRMACIÓN',
+        'Está a punto de eliminar <strong>PERMANENTEMENTE</strong> todos los datos registrados de los niños.<br><br>Esta acción es <strong>IRREVERSIBLE</strong> y no se puede deshacer.',
+        {
+          textoCancelar: 'Cancelar',
+          textoConfirmar: 'SÍ, ELIMINAR TODO'
+        }
+      );
+
+      if (!confirmacionFinal) {
+        return;
+      }
+
+      // Mostrar loading
+      const boton = event.target.closest('button');
+      const textoOriginal = boton.innerHTML;
+      boton.disabled = true;
+      boton.innerHTML = '<svg class="animate-spin" style="width: 20px; height: 20px; display: inline-block; margin-right: 8px;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Eliminando...';
+
+      // Realizar la petición
+      try {
+        const response = await fetch('{{ route("admin.eliminar-todos-datos") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Mostrar mensaje de éxito
+          const overlay = document.createElement('div');
+          overlay.className = 'modal-overlay';
+          
+          const container = document.createElement('div');
+          container.className = 'modal-container';
+          
+          const header = document.createElement('div');
+          header.className = 'modal-header success';
+          
+          const icon = document.createElement('div');
+          icon.className = 'modal-icon success';
+          icon.innerHTML = '✅';
+          
+          const title = document.createElement('h3');
+          title.className = 'modal-title';
+          title.textContent = '✅ Eliminación Exitosa';
+          
+          header.appendChild(icon);
+          header.appendChild(title);
+          
+          const body = document.createElement('div');
+          body.className = 'modal-body';
+          
+          const message = document.createElement('p');
+          message.className = 'modal-message';
+          message.innerHTML = 'Todos los datos registrados de los niños han sido eliminados exitosamente.<br><br><strong>La página se recargará automáticamente...</strong>';
+          body.appendChild(message);
+          
+          container.appendChild(header);
+          container.appendChild(body);
+          overlay.appendChild(container);
+          
+          document.body.appendChild(overlay);
+          
+          // Recargar la página después de 2 segundos
+          setTimeout(() => {
+            window.location.href = window.location.href;
+          }, 2000);
+        } else {
+          await crearModal(
+            'error',
+            '❌ Error al Eliminar',
+            'Ocurrió un error al intentar eliminar los datos:<br><br><strong>' + (data.message || 'Error desconocido') + '</strong>',
+            {
+              textoCancelar: '',
+              textoConfirmar: 'Cerrar'
+            }
+          );
+          boton.disabled = false;
+          boton.innerHTML = textoOriginal;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        await crearModal(
+          'error',
+          '❌ Error de Conexión',
+          'No se pudo conectar con el servidor. Por favor, verifique su conexión e intente nuevamente.',
+          {
+            textoCancelar: '',
+            textoConfirmar: 'Cerrar'
+          }
+        );
+        boton.disabled = false;
+        boton.innerHTML = textoOriginal;
+      }
     }
 
     // Cargar contador de alertas al cargar la página

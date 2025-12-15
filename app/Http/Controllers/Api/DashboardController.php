@@ -30,15 +30,44 @@ class DashboardController extends Controller
      */
     public function stats()
     {
-        $totalNinos = Nino::count();
-        $totalControles = ControlRn::count() + ControlMenor1::count();
-        $totalUsuarios = User::count();
+        // Aplicar filtros según el rol del usuario
+        $queryNinos = Nino::query();
+        $queryNinos = $this->applyRedMicroredFilter($queryNinos, 'datosExtra');
+        $totalNinos = $queryNinos->count();
+        
+        // Para controles, necesitamos filtrar por los niños filtrados
+        $ninosIds = $queryNinos->pluck('id')->toArray();
+        $totalControles = ControlRn::whereIn('id_niño', $ninosIds)->count() + 
+                         ControlMenor1::whereIn('id_niño', $ninosIds)->count();
+        
+        // Para usuarios, aplicar filtros según rol
+        $queryUsuarios = User::query();
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $queryUsuarios->whereHas('solicitud', function($q) use ($codigoRed) {
+                        $q->where('codigo_red', $codigoRed);
+                    });
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $queryUsuarios->whereHas('solicitud', function($q) use ($codigoMicrored) {
+                        $q->where('codigo_microred', $codigoMicrored);
+                    });
+                }
+            }
+        }
+        $totalUsuarios = $queryUsuarios->count();
         
         // Calcular alertas reales
         $totalAlertas = 0;
         $hoy = Carbon::now();
         
-        $ninos = Nino::all();
+        $ninos = $queryNinos->get();
         
         foreach ($ninos as $nino) {
             // Validar que el niño tenga fecha de nacimiento

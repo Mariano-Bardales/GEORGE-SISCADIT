@@ -139,7 +139,7 @@
                         <select id="filtroRol" onchange="cambiarRol()" class="bg-white border border-slate-300 text-slate-700 px-4 py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                           <option value="">Todos los roles</option>
                           <option value="jefe_microred">Jefe de Red</option>
-                          <option value="coordinador_red">Coordinador de MicroRed</option>
+                          <option value="coordinador_red">Coordinador de Micro Red</option>
                         </select>
                       </div>
 
@@ -462,8 +462,8 @@
                     <select id="rolUsuario" name="role" 
                       class="modal-usuario-select" required>
                       <option value="">Seleccione un rol</option>
-                      <option value="jefe_microred">Jefe de Micro Red</option>
-                      <option value="coordinador_red">Coordinador de Red</option>
+                      <option value="jefe_microred">Jefe de Red</option>
+                      <option value="coordinador_red">Coordinador de Micro Red</option>
                     </select>
                     <p class="text-xs text-slate-600 mt-2.5 font-medium flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
@@ -581,8 +581,8 @@
                   <select id="rolUsuarioEditar" name="role" 
                     class="modal-usuario-select" required>
                     <option value="">Seleccione un rol</option>
-                    <option value="jefe_microred">Red</option>
-                    <option value="coordinador_red">MicroRed</option>
+                    <option value="jefe_microred">Jefe de Red</option>
+                    <option value="coordinador_red">Coordinador de Micro Red</option>
                     <option value="usuario">Cancelar Permisos</option>
                   </select>
                   <p style="font-size: 0.75rem; color: #475569; margin-top: 0.5rem; font-weight: 500; display: flex; align-items: flex-start; gap: 0.375rem; line-height: 1.5;">
@@ -1324,7 +1324,12 @@
         'medico': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Médico</span>',
         'usuario': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">Usuario</span>',
         'jefe_microred': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
-        'coordinador_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de MicroRed</span>'
+        'jefe_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
+        'JefeDeRed': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
+        'Jefe_microred': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">Jefe de Red</span>',
+        'coordinador_red': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de Micro Red</span>',
+        'coordinador_microred': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de Micro Red</span>',
+        'CoordinadorDeMicroRed': '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Coordinador de Micro Red</span>'
       };
 
       // Función helper para obtener nombre de establecimiento
@@ -1344,7 +1349,40 @@
       console.log('Renderizando tabla con', usuarios.length, 'usuarios');
       tbody.innerHTML = usuarios.map(usuario => {
         console.log('Procesando usuario:', usuario);
-        const rolBadge = rolesBadge[usuario.role] || rolesBadge['usuario'];
+        // Normalizar el rol para manejar diferentes variaciones
+        const rolOriginal = usuario.role || '';
+        const rolNormalizado = rolOriginal.toLowerCase();
+        
+        // Mapear variaciones de roles a la clave correcta del badge
+        let rolMapeado = rolOriginal;
+        if (rolNormalizado === 'jefe_microred' || rolNormalizado === 'jefe_red' || rolNormalizado === 'jefedered' || rolNormalizado === 'jefe_micro_red') {
+          rolMapeado = 'jefe_microred';
+        } else if (rolNormalizado === 'coordinador_microred' || rolNormalizado === 'coordinador_red' || rolNormalizado === 'coordinadordemicrored') {
+          rolMapeado = 'coordinador_red';
+        }
+        
+        // Obtener el badge, intentando primero con el rol mapeado, luego con el original, y finalmente con 'usuario'
+        let rolBadge = rolesBadge[rolMapeado];
+        if (!rolBadge) {
+          rolBadge = rolesBadge[rolOriginal];
+        }
+        if (!rolBadge) {
+          rolBadge = rolesBadge[rolNormalizado];
+        }
+        if (!rolBadge) {
+          rolBadge = rolesBadge['usuario'];
+        }
+        
+        // Asegurar que siempre tengamos un badge válido
+        if (!rolBadge || rolBadge === 'undefined') {
+          console.error('No se encontró badge para rol:', rolOriginal, '- Mapeado:', rolMapeado);
+          rolBadge = rolesBadge['usuario'];
+        }
+        
+        // Debug: mostrar qué rol se está usando
+        if (rolNormalizado === 'jefe_microred') {
+          console.log('Usuario con rol jefe_microred:', usuario.name, '- Rol original:', rolOriginal, '- Rol mapeado:', rolMapeado, '- Badge encontrado:', !!rolesBadge[rolMapeado]);
+        }
         const tipoDoc = usuario.tipo_documento || 'N/A';
         const numDoc = usuario.numero_documento || 'N/A';
         const red = usuario.red || 'N/A';
@@ -1549,7 +1587,7 @@
           // Filtrar por Jefe de Red
           coincide = rolUsuario.includes('jefe');
         } else if (rol === 'coordinador_red') {
-          // Filtrar por Coordinador de MicroRed
+          // Filtrar por Coordinador de Micro Red
           coincide = rolUsuario.includes('coordinador');
         }
         

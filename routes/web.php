@@ -78,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/usuarios/{id}', [UsuarioController::class, 'show'])->name('usuarios.show');
         Route::put('/usuarios/{id}', [UsuarioController::class, 'update'])->name('usuarios.update');
         Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+        Route::post('/admin/eliminar-todos-datos', [ApiController::class, 'eliminarTodosDatos'])->name('admin.eliminar-todos-datos');
     });
     
     // API Routes (requieren autenticación)

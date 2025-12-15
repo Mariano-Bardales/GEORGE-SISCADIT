@@ -40,12 +40,15 @@
       <div class="flex-1 min-w-0">
         <p class="font-semibold text-sm truncate">{{ auth()->user()->name ?? 'Usuario' }}</p>
         <span class="text-xs bg-white/20 backdrop-blur-sm text-white px-2.5 py-1 rounded-full inline-block mt-1">
-          @if(auth()->user()->role === 'admin' || auth()->user()->role === 'ADMIN')
+          @php
+            $role = strtolower(auth()->user()->role ?? '');
+          @endphp
+          @if($role === 'admin')
             DIRESA
-          @elseif(auth()->user()->role === 'jefe_red' || auth()->user()->role === 'JefeDeRed')
+          @elseif($role === 'jefe_red' || $role === 'jefedered' || $role === 'jefe_microred')
             Jefe de Red
-          @elseif(auth()->user()->role === 'coordinador_microred' || auth()->user()->role === 'CoordinadorDeMicroRed')
-            Coordinador de Microred
+          @elseif($role === 'coordinador_microred' || $role === 'coordinadordemicrored' || $role === 'coordinador_red')
+            Coordinador de Micro Red
           @else
             {{ ucfirst(auth()->user()->role ?? 'Usuario') }}
           @endif

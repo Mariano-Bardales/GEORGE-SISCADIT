@@ -257,7 +257,7 @@
                   </svg>
                   Buscar por DNI o Nombre
                 </label>
-                <input type="text" id="filtroBuscar" class="filtro-input" placeholder="Ingrese DNI o nombre del niño..." onkeyup="filtrarAlertas()">
+                <input type="text" id="filtroBuscar" class="filtro-input" placeholder="Ingrese DNI o nombre del niño..." onkeyup="filtrarAlertas()" oninput="filtrarAlertas()">
               </div>
               <div class="filtro-group">
                 <label class="filtro-label">
@@ -271,12 +271,12 @@
                   <option value="datos_faltantes_nino">Datos Faltantes del Niño</option>
                   <option value="datos_faltantes_madre">Datos Faltantes de la Madre</option>
                   <option value="datos_faltantes_extras">Datos Faltantes Extras</option>
-                  <option value="control_recien_nacido">Control Recién Nacido</option>
-                  <option value="control_cred_mensual">CRED Mensual</option>
-                  <option value="tamizaje">Tamizaje</option>
+                  <option value="control_recien_nacido">Controles RN</option>
+                  <option value="control_cred_mensual">Controles CRED</option>
+                  <option value="tamizaje">Tamizaje Neonatal</option>
                   <option value="cnv">CNV (Carné de Nacido Vivo)</option>
                   <option value="visita">Visitas Domiciliarias</option>
-                  <option value="vacuna">Vacuna</option>
+                  <option value="vacuna">Vacunas RN (BCG y HVB)</option>
                 </select>
               </div>
             </div>
@@ -356,7 +356,9 @@
         const data = await response.json();
         
         if (data.success && data.data) {
-          todasLasAlertas = data.data;
+          todasLasAlertas = data.data || [];
+          console.log(`✅ Alertas cargadas: ${todasLasAlertas.length} alertas`);
+          // Aplicar filtros después de cargar
           filtrarAlertas();
         } else {
           document.getElementById('tablaAlertas').innerHTML = `
@@ -380,20 +382,55 @@
     }
 
     function filtrarAlertas() {
-      const filtroBuscar = document.getElementById('filtroBuscar').value.toLowerCase();
-      const filtroTipo = document.getElementById('filtroTipo').value;
+      // Verificar que todasLasAlertas esté cargado
+      if (!todasLasAlertas || todasLasAlertas.length === 0) {
+        console.warn('⚠️ No hay alertas cargadas para filtrar');
+        return;
+      }
+      
+      const filtroBuscar = document.getElementById('filtroBuscar')?.value.toLowerCase().trim() || '';
+      const filtroTipo = document.getElementById('filtroTipo')?.value || '';
       
       let alertasFiltradas = todasLasAlertas.filter(alerta => {
         // Filtro por búsqueda (DNI o nombre)
-        const coincideBuscar = !filtroBuscar || 
-          (alerta.nino_nombre && alerta.nino_nombre.toLowerCase().includes(filtroBuscar)) ||
-          (alerta.nino_dni && alerta.nino_dni.toString().includes(filtroBuscar));
+        let coincideBuscar = true;
+        if (filtroBuscar) {
+          const nombreMatch = alerta.nino_nombre && alerta.nino_nombre.toLowerCase().includes(filtroBuscar);
+          const dniMatch = alerta.nino_dni && alerta.nino_dni.toString().includes(filtroBuscar);
+          coincideBuscar = nombreMatch || dniMatch;
+        }
         
         // Filtro por tipo de control
-        const coincideTipo = !filtroTipo || alerta.tipo === filtroTipo;
+        // Permitir filtrar por tipo base o tipo específico (ej: control_recien_nacido incluye control_recien_nacido_fuera_rango)
+        let coincideTipo = true;
+        if (filtroTipo) {
+          // Si el filtro es un tipo base, incluir también sus variantes
+          if (filtroTipo === 'control_recien_nacido') {
+            coincideTipo = alerta.tipo === 'control_recien_nacido' || 
+                          alerta.tipo === 'control_recien_nacido_fuera_rango' ||
+                          alerta.tipo === 'control_recien_nacido_datos_faltantes';
+          } else if (filtroTipo === 'control_cred_mensual') {
+            coincideTipo = alerta.tipo === 'control_cred_mensual' || 
+                          alerta.tipo === 'control_cred_mensual_fuera_rango' ||
+                          alerta.tipo === 'control_cred_datos_faltantes';
+          } else if (filtroTipo === 'tamizaje') {
+            coincideTipo = alerta.tipo === 'tamizaje' || alerta.tipo === 'tamizaje_fuera_rango';
+          } else if (filtroTipo === 'visita') {
+            coincideTipo = alerta.tipo === 'visita' || 
+                          alerta.tipo === 'visita_fuera_rango' ||
+                          alerta.tipo === 'visita_general' ||
+                          alerta.tipo === 'visita_datos_faltantes';
+          } else {
+            // Filtro exacto para otros tipos
+            coincideTipo = alerta.tipo === filtroTipo;
+          }
+        }
         
         return coincideBuscar && coincideTipo;
       });
+      
+      console.log(`🔍 Filtros aplicados: Buscar="${filtroBuscar}", Tipo="${filtroTipo}"`);
+      console.log(`📊 Alertas filtradas: ${alertasFiltradas.length} de ${todasLasAlertas.length}`);
       
       renderizarAlertas(alertasFiltradas);
     }
@@ -420,7 +457,6 @@
       tbody.innerHTML = alertas.map(alerta => {
         const tipoClass = alerta.tipo.replace(/_/g, '-');
         const prioridadClass = alerta.prioridad;
-        const diasFuera = alerta.dias_fuera || 0;
         
         return `
           <tr>
@@ -431,9 +467,6 @@
               <div class="mensaje-alerta">
                 ${alerta.mensaje || 'Control pendiente de realizar'}
               </div>
-              ${diasFuera > 0 ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: rgb(118, 75, 162); font-weight: 600;">
-                ⚠️ Fuera del rango por ${diasFuera} día(s)
-              </div>` : ''}
             </td>
             <td>
               <button class="btn-ver-controles" onclick="window.location.href='/controles-cred'">

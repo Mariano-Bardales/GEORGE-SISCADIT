@@ -43,6 +43,23 @@ class SolicitudController extends Controller
             });
         }
 
+        // Aplicar filtros según el rol del usuario (red/microred)
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $query->where('codigo_red', $codigoRed);
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $query->where('codigo_microred', $codigoMicrored);
+                }
+            }
+        }
+        
         // Ordenar por más recientes primero (usando ID en lugar de created_at eliminado)
         $query->orderBy('id', 'desc');
 

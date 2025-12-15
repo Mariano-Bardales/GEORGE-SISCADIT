@@ -68,15 +68,58 @@ class ApiController extends Controller
     
     public function dashboardStats()
     {
-        $totalNinos = Nino::count();
-        $totalControles = ControlRn::count() + ControlMenor1::count();
-        $totalUsuarios = User::count();
+        // Aplicar filtros según el rol del usuario
+        $queryNinos = Nino::query();
+        $queryNinos = $this->applyRedMicroredFilter($queryNinos, 'datosExtra');
+        $totalNinos = $queryNinos->count();
+        
+        // Para controles, necesitamos filtrar por los niños filtrados
+        $ninosIds = $queryNinos->pluck('id')->toArray();
+        $totalControles = ControlRn::whereIn('id_niño', $ninosIds)->count() + 
+                         ControlMenor1::whereIn('id_niño', $ninosIds)->count();
+        
+        // Para usuarios, aplicar filtros según rol
+        $queryUsuarios = User::query();
+        $user = auth()->user();
+        if ($user) {
+            $role = strtolower($user->role);
+            if ($role === 'jefe_red' || $role === 'jefedered') {
+                $codigoRed = $this->getUserRed();
+                if ($codigoRed) {
+                    $redes = [
+                        1 => 'AGUAYTIA',
+                        2 => 'ATALAYA',
+                        3 => 'BAP-CURARAY',
+                        4 => 'CORONEL PORTILLO',
+                        5 => 'ESSALUD',
+                        6 => 'FEDERICO BASADRE - YARINACOCHA',
+                        7 => 'HOSPITAL AMAZONICO - YARINACOCHA',
+                        8 => 'HOSPITAL REGIONAL DE PUCALLPA',
+                        9 => 'NO PERTENECE A NINGUNA RED'
+                    ];
+                    $nombreRed = $redes[$codigoRed] ?? null;
+                    if ($nombreRed) {
+                        $queryUsuarios->whereHas('solicitud', function($q) use ($codigoRed) {
+                            $q->where('codigo_red', $codigoRed);
+                        });
+                    }
+                }
+            } elseif ($role === 'coordinador_microred' || $role === 'coordinadordemicrored') {
+                $codigoMicrored = $this->getUserMicrored();
+                if ($codigoMicrored) {
+                    $queryUsuarios->whereHas('solicitud', function($q) use ($codigoMicrored) {
+                        $q->where('codigo_microred', $codigoMicrored);
+                    });
+                }
+            }
+        }
+        $totalUsuarios = $queryUsuarios->count();
         
         // Calcular alertas reales
         $totalAlertas = 0;
         $hoy = Carbon::now();
         
-        $ninos = Nino::all();
+        $ninos = $queryNinos->get();
         
         foreach ($ninos as $nino) {
             // Validar que el niño tenga fecha de nacimiento
@@ -186,8 +229,14 @@ class ApiController extends Controller
 
     public function reportesEstadisticas()
     {
-        $masculino = Nino::where('genero', 'M')->count();
-        $femenino = Nino::where('genero', 'F')->count();
+        // Aplicar filtros según el rol del usuario
+        $queryMasculino = Nino::where('genero', 'M');
+        $queryMasculino = $this->applyRedMicroredFilter($queryMasculino, 'datosExtra');
+        $masculino = $queryMasculino->count();
+        
+        $queryFemenino = Nino::where('genero', 'F');
+        $queryFemenino = $this->applyRedMicroredFilter($queryFemenino, 'datosExtra');
+        $femenino = $queryFemenino->count();
 
         return response()->json([
             'success' => true,
@@ -205,6 +254,9 @@ class ApiController extends Controller
         try {
             // Cargar relaciones - para madre usamos un método personalizado
             $query = Nino::with(['datosExtra']);
+            
+            // Aplicar filtros según el rol del usuario (red/microred)
+            $query = $this->applyRedMicroredFilter($query, 'datosExtra');
             
             // Filtro por género
             if ($request->has('genero') && $request->genero !== '') {
@@ -1086,7 +1138,7 @@ class ApiController extends Controller
         $visitasEjemplo = collect();
         // Controles de visita con sus rangos (1-4)
         $controlesVisita = [
-            1 => ['dias' => 28, 'min' => 28, 'max' => 30, 'descripcion' => 'Visita domiciliaria Control 1 (28-30 días)'],
+            1 => ['dias' => 28, 'min' => 28, 'max' => 28, 'descripcion' => 'Visita domiciliaria Control 1 (28 días)'],
             2 => ['dias' => 105, 'min' => 60, 'max' => 150, 'descripcion' => 'Visita domiciliaria Control 2 (60-150 días)'],
             3 => ['dias' => 210, 'min' => 180, 'max' => 240, 'descripcion' => 'Visita domiciliaria Control 3 (180-240 días)'],
             4 => ['dias' => 300, 'min' => 270, 'max' => 330, 'descripcion' => 'Visita domiciliaria Control 4 (270-330 días)'],
@@ -1274,17 +1326,15 @@ class ApiController extends Controller
 
     public function totalAlertas()
     {
-        // Usar el mismo método que genera las alertas de la página para mantener consistencia
+        // Usar la misma lógica que obtenerAlertas para asegurar consistencia
+        // Esto garantiza que el total coincida con el número real de alertas mostradas
         $request = new \Illuminate\Http\Request();
         $response = $this->obtenerAlertas($request);
-        
-        // Extraer el total del JSON response
         $data = json_decode($response->getContent(), true);
-        $total = isset($data['total']) ? $data['total'] : (isset($data['data']) ? count($data['data']) : 0);
         
         return response()->json([
             'success' => true,
-            'total' => $total
+            'total' => $data['total'] ?? 0
         ]);
     }
 
@@ -1296,8 +1346,10 @@ class ApiController extends Controller
         $hoy = Carbon::now();
         $alertas = [];
         
-        // Obtener todos los niños
-        $ninos = Nino::all();
+        // Obtener niños aplicando filtros según el rol del usuario
+        $query = Nino::query();
+        $query = $this->applyRedMicroredFilter($query, 'datosExtra');
+        $ninos = $query->get();
         
         foreach ($ninos as $nino) {
             $ninoId = $this->getNinoId($nino);
@@ -1305,9 +1357,6 @@ class ApiController extends Controller
             // ========== ALERTAS DE DATOS FALTANTES DEL NIÑO ==========
             $camposFaltantesNino = $this->detectarDatosFaltantesNino($nino);
             if (!empty($camposFaltantesNino)) {
-                $totalCampos = count($camposFaltantesNino);
-                $camposStr = implode(', ', $camposFaltantesNino);
-                
                 $alertas[] = [
                     'tipo' => 'datos_faltantes_nino',
                     'nino_id' => $ninoId,
@@ -1318,18 +1367,14 @@ class ApiController extends Controller
                     'edad_dias' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->diffInDays($hoy) : null,
                     'prioridad' => 'alta',
                     'fecha_nacimiento' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->format('Y-m-d') : null,
-                    'mensaje' => "Faltan datos del niño: {$camposStr}",
+                    'mensaje' => 'Faltan datos del niño: ' . implode(', ', $camposFaltantesNino),
                     'campos_faltantes' => $camposFaltantesNino,
-                    'total_campos_faltantes' => $totalCampos,
                 ];
             }
             
             // ========== ALERTAS DE DATOS FALTANTES DE LA MADRE ==========
             $camposFaltantesMadre = $this->detectarDatosFaltantesMadre($nino);
             if (!empty($camposFaltantesMadre)) {
-                $totalCampos = count($camposFaltantesMadre);
-                $camposStr = implode(', ', $camposFaltantesMadre);
-                
                 $alertas[] = [
                     'tipo' => 'datos_faltantes_madre',
                     'nino_id' => $ninoId,
@@ -1340,18 +1385,14 @@ class ApiController extends Controller
                     'edad_dias' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->diffInDays($hoy) : null,
                     'prioridad' => 'alta',
                     'fecha_nacimiento' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->format('Y-m-d') : null,
-                    'mensaje' => "Faltan datos de la madre: {$camposStr}",
+                    'mensaje' => 'Faltan datos de la madre: ' . implode(', ', $camposFaltantesMadre),
                     'campos_faltantes' => $camposFaltantesMadre,
-                    'total_campos_faltantes' => $totalCampos,
                 ];
             }
             
             // ========== ALERTAS DE DATOS FALTANTES EXTRAS ==========
             $camposFaltantesExtras = $this->detectarDatosFaltantesExtras($nino);
             if (!empty($camposFaltantesExtras)) {
-                $totalCampos = count($camposFaltantesExtras);
-                $camposStr = implode(', ', $camposFaltantesExtras);
-                
                 $alertas[] = [
                     'tipo' => 'datos_faltantes_extras',
                     'nino_id' => $ninoId,
@@ -1362,9 +1403,8 @@ class ApiController extends Controller
                     'edad_dias' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->diffInDays($hoy) : null,
                     'prioridad' => 'media',
                     'fecha_nacimiento' => $nino->fecha_nacimiento ? Carbon::parse($nino->fecha_nacimiento)->format('Y-m-d') : null,
-                    'mensaje' => "Faltan datos extras: {$camposStr}",
+                    'mensaje' => 'Faltan datos extras: ' . implode(', ', $camposFaltantesExtras),
                     'campos_faltantes' => $camposFaltantesExtras,
-                    'total_campos_faltantes' => $totalCampos,
                 ];
             }
             
@@ -1375,7 +1415,8 @@ class ApiController extends Controller
             $edadDias = $fechaNacimiento->diffInDays($hoy);
             
             // Alertas de controles recién nacido (0-28 días) - CONSOLIDADAS
-            // Verificar siempre si faltan controles RN, incluso si ya pasó el rango
+            // Se generan alertas incluso si el niño tiene más de 28 días (alertas históricas)
+            if ($edadDias >= 0) {
             $controlesRn = ControlRn::where('id_niño', $ninoId)->get();
             $controlesRegistrados = $controlesRn->pluck('numero_control')->toArray();
             $controlesRegistradosMap = [];
@@ -1430,14 +1471,11 @@ class ApiController extends Controller
                 }
             }
             
-            // Verificar controles RN faltantes o fuera de rango
             foreach ($rangosRN as $num => $rango) {
                 $debeTener = false;
-                // Si el niño ya pasó el rango máximo, debe tener el control
-                if ($edadDias > $rango['max']) {
+                    if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
                     $debeTener = true;
-                } else if ($edadDias >= $rango['min'] && $edadDias <= $rango['max']) {
-                    // Si está dentro del rango, debe tener el control
+                    } else if ($edadDias > $rango['max']) {
                     $debeTener = true;
                 }
                     
@@ -1480,31 +1518,18 @@ class ApiController extends Controller
                     }
             }
             
-            // Consolidar alertas de controles RN: faltantes y fuera de rango en una sola alerta
-            if (!empty($controlesFaltantes) || !empty($controlesFueraRango) || !empty($controlesAnterioresFaltantes)) {
-                    $partesMensaje = [];
+                // Consolidar todas las alertas de controles RN en una sola alerta
+                // Prioridad: 1) Controles fuera de rango, 2) Controles anteriores faltantes, 3) Controles faltantes
+                
+                // 1. Alertas de controles fuera de rango (prioridad más alta - se muestra primero)
+                if (!empty($controlesFueraRango)) {
+                    $nombresFueraRango = array_column($controlesFueraRango, 'nombre');
+                    $totalFueraRango = count($controlesFueraRango);
                     
-                    // Agregar controles anteriores faltantes
-                    if (!empty($controlesAnterioresFaltantes)) {
-                        $nombresAnteriores = array_column($controlesAnterioresFaltantes, 'nombre');
-                        $partesMensaje[] = "Faltan controles anteriores: " . implode(', ', $nombresAnteriores);
-                    }
-                    
-                    // Agregar controles faltantes
-                    if (!empty($controlesFaltantes)) {
-                        $nombresFaltantes = array_column($controlesFaltantes, 'nombre');
-                        $maxDiasFuera = max(array_column($controlesFaltantes, 'dias_fuera'));
-                        $partesMensaje[] = "Controles faltantes: " . implode(', ', $nombresFaltantes) . ($maxDiasFuera > 0 ? " ({$maxDiasFuera} días fuera)" : "");
-                    }
-                    
-                    // Agregar controles fuera de rango
-                    if (!empty($controlesFueraRango)) {
-                        $nombresFueraRango = array_column($controlesFueraRango, 'nombre');
-                        $maxDiasFuera = max(array_column($controlesFueraRango, 'dias_fuera'));
-                        $partesMensaje[] = "Controles fuera de rango: " . implode(', ', $nombresFueraRango) . " ({$maxDiasFuera} días fuera)";
-                    }
-                    
-                    $mensaje = implode('. ', $partesMensaje) . '.';
+                    // Mensaje simplificado: solo indicar qué controles están fuera de rango
+                    $mensaje = $totalFueraRango === 1
+                        ? "El control " . $nombresFueraRango[0] . " fue realizado fuera del rango permitido."
+                        : "Los controles " . implode(', ', $nombresFueraRango) . " fueron realizados fuera del rango permitido.";
                     
                     $alertas[] = [
                         'tipo' => 'control_recien_nacido',
@@ -1517,12 +1542,94 @@ class ApiController extends Controller
                         'prioridad' => 'alta',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
-                        'controles_faltantes' => !empty($controlesFaltantes) ? array_column($controlesFaltantes, 'nombre') : [],
-                        'controles_fuera_rango' => !empty($controlesFueraRango) ? array_column($controlesFueraRango, 'nombre') : [],
-                        'controles_anteriores_faltantes' => !empty($controlesAnterioresFaltantes) ? array_column($controlesAnterioresFaltantes, 'nombre') : [],
-                        'total_controles_faltantes' => !empty($controlesFaltantes) ? count($controlesFaltantes) : 0,
-                        'total_controles_fuera_rango' => !empty($controlesFueraRango) ? count($controlesFueraRango) : 0,
+                        'controles_fuera_rango' => $nombresFueraRango,
+                        'total_controles_fuera_rango' => $totalFueraRango,
                     ];
+                }
+                // 2. Alertas de controles anteriores faltantes (solo si NO hay controles fuera de rango)
+                else if (!empty($controlesAnterioresFaltantes)) {
+                    $nombresFaltantes = array_column($controlesAnterioresFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesAnterioresFaltantes);
+                    $controlReferencia = $controlesAnterioresFaltantes[0]['control_referencia'] ?? 'un control posterior';
+                    
+                    // Mensaje simplificado: solo indicar qué controles faltan
+                    $mensaje = $totalFaltantes === 1
+                        ? "El niño tiene el {$controlReferencia} registrado, pero falta el {$nombresFaltantes[0]} que debió realizarse antes."
+                        : "El niño tiene el {$controlReferencia} registrado, pero faltan los controles " . implode(', ', $nombresFaltantes) . " que debieron realizarse antes.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_recien_nacido',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles RN',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                        'control_referencia' => $controlReferencia,
+                    ];
+                    }
+                // 3. Alertas de controles faltantes (solo si NO hay controles fuera de rango NI controles anteriores faltantes)
+                else if (!empty($controlesFaltantes)) {
+                        $nombresFaltantes = array_column($controlesFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesFaltantes);
+                    
+                    // Mensaje simplificado: solo indicar qué controles faltan
+                    $mensaje = $totalFaltantes === 1
+                        ? "El control " . $nombresFaltantes[0] . " debió realizarse."
+                        : "Los controles " . implode(', ', $nombresFaltantes) . " debieron realizarse.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_recien_nacido',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles RN',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                    ];
+                }
+                
+                // 4. Alertas de datos faltantes en controles RN (controles registrados sin fecha)
+                // Solo si NO hay alertas de controles faltantes o fuera de rango para evitar duplicación
+                $controlesRnIncompletos = [];
+                foreach ($controlesRn as $control) {
+                    if (empty($control->fecha)) {
+                        $controlesRnIncompletos[] = "Control {$control->numero_control}";
+                    }
+                }
+                
+                if (!empty($controlesRnIncompletos) && empty($controlesFaltantes) && empty($controlesFueraRango) && empty($controlesAnterioresFaltantes)) {
+                    $controlesStr = implode(', ', $controlesRnIncompletos);
+                    $total = count($controlesRnIncompletos);
+                    $mensaje = $total === 1 
+                        ? "El control RN {$controlesStr} está incompleto. Falta la fecha del control."
+                        : "Los controles RN {$controlesStr} están incompletos. Faltan las fechas de los controles ({$total} control" . ($total > 1 ? 'es' : '') . ").";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_recien_nacido_datos_faltantes',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles RN',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $controlesRnIncompletos,
+                        'total_controles_faltantes' => $total,
+                    ];
+                }
             }
             
             // Alertas de CRED mensual (29 días o más) - CONSOLIDADAS
@@ -1635,31 +1742,17 @@ class ApiController extends Controller
                     }
                 }
                 
-                // Consolidar alertas de controles CRED: faltantes y fuera de rango en una sola alerta
-                if (!empty($controlesFaltantes) || !empty($controlesFueraRango) || !empty($controlesAnterioresFaltantes)) {
-                    $partesMensaje = [];
-                    
-                    // Agregar controles anteriores faltantes
+                // Consolidar todas las alertas de controles CRED en una sola alerta por tipo
+                // 1. Alertas de controles anteriores faltantes (solo si hay controles posteriores registrados)
                     if (!empty($controlesAnterioresFaltantes)) {
-                        $nombresAnteriores = array_column($controlesAnterioresFaltantes, 'nombre');
-                        $partesMensaje[] = "Faltan controles anteriores: " . implode(', ', $nombresAnteriores);
-                    }
+                    $nombresFaltantes = array_column($controlesAnterioresFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesAnterioresFaltantes);
+                    $controlReferencia = $controlesAnterioresFaltantes[0]['control_referencia'] ?? 'un control posterior';
                     
-                    // Agregar controles faltantes
-                    if (!empty($controlesFaltantes)) {
-                        $nombresFaltantes = array_column($controlesFaltantes, 'nombre');
-                        $maxDiasFuera = max(array_column($controlesFaltantes, 'dias_fuera'));
-                        $partesMensaje[] = "Controles faltantes: " . implode(', ', $nombresFaltantes) . ($maxDiasFuera > 0 ? " ({$maxDiasFuera} días fuera)" : "");
-                    }
-                    
-                    // Agregar controles fuera de rango
-                    if (!empty($controlesFueraRango)) {
-                        $nombresFueraRango = array_column($controlesFueraRango, 'nombre');
-                        $maxDiasFuera = max(array_column($controlesFueraRango, 'dias_fuera'));
-                        $partesMensaje[] = "Controles fuera de rango: " . implode(', ', $nombresFueraRango) . " ({$maxDiasFuera} días fuera)";
-                    }
-                    
-                    $mensaje = implode('. ', $partesMensaje) . '.';
+                    // Mensaje simplificado: solo indicar qué controles faltan
+                    $mensaje = $totalFaltantes === 1
+                        ? "El niño tiene el {$controlReferencia} registrado, pero falta el {$nombresFaltantes[0]} que debió realizarse antes."
+                        : "El niño tiene el {$controlReferencia} registrado, pero faltan los controles " . implode(', ', $nombresFaltantes) . " que debieron realizarse antes.";
                     
                     $alertas[] = [
                         'tipo' => 'control_cred_mensual',
@@ -1672,11 +1765,93 @@ class ApiController extends Controller
                         'prioridad' => 'alta',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
-                        'controles_faltantes' => !empty($controlesFaltantes) ? array_column($controlesFaltantes, 'nombre') : [],
-                        'controles_fuera_rango' => !empty($controlesFueraRango) ? array_column($controlesFueraRango, 'nombre') : [],
-                        'controles_anteriores_faltantes' => !empty($controlesAnterioresFaltantes) ? array_column($controlesAnterioresFaltantes, 'nombre') : [],
-                        'total_controles_faltantes' => !empty($controlesFaltantes) ? count($controlesFaltantes) : 0,
-                        'total_controles_fuera_rango' => !empty($controlesFueraRango) ? count($controlesFueraRango) : 0,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                        'control_referencia' => $controlReferencia,
+                    ];
+                    }
+                    
+                // 2. Alertas de controles faltantes (solo si NO hay alerta de controles anteriores faltantes para evitar duplicación)
+                if (!empty($controlesFaltantes) && empty($controlesAnterioresFaltantes)) {
+                        $nombresFaltantes = array_column($controlesFaltantes, 'nombre');
+                    $totalFaltantes = count($controlesFaltantes);
+                    
+                    // Mensaje simplificado: solo indicar qué controles faltan
+                    $mensaje = $totalFaltantes === 1
+                        ? "El control CRED " . $nombresFaltantes[0] . " debió realizarse."
+                        : "Los controles CRED " . implode(', ', $nombresFaltantes) . " debieron realizarse.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_cred_mensual',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles CRED',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $nombresFaltantes,
+                        'total_controles_faltantes' => $totalFaltantes,
+                    ];
+                    }
+                    
+                // 3. Alertas de controles fuera de rango (siempre se genera si hay controles fuera de rango)
+                    if (!empty($controlesFueraRango)) {
+                        $nombresFueraRango = array_column($controlesFueraRango, 'nombre');
+                    $totalFueraRango = count($controlesFueraRango);
+                    
+                    // Mensaje simplificado: solo indicar qué controles están fuera de rango, sin mencionar días de diferencia
+                    $mensaje = $totalFueraRango === 1
+                        ? "El control CRED " . $nombresFueraRango[0] . " fue realizado fuera del rango permitido."
+                        : "Los controles CRED " . implode(', ', $nombresFueraRango) . " fueron realizados fuera del rango permitido.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_cred_mensual_fuera_rango',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles CRED',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_fuera_rango' => $nombresFueraRango,
+                        'total_controles_fuera_rango' => $totalFueraRango,
+                    ];
+                }
+                
+                // 4. Alertas de datos faltantes en controles CRED (controles registrados sin fecha)
+                // Solo si NO hay alertas de controles faltantes o fuera de rango para evitar duplicación
+                $controlesCredIncompletos = [];
+                foreach ($controlesCred as $control) {
+                    if (empty($control->fecha)) {
+                        $controlesCredIncompletos[] = "Control {$control->numero_control}";
+                    }
+                }
+                
+                if (!empty($controlesCredIncompletos) && empty($controlesFaltantes) && empty($controlesFueraRango) && empty($controlesAnterioresFaltantes)) {
+                    $controlesStr = implode(', ', $controlesCredIncompletos);
+                    $total = count($controlesCredIncompletos);
+                    $mensaje = $total === 1 
+                        ? "El control CRED {$controlesStr} está incompleto. Falta la fecha del control."
+                        : "Los controles CRED {$controlesStr} están incompletos. Faltan las fechas de los controles ({$total} control" . ($total > 1 ? 'es' : '') . ").";
+                    
+                    $alertas[] = [
+                        'tipo' => 'control_cred_datos_faltantes',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Controles CRED',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'controles_faltantes' => $controlesCredIncompletos,
+                        'total_controles_faltantes' => $total,
                     ];
                 }
             }
@@ -1689,10 +1864,7 @@ class ApiController extends Controller
                 if (!$cnv || empty($cnv->edad_gestacional)) $camposFaltantes[] = 'Edad Gestacional';
                 if (!$cnv || empty($cnv->clasificacion)) $camposFaltantes[] = 'Clasificación';
                 
-                $totalCampos = count($camposFaltantes);
-                $camposStr = implode(', ', $camposFaltantes);
-                
-                $mensaje = "CNV incompleto. Faltan: {$camposStr}";
+                $mensaje = "El CNV (Carné de Nacido Vivo) está incompleto. Faltan los siguientes datos: " . implode(', ', $camposFaltantes);
                 
                 $alertas[] = [
                     'tipo' => 'cnv',
@@ -1706,17 +1878,16 @@ class ApiController extends Controller
                     'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                     'mensaje' => $mensaje,
                     'campos_faltantes' => $camposFaltantes,
-                    'total_campos_faltantes' => $totalCampos,
                 ];
             }
             
-            // Alertas de visitas domiciliarias - SOLO ALERTAR SI HAY MENOS DE 2 VISITAS QUE CUMPLEN
+            // Alertas de visitas domiciliarias - CONSOLIDADAS
             if ($edadDias >= 28) {
                 $visitas = VisitaDomiciliaria::where('id_niño', $ninoId)->get();
                 $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
                 
                 $rangosVisitas = [
-                    1 => ['min' => 28, 'max' => 30, 'nombre' => 'Visita 1'],
+                    1 => ['min' => 28, 'max' => 28, 'nombre' => 'Visita 1'],
                     2 => ['min' => 60, 'max' => 150, 'nombre' => 'Visita 2'],
                     3 => ['min' => 180, 'max' => 240, 'nombre' => 'Visita 3'],
                     4 => ['min' => 270, 'max' => 330, 'nombre' => 'Visita 4']
@@ -1725,25 +1896,85 @@ class ApiController extends Controller
                 $visitasCumplen = 0;
                 $visitasFaltantes = [];
                 $visitasFueraRango = [];
+                $visitasIncompletas = [];
                 
-                // Revisar TODAS las visitas registradas (sin importar el control_de_visita)
+                // Primero verificar visitas incompletas (sin fecha o sin control_de_visita)
                 foreach ($visitas as $visita) {
+                    $camposFaltantes = [];
+                    if (empty($visita->fecha_visita)) {
+                        $camposFaltantes[] = 'Fecha de Visita';
+                    }
+                    if (empty($visita->control_de_visita)) {
+                        $camposFaltantes[] = 'Control de Visita';
+                    }
+                    
+                    if (!empty($camposFaltantes)) {
+                        $controlNum = $visita->control_de_visita ?? 'N/A';
+                        $visitasIncompletas[] = [
+                            'numero' => $controlNum,
+                            'campos' => $camposFaltantes
+                        ];
+                    }
+                }
+                
+                // Si hay visitas incompletas, generar alerta
+                if (!empty($visitasIncompletas)) {
+                    $visitasStr = implode(', ', array_map(function($v) {
+                        return "Visita " . ($v['numero'] !== 'N/A' ? $v['numero'] : 'sin número');
+                    }, $visitasIncompletas));
+                    $total = count($visitasIncompletas);
+                    $camposStr = implode(', ', array_unique(array_merge(...array_column($visitasIncompletas, 'campos'))));
+                    
+                    $mensaje = $total === 1 
+                        ? "La visita domiciliaria {$visitasStr} está incompleta. Faltan los siguientes datos: {$camposStr}."
+                        : "Las visitas domiciliarias {$visitasStr} están incompletas. Faltan los siguientes datos: {$camposStr} ({$total} visita" . ($total > 1 ? 's' : '') . ").";
+                    
+                    $alertas[] = [
+                        'tipo' => 'visita_datos_faltantes',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Visitas Domiciliarias',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'visitas_incompletas' => $visitasIncompletas,
+                        'campos_faltantes' => array_unique(array_merge(...array_column($visitasIncompletas, 'campos'))),
+                    ];
+                }
+                
+                // Verificar visitas cumplidas, faltantes y fuera de rango
+                foreach ($rangosVisitas as $controlNum => $rango) {
+                    $visitasControl = $visitas->where('control_de_visita', $controlNum)->filter(function($v) {
+                        return !empty($v->fecha_visita);
+                    });
+                    $tieneVisitaCumplida = false;
+                    $tieneVisitaFueraRango = false;
+                    
+                    foreach ($visitasControl as $visita) {
                     if ($visita->fecha_visita) {
                         $fechaVisita = Carbon::parse($visita->fecha_visita);
                         $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
-                        $controlVisita = $visita->control_de_visita ?? 1;
-                        $rango = $rangosVisitas[$controlVisita] ?? null;
                         
-                        if ($rango) {
                             if ($edadDiasVisita >= $rango['min'] && $edadDiasVisita <= $rango['max']) {
-                                // Esta visita CUMPLE
+                                $tieneVisitaCumplida = true;
                                 $visitasCumplen++;
-                            } else {
-                                // Esta visita NO CUMPLE (fuera de rango)
-                                $diasFuera = $edadDiasVisita > $rango['max'] 
-                                    ? ($edadDiasVisita - $rango['max']) 
-                                    : ($rango['min'] - $edadDiasVisita);
-                                
+                                break;
+                            } elseif ($edadDiasVisita > $rango['max']) {
+                                // Visita fuera de rango (tarde)
+                                $tieneVisitaFueraRango = true;
+                                $diasFuera = $edadDiasVisita - $rango['max'];
+                                // Verificar si ya existe en el array
+                                $yaExiste = false;
+                                foreach ($visitasFueraRango as $vfr) {
+                                    if ($vfr['nombre'] === $rango['nombre']) {
+                                        $yaExiste = true;
+                                        break;
+                                    }
+                                }
+                                if (!$yaExiste) {
                                 $visitasFueraRango[] = [
                                     'nombre' => $rango['nombre'],
                                     'dias_fuera' => $diasFuera,
@@ -1755,26 +1986,18 @@ class ApiController extends Controller
                     }
                 }
                 
-                // Verificar visitas faltantes solo si hay menos de 2 que cumplen
-                if ($visitasCumplen < 2) {
-                    foreach ($rangosVisitas as $controlNum => $rango) {
-                        // Verificar si hay alguna visita registrada para este control que cumpla
-                        $tieneVisitaCumplida = false;
-                        foreach ($visitas as $visita) {
-                            if ($visita->control_de_visita == $controlNum && $visita->fecha_visita) {
-                                $fechaVisita = Carbon::parse($visita->fecha_visita);
-                                $edadDiasVisita = $fechaNacimiento->diffInDays($fechaVisita);
-                                
-                                if ($edadDiasVisita >= $rango['min'] && $edadDiasVisita <= $rango['max']) {
-                                    $tieneVisitaCumplida = true;
+                    // Si no tiene visita cumplida ni visita fuera de rango, y ya pasó el rango, agregar a faltantes
+                    if (!$tieneVisitaCumplida && !$tieneVisitaFueraRango && $edadDias > $rango['max']) {
+                        $diasFuera = $edadDias - $rango['max'];
+                        // Verificar si ya existe en el array
+                        $yaExiste = false;
+                        foreach ($visitasFaltantes as $vf) {
+                            if ($vf['nombre'] === $rango['nombre']) {
+                                $yaExiste = true;
                                     break;
                                 }
                             }
-                        }
-                        
-                        // Si no tiene visita cumplida y ya pasó el rango, agregar a faltantes
-                        if (!$tieneVisitaCumplida && $edadDias > $rango['max']) {
-                            $diasFuera = $edadDias - $rango['max'];
+                        if (!$yaExiste) {
                             $visitasFaltantes[] = [
                                 'nombre' => $rango['nombre'],
                                 'dias_fuera' => $diasFuera,
@@ -1784,28 +2007,15 @@ class ApiController extends Controller
                     }
                 }
                 
-                // SOLO generar alerta si hay MENOS de 2 visitas que cumplen
-                if ($visitasCumplen < 2) {
-                    $partesMensaje = [];
-                    
-                    // Agregar información sobre visitas fuera de rango
-                    if (!empty($visitasFueraRango)) {
-                        $nombresFueraRango = array_column($visitasFueraRango, 'nombre');
-                        $maxDiasFuera = max(array_column($visitasFueraRango, 'dias_fuera'));
-                        $partesMensaje[] = "Visitas fuera de rango: " . implode(', ', $nombresFueraRango) . " ({$maxDiasFuera} días fuera)";
-                    }
-                    
-                    // Agregar información sobre visitas faltantes
-                    if (!empty($visitasFaltantes)) {
+                // Crear alerta consolidada para visitas faltantes (SOLO si no hay alerta de datos faltantes)
+                if (!empty($visitasFaltantes) && empty($visitasIncompletas)) {
                         $nombresFaltantes = array_column($visitasFaltantes, 'nombre');
+                    $totalFaltantes = count($visitasFaltantes);
                         $maxDiasFuera = max(array_column($visitasFaltantes, 'dias_fuera'));
-                        $partesMensaje[] = "Visitas faltantes: " . implode(', ', $nombresFaltantes) . " ({$maxDiasFuera} días fuera)";
-                    }
                     
-                    // Crear mensaje consolidado
-                    $mensaje = !empty($partesMensaje) 
-                        ? implode('. ', $partesMensaje) . ". Mínimo requerido: 2 visitas cumplidas. Actual: {$visitasCumplen}."
-                        : "Mínimo requerido: 2 visitas cumplidas. Actual: {$visitasCumplen}.";
+                    $mensaje = $totalFaltantes === 1
+                        ? "La visita " . $nombresFaltantes[0] . " debió realizarse. Ya pasaron {$maxDiasFuera} día(s) del límite máximo."
+                        : "Las visitas " . implode(', ', $nombresFaltantes) . " debieron realizarse. Ya pasaron hasta {$maxDiasFuera} día(s) del límite máximo ({$totalFaltantes} visita" . ($totalFaltantes > 1 ? 's' : '') . " faltantes).";
                     
                     $alertas[] = [
                         'tipo' => 'visita',
@@ -1818,47 +2028,75 @@ class ApiController extends Controller
                         'prioridad' => 'alta',
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
-                        'visitas_cumplen' => $visitasCumplen,
-                        'visitas_requeridas' => 2,
-                        'visitas_faltantes' => !empty($visitasFaltantes) ? array_column($visitasFaltantes, 'nombre') : [],
-                        'visitas_fuera_rango' => !empty($visitasFueraRango) ? array_column($visitasFueraRango, 'nombre') : [],
-                        'total_visitas_faltantes' => !empty($visitasFaltantes) ? count($visitasFaltantes) : 0,
-                        'total_visitas_fuera_rango' => !empty($visitasFueraRango) ? count($visitasFueraRango) : 0,
+                        'visitas_faltantes' => $nombresFaltantes,
+                        'total_visitas_faltantes' => $totalFaltantes,
+                        'max_dias_fuera' => $maxDiasFuera,
                     ];
                 }
-            }
-            
-            // Alertas de tamizaje (0-29 días) - SOLO TAMIZAJE NEONATAL ES REQUERIDO
-            // Verificar siempre si falta el tamizaje o está fuera de rango
-            $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
-            $tamizajeFaltante = false;
-            $tamizajeFueraRango = false;
-            $diasFuera = 0;
-            
-            if (!$tamizaje || empty($tamizaje->fecha_tam_neo)) {
-                // Tamizaje faltante
-                $tamizajeFaltante = true;
-                $diasFuera = $edadDias > 29 ? ($edadDias - 29) : 0;
-            } else if (!empty($tamizaje->fecha_tam_neo)) {
-                // Verificar si está fuera de rango
-                $fechaTamizaje = Carbon::parse($tamizaje->fecha_tam_neo);
-                $edadDiasTamizaje = $fechaNacimiento->diffInDays($fechaTamizaje);
                 
-                if ($edadDiasTamizaje < 0 || $edadDiasTamizaje > 29) {
-                    $tamizajeFueraRango = true;
-                    $diasFuera = $edadDiasTamizaje > 29 ? ($edadDiasTamizaje - 29) : abs($edadDiasTamizaje);
+                // Crear alerta consolidada para visitas fuera de rango (SOLO si no hay alerta de datos faltantes)
+                if (!empty($visitasFueraRango) && empty($visitasIncompletas)) {
+                    $nombresFueraRango = array_column($visitasFueraRango, 'nombre');
+                    $totalFueraRango = count($visitasFueraRango);
+                    
+                    // Mensaje simplificado: solo indicar qué visitas están fuera de rango
+                    $mensaje = $totalFueraRango === 1
+                        ? "La visita " . $nombresFueraRango[0] . " fue realizada fuera del rango permitido."
+                        : "Las visitas " . implode(', ', $nombresFueraRango) . " fueron realizadas fuera del rango permitido.";
+                    
+                    $alertas[] = [
+                        'tipo' => 'visita_fuera_rango',
+                        'nino_id' => $ninoId,
+                        'nino_nombre' => $nino->apellidos_nombres,
+                        'nino_dni' => $nino->numero_doc,
+                        'establecimiento' => $nino->establecimiento,
+                        'control' => 'Visitas Domiciliarias',
+                        'edad_dias' => $edadDias,
+                        'prioridad' => 'alta',
+                        'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                        'mensaje' => $mensaje,
+                        'visitas_fuera_rango' => $nombresFueraRango,
+                        'total_visitas_fuera_rango' => $totalFueraRango,
+                    ];
+                }
+                
+                // Si tiene menos de 2 visitas cumplidas y ya debería tenerlas, generar alerta general
+                // SOLO si NO hay alertas específicas (faltantes, fuera de rango, o datos faltantes) para evitar duplicación
+                if ($visitasCumplen < 2 && empty($visitasFaltantes) && empty($visitasFueraRango) && empty($visitasIncompletas)) {
+                    $visitasEsperadas = 0;
+                    if ($edadDias >= 28) $visitasEsperadas++; // Visita 1
+                    if ($edadDias >= 150) $visitasEsperadas++; // Visita 2
+                    if ($edadDias >= 240) $visitasEsperadas++; // Visita 3
+                    if ($edadDias >= 330) $visitasEsperadas++; // Visita 4
+                    
+                    if ($visitasEsperadas >= 2 && $visitasCumplen < 2) {
+                        $faltan = 2 - $visitasCumplen;
+                        $alertas[] = [
+                            'tipo' => 'visita_general',
+                            'nino_id' => $ninoId,
+                            'nino_nombre' => $nino->apellidos_nombres,
+                            'nino_dni' => $nino->numero_doc,
+                            'establecimiento' => $nino->establecimiento,
+                            'control' => 'Visitas Domiciliarias',
+                            'edad_dias' => $edadDias,
+                        'visitas_cumplen' => $visitasCumplen,
+                        'visitas_requeridas' => 2,
+                            'prioridad' => 'alta',
+                            'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                            'mensaje' => "El niño tiene {$edadDias} días y debe tener mínimo 2 visitas domiciliarias cumplidas. Actualmente tiene {$visitasCumplen} visita(s) cumplida(s). Faltan {$faltan} visita(s).",
+                    ];
+                    }
                 }
             }
             
-            // Generar alerta si falta o está fuera de rango
-            if ($tamizajeFaltante || $tamizajeFueraRango) {
-                if ($tamizajeFaltante) {
-                    $mensaje = $edadDias > 29 
-                        ? "Tamizaje neonatal faltante. Rango: 0-29 días. {$diasFuera} días fuera del límite."
-                        : "Tamizaje neonatal pendiente. Rango: 0-29 días.";
-                } else {
-                    $mensaje = "Tamizaje neonatal fuera de rango. Rango: 0-29 días. {$diasFuera} días fuera del límite.";
-                }
+            // Alertas de tamizaje - SOLO TAMIZAJE NEONATAL ES REQUERIDO
+            // Verificar para todos los niños que no tengan tamizaje registrado o esté fuera de rango
+            $tamizaje = TamizajeNeonatal::where('id_niño', $ninoId)->first();
+            
+            if (!$tamizaje || !$tamizaje->fecha_tam_neo) {
+                // No tiene tamizaje registrado
+                // Mensaje simplificado: solo indicar que falta el tamizaje
+                $mensaje = "El tamizaje neonatal no está registrado. Debe realizarse entre los 0 y 29 días de vida.";
                 
                 $alertas[] = [
                     'tipo' => 'tamizaje',
@@ -1871,21 +2109,48 @@ class ApiController extends Controller
                     'rango_min' => 0,
                     'rango_max' => 29,
                     'rango_dias' => '0-29',
-                    'prioridad' => ($edadDias > 29 || $tamizajeFueraRango) ? 'alta' : 'media',
+                    'prioridad' => $edadDias > 29 ? 'alta' : 'media',
                     'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                     'mensaje' => $mensaje,
-                    'dias_fuera' => $diasFuera,
                 ];
+                } else {
+                // Tiene tamizaje registrado, verificar si está fuera de rango
+                $fechaTamizaje = Carbon::parse($tamizaje->fecha_tam_neo);
+                $edadTamizaje = $fechaNacimiento->diffInDays($fechaTamizaje);
+                
+                if ($edadTamizaje < 0 || $edadTamizaje > 29) {
+                    // Tamizaje fuera de rango
+                    // Mensaje simplificado: solo indicar que está fuera de rango
+                    $mensaje = "El tamizaje neonatal fue realizado fuera del rango permitido (0-29 días).";
+                
+                $alertas[] = [
+                        'tipo' => 'tamizaje_fuera_rango',
+                    'nino_id' => $ninoId,
+                    'nino_nombre' => $nino->apellidos_nombres,
+                    'nino_dni' => $nino->numero_doc,
+                    'establecimiento' => $nino->establecimiento,
+                    'control' => 'Tamizaje Neonatal',
+                    'edad_dias' => $edadDias,
+                    'rango_min' => 0,
+                    'rango_max' => 29,
+                    'rango_dias' => '0-29',
+                        'prioridad' => 'alta',
+                    'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
+                    'mensaje' => $mensaje,
+                        'edad_tamizaje' => $edadTamizaje,
+                ];
+                }
             }
             
-            // Alertas de vacunas (0-2 días) - CONSOLIDADA EN UNA SOLA ALERTA
-            // Verificar siempre si faltan vacunas, incluso si ya pasó el rango
+            // Alertas de vacunas (0-2 días) - AMBAS VACUNAS SON REQUERIDAS
+            // Se generan alertas incluso si el niño tiene más de 30 días (alertas históricas)
+            // Consolidar BCG y HVB en una sola alerta
+            if ($edadDias >= 0) {
             $vacunas = VacunaRn::where('id_niño', $ninoId)->first();
             // Verificar que tenga AMBAS vacunas (BCG y HVB) - estado se calcula dinámicamente
             $tieneBCG = false;
             $tieneHVB = false;
-            $vacunasFaltantes = [];
-            $vacunasFueraRango = [];
+                $problemasVacunas = [];
             
             if ($vacunas && $vacunas->fecha_bcg) {
                 $fechaBCG = Carbon::parse($vacunas->fecha_bcg);
@@ -1893,15 +2158,17 @@ class ApiController extends Controller
                 $tieneBCG = ($edadBCG >= 0 && $edadBCG <= 2); // Rango 0-2 días
                 
                 if (!$tieneBCG) {
-                    $diasFuera = $edadBCG > 2 ? ($edadBCG - 2) : 0;
-                    $vacunasFueraRango[] = [
+                        $problemasVacunas[] = [
                         'nombre' => 'BCG',
-                        'dias_fuera' => $diasFuera,
-                        'edad_dias' => $edadBCG
+                            'edad_aplicacion' => $edadBCG,
+                            'tipo' => 'fuera_rango'
                     ];
                 }
             } else {
-                $vacunasFaltantes[] = 'BCG';
+                    $problemasVacunas[] = [
+                        'nombre' => 'BCG',
+                        'tipo' => 'faltante'
+                    ];
             }
             
             if ($vacunas && $vacunas->fecha_hvb) {
@@ -1910,33 +2177,68 @@ class ApiController extends Controller
                 $tieneHVB = ($edadHVB >= 0 && $edadHVB <= 2); // Rango 0-2 días
                 
                 if (!$tieneHVB) {
-                    $diasFuera = $edadHVB > 2 ? ($edadHVB - 2) : 0;
-                    $vacunasFueraRango[] = [
+                        $problemasVacunas[] = [
                         'nombre' => 'HVB',
-                        'dias_fuera' => $diasFuera,
-                        'edad_dias' => $edadHVB
+                            'edad_aplicacion' => $edadHVB,
+                            'tipo' => 'fuera_rango'
                     ];
                 }
             } else {
-                $vacunasFaltantes[] = 'HVB';
+                    $problemasVacunas[] = [
+                        'nombre' => 'HVB',
+                        'tipo' => 'faltante'
+                    ];
             }
             
-            // Generar UNA SOLA alerta consolidada si falta alguna vacuna o está fuera de rango
-            if (!empty($vacunasFaltantes) || !empty($vacunasFueraRango)) {
+                // Generar una sola alerta consolidada si hay problemas con alguna vacuna
+                if (!empty($problemasVacunas)) {
+                    $vacunasFaltantes = [];
+                    $vacunasFueraRango = [];
+                    
+                    foreach ($problemasVacunas as $problema) {
+                        if ($problema['tipo'] === 'faltante') {
+                            $vacunasFaltantes[] = $problema['nombre'];
+                        } else {
+                            $vacunasFueraRango[] = [
+                                'nombre' => $problema['nombre'],
+                                'edad' => $problema['edad_aplicacion']
+                            ];
+                    }
+                    }
+                    
+                    $mensaje = '';
+                        $diasFuera = $edadDias > 2 ? ($edadDias - 2) : 0;
+                    
+                    // Construir mensaje consolidado simplificado
                     $partesMensaje = [];
                     
-                    if (!empty($vacunasFueraRango)) {
-                        $nombresFueraRango = array_column($vacunasFueraRango, 'nombre');
-                        $maxDiasFuera = max(array_column($vacunasFueraRango, 'dias_fuera'));
-                        $partesMensaje[] = "Vacunas fuera de rango: " . implode(', ', $nombresFueraRango) . " ({$maxDiasFuera} días fuera)";
-                    }
-                    
                     if (!empty($vacunasFaltantes)) {
-                        $diasFuera = $edadDias > 2 ? ($edadDias - 2) : 0;
-                        $partesMensaje[] = "Vacunas faltantes: " . implode(', ', $vacunasFaltantes) . ($diasFuera > 0 ? " ({$diasFuera} días fuera)" : "");
+                        $vacunasFaltantesStr = implode(' y ', $vacunasFaltantes);
+                        if (count($vacunasFaltantes) === 1) {
+                            $partesMensaje[] = "la vacuna {$vacunasFaltantesStr} no está registrada";
+                        } else {
+                            $partesMensaje[] = "las vacunas {$vacunasFaltantesStr} no están registradas";
+                        }
                     }
                     
-                    $mensaje = implode('. ', $partesMensaje) . '.';
+                    if (!empty($vacunasFueraRango)) {
+                        $vacunasFueraRangoNombres = array_column($vacunasFueraRango, 'nombre');
+                        $vacunasFueraRangoStr = implode(' y ', $vacunasFueraRangoNombres);
+                        if (count($vacunasFueraRango) === 1) {
+                            $partesMensaje[] = "la vacuna {$vacunasFueraRangoStr} fue aplicada fuera del rango permitido (0-2 días)";
+                        } else {
+                            $partesMensaje[] = "las vacunas {$vacunasFueraRangoStr} fueron aplicadas fuera del rango permitido (0-2 días)";
+                    }
+                    }
+                    
+                    // Mensaje simplificado: solo indicar qué vacunas están mal, sin mencionar días de diferencia
+                    $mensaje = implode(', ', $partesMensaje) . ". Deben aplicarse entre los 0 y 2 días de vida.";
+                    
+                    // Determinar prioridad basada en si alguna vacuna está fuera de rango o faltante
+                    $prioridad = 'media';
+                    if ($edadDias > 2 || !empty($vacunasFueraRango)) {
+                        $prioridad = 'alta';
+                    }
                     
                     $alertas[] = [
                         'tipo' => 'vacuna',
@@ -1944,25 +2246,48 @@ class ApiController extends Controller
                         'nino_nombre' => $nino->apellidos_nombres,
                         'nino_dni' => $nino->numero_doc,
                         'establecimiento' => $nino->establecimiento,
-                        'control' => 'Vacunas del Recién Nacido',
+                        'control' => 'Vacunas RN (BCG y HVB)',
                         'edad_dias' => $edadDias,
                         'rango_min' => 0,
                         'rango_max' => 2,
                         'rango_dias' => '0-2',
-                        'prioridad' => ($edadDias > 2 || !empty($vacunasFueraRango)) ? 'alta' : 'media',
+                        'prioridad' => $prioridad,
                         'fecha_nacimiento' => $nino->fecha_nacimiento->format('Y-m-d'),
                         'mensaje' => $mensaje,
-                        'razon' => "Las vacunas BCG y HVB son esenciales para proteger al recién nacido contra enfermedades graves. Deben aplicarse dentro de las primeras 48 horas de vida.",
+                        'dias_fuera' => $diasFuera,
                         'vacunas_faltantes' => $vacunasFaltantes,
-                        'vacunas_fuera_rango' => !empty($vacunasFueraRango) ? array_column($vacunasFueraRango, 'nombre') : [],
-                        'total_vacunas_faltantes' => count($vacunasFaltantes),
-                        'total_vacunas_fuera_rango' => count($vacunasFueraRango),
+                        'vacunas_fuera_rango' => array_column($vacunasFueraRango, 'nombre'),
                     ];
+                }
+            }
+        }
+        
+        // Eliminar alertas duplicadas basándose en tipo, nino_id y control
+        // Usar tipo, nino_id y control para identificar duplicados
+        // Esto asegura que solo haya una alerta por tipo de problema por niño por control
+        $alertasUnicas = [];
+        $alertasVistas = [];
+        
+        foreach ($alertas as $alerta) {
+            // Crear una clave única para identificar duplicados
+            // Normalizar valores para evitar problemas con espacios o mayúsculas/minúsculas
+            $tipo = strtolower(trim($alerta['tipo'] ?? ''));
+            $ninoId = (string)($alerta['nino_id'] ?? '');
+            $control = strtolower(trim($alerta['control'] ?? ''));
+            
+            // Usar clave directa sin md5 para mejor debugging
+            $clave = $tipo . '|' . $ninoId . '|' . $control;
+            
+            // Solo agregar si no hemos visto esta alerta antes
+            // Si ya existe una alerta del mismo tipo para el mismo niño y control, mantener la primera
+            if (!isset($alertasVistas[$clave])) {
+                $alertasVistas[$clave] = true;
+                $alertasUnicas[] = $alerta;
             }
         }
         
         // Ordenar por prioridad (alta primero) y luego por edad
-        usort($alertas, function($a, $b) {
+        usort($alertasUnicas, function($a, $b) {
             if ($a['prioridad'] === $b['prioridad']) {
                 return $b['edad_dias'] - $a['edad_dias'];
             }
@@ -1971,8 +2296,8 @@ class ApiController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $alertas,
-            'total' => count($alertas)
+            'data' => $alertasUnicas,
+            'total' => count($alertasUnicas)
         ])->header('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
     
@@ -2289,13 +2614,15 @@ class ApiController extends Controller
         }
 
         try {
-            // Buscar el niño por número de documento
-            $nino = Nino::where('numero_doc', $documento)->first();
+            // Buscar el niño por número de documento aplicando filtros según el rol
+            $query = Nino::where('numero_doc', $documento);
+            $query = $this->applyRedMicroredFilter($query, 'datosExtra');
+            $nino = $query->first();
             
             if (!$nino) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Niño no encontrado'
+                    'message' => 'Niño no encontrado o no tiene acceso a este registro'
                 ], 404);
             }
 
@@ -2337,99 +2664,6 @@ class ApiController extends Controller
                 'message' => 'Error al obtener datos: ' . $e->getMessage()
             ], 500);
         }
-    }
-    
-    /**
-     * Generar PDF explicativo sobre las alertas
-     */
-    public function generarPdfExplicacionAlertas()
-    {
-        $informacionAlertas = [
-            [
-                'tipo' => 'datos_faltantes_nino',
-                'nombre' => 'Datos Faltantes del Niño',
-                'como' => 'Se genera una alerta cuando faltan uno o más de los siguientes campos obligatorios: Tipo de Documento, Número de Documento, Apellidos y Nombres, Fecha de Nacimiento, Género, Establecimiento.',
-                'campos' => ['Tipo de Documento', 'Número de Documento', 'Apellidos y Nombres', 'Fecha de Nacimiento', 'Género', 'Establecimiento']
-            ],
-            [
-                'tipo' => 'datos_faltantes_madre',
-                'nombre' => 'Datos Faltantes de la Madre',
-                'como' => 'Se genera una alerta cuando falta el registro completo de la madre o cuando faltan campos como: DNI, Apellidos y Nombres, Celular, Domicilio, Referencia de Dirección.',
-                'campos' => ['DNI de la Madre', 'Apellidos y Nombres', 'Celular', 'Domicilio', 'Referencia de Dirección']
-            ],
-            [
-                'tipo' => 'datos_faltantes_extras',
-                'nombre' => 'Datos Faltantes Extras',
-                'como' => 'Se genera una alerta cuando faltan datos administrativos como: Red, Microred, EESS de Nacimiento, Distrito, Provincia, Departamento, Seguro, Programa.',
-                'campos' => ['Red', 'Microred', 'EESS de Nacimiento', 'Distrito', 'Provincia', 'Departamento', 'Seguro', 'Programa']
-            ],
-            [
-                'tipo' => 'control_recien_nacido',
-                'nombre' => 'Controles Recién Nacido (0-28 días)',
-                'como' => 'Se genera una alerta cuando: 1) Faltan controles que debieron realizarse según los rangos establecidos, 2) Los controles fueron realizados fuera del rango permitido, 3) Hay controles anteriores faltantes cuando se registra un control posterior.',
-                'rangos' => [
-                    'Control 1' => '2-6 días',
-                    'Control 2' => '7-13 días',
-                    'Control 3' => '14-20 días',
-                    'Control 4' => '21-28 días'
-                ]
-            ],
-            [
-                'tipo' => 'control_cred_mensual',
-                'nombre' => 'Controles CRED Mensual (29-359 días)',
-                'como' => 'Se genera una alerta cuando: 1) Faltan controles mensuales que debieron realizarse según la edad del niño, 2) Los controles fueron realizados fuera del rango mensual permitido, 3) Hay controles anteriores faltantes cuando se registra un control posterior.',
-                'rangos' => [
-                    'Control 1' => '29-59 días',
-                    'Control 2' => '60-89 días',
-                    'Control 3' => '90-119 días',
-                    'Control 4' => '120-149 días',
-                    'Control 5' => '150-179 días',
-                    'Control 6' => '180-209 días',
-                    'Control 7' => '210-239 días',
-                    'Control 8' => '240-269 días',
-                    'Control 9' => '270-299 días',
-                    'Control 10' => '300-329 días',
-                    'Control 11' => '330-359 días'
-                ]
-            ],
-            [
-                'tipo' => 'cnv',
-                'nombre' => 'CNV (Carné de Nacido Vivo)',
-                'como' => 'Se genera una alerta cuando falta alguno de los siguientes datos obligatorios: Peso al Nacer, Edad Gestacional, Clasificación.',
-                'campos' => ['Peso al Nacer', 'Edad Gestacional', 'Clasificación']
-            ],
-            [
-                'tipo' => 'visita',
-                'nombre' => 'Visitas Domiciliarias',
-                'como' => 'Se genera una alerta cuando el niño tiene menos de 2 visitas cumplidas. Las visitas deben realizarse en los rangos establecidos. Si hay al menos 2 visitas cumplidas (dentro de cualquier rango), no se genera alerta.',
-                'rangos' => [
-                    'Visita 1' => '28-30 días',
-                    'Visita 2' => '60-150 días',
-                    'Visita 3' => '180-240 días',
-                    'Visita 4' => '270-330 días'
-                ]
-            ],
-            [
-                'tipo' => 'tamizaje',
-                'nombre' => 'Tamizaje Neonatal',
-                'como' => 'Se genera una alerta cuando: 1) No se ha registrado el tamizaje neonatal, 2) El tamizaje fue realizado fuera del rango permitido (0-29 días).',
-                'rangos' => ['Tamizaje Neonatal' => '0-29 días']
-            ],
-            [
-                'tipo' => 'vacuna',
-                'nombre' => 'Vacunas del Recién Nacido',
-                'como' => 'Se genera una alerta cuando: 1) Faltan las vacunas BCG o HVB, 2) Las vacunas fueron aplicadas fuera del rango permitido (0-2 días).',
-                'rangos' => [
-                    'BCG' => '0-2 días',
-                    'HVB' => '0-2 días'
-                ]
-            ]
-        ];
-        
-        return view('dashboard.pdf-explicacion-alertas', [
-            'informacionAlertas' => $informacionAlertas,
-            'fechaGeneracion' => Carbon::now()->format('d/m/Y H:i:s')
-        ]);
     }
 
     /**
@@ -2848,6 +3082,194 @@ class ApiController extends Controller
                 'success' => false,
                 'message' => 'Error al cargar los datos: ' . $e->getMessage(),
                 'data' => []
+            ], 500);
+        }
+    }
+
+    /**
+     * Generar PDF de explicación de alertas CRED
+     */
+    public function generarPdfExplicacionAlertas(Request $request)
+    {
+        $print = $request->get('print', false);
+        $fechaGeneracion = Carbon::now()->format('d/m/Y H:i:s');
+        
+        // Información de las alertas para el PDF
+        $informacionAlertas = [
+            [
+                'nombre' => 'Alertas de Controles Recién Nacido (RN)',
+                'como' => 'Se generan alertas cuando un niño de 0 a 28 días no tiene registrados los controles correspondientes a su edad. El sistema verifica que existan los controles RN 1, 2, 3 y 4 según los rangos de días establecidos.',
+                'campos' => [
+                    'Número de control RN',
+                    'Fecha del control',
+                    'Edad del niño en días'
+                ],
+                'rangos' => [
+                    'Control RN 1' => '2-6',
+                    'Control RN 2' => '7-13',
+                    'Control RN 3' => '14-20',
+                    'Control RN 4' => '21-28'
+                ]
+            ],
+            [
+                'nombre' => 'Alertas de Controles CRED Mensuales',
+                'como' => 'Se generan alertas cuando un niño de 29 a 359 días no tiene registrados los controles CRED mensuales correspondientes. El sistema verifica que existan los controles del mes 1 al 11 según los rangos de días establecidos.',
+                'campos' => [
+                    'Número de control CRED (mes)',
+                    'Fecha del control',
+                    'Edad del niño en días'
+                ],
+                'rangos' => [
+                    'Control CRED Mes 1' => '29-59',
+                    'Control CRED Mes 2' => '60-89',
+                    'Control CRED Mes 3' => '90-119',
+                    'Control CRED Mes 4' => '120-149',
+                    'Control CRED Mes 5' => '150-179',
+                    'Control CRED Mes 6' => '180-209',
+                    'Control CRED Mes 7' => '210-239',
+                    'Control CRED Mes 8' => '240-269',
+                    'Control CRED Mes 9' => '270-299',
+                    'Control CRED Mes 10' => '300-329',
+                    'Control CRED Mes 11' => '330-359'
+                ]
+            ],
+            [
+                'nombre' => 'Alertas de Tamizaje Neonatal',
+                'como' => 'Se genera una alerta cuando un niño de 1 a 29 días no tiene registrado el tamizaje neonatal. Este examen es obligatorio y debe realizarse dentro del primer mes de vida.',
+                'campos' => [
+                    'Fecha de tamizaje neonatal',
+                    'Edad del niño en días'
+                ]
+            ],
+            [
+                'nombre' => 'Alertas de Vacunas',
+                'como' => 'Se generan alertas cuando un niño de 0 a 30 días no tiene registradas las vacunas BCG y/o HVB dentro del rango establecido (0-2 días después del nacimiento).',
+                'campos' => [
+                    'Fecha de vacuna BCG',
+                    'Fecha de vacuna HVB',
+                    'Edad del niño en días'
+                ],
+                'rangos' => [
+                    'Vacuna BCG' => '0-2',
+                    'Vacuna HVB' => '0-2'
+                ]
+            ],
+            [
+                'nombre' => 'Alertas de CNV (Carné de Nacido Vivo)',
+                'como' => 'Se genera una alerta cuando un niño no tiene registrado el CNV completo. Todos los campos son requeridos: peso al nacer, edad gestacional y clasificación.',
+                'campos' => [
+                    'Peso al nacer',
+                    'Edad gestacional',
+                    'Clasificación'
+                ]
+            ],
+            [
+                'nombre' => 'Alertas de Visitas Domiciliarias',
+                'como' => 'Se generan alertas cuando un niño de 28 días o más no tiene registradas al menos 2 de las 4 visitas domiciliarias requeridas dentro de los rangos establecidos.',
+                'campos' => [
+                    'Fecha de visita domiciliaria',
+                    'Número de control de visita',
+                    'Edad del niño en días'
+                ],
+                'rangos' => [
+                    'Visita 1 (28 días)' => '28',
+                    'Visita 2' => '60-150',
+                    'Visita 3' => '180-240',
+                    'Visita 4' => '270-330'
+                ]
+            ]
+        ];
+        
+        return view('dashboard.pdf-explicacion-alertas', [
+            'print' => $print,
+            'fechaGeneracion' => $fechaGeneracion,
+            'informacionAlertas' => $informacionAlertas
+        ]);
+    }
+
+    /**
+     * Eliminar todos los datos del sistema (solo admin)
+     * Esta función elimina:
+     * - Todos los niños
+     * - Todas las madres
+     * - Todos los controles (RN y CRED)
+     * - Todos los datos extras
+     * - Todos los tamizajes
+     * - Todas las vacunas
+     * - Todas las visitas domiciliarias
+     * - Todos los CNV
+     * 
+     * NOTA: NO elimina usuarios ni solicitudes
+     */
+    public function eliminarTodosDatos(Request $request)
+    {
+        // Verificar que el usuario sea admin
+        $user = auth()->user();
+        if (!$user || (strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'administrator')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tiene permisos para realizar esta acción'
+            ], 403);
+        }
+
+        try {
+            // Nota: TRUNCATE no funciona dentro de transacciones en MySQL
+            // porque TRUNCATE hace commit automático. Por eso no usamos transacciones aquí.
+            
+            // Desactivar verificación de foreign keys temporalmente para poder hacer truncate
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            // Eliminar todas las tablas (el orden no importa con foreign keys desactivadas)
+            // 1. Eliminar controles CRED
+            ControlMenor1::truncate();
+            
+            // 2. Eliminar controles RN
+            ControlRn::truncate();
+            
+            // 3. Eliminar visitas domiciliarias
+            VisitaDomiciliaria::truncate();
+            
+            // 4. Eliminar tamizajes
+            TamizajeNeonatal::truncate();
+            
+            // 5. Eliminar vacunas
+            VacunaRn::truncate();
+            
+            // 6. Eliminar CNV
+            RecienNacido::truncate();
+            
+            // 7. Eliminar datos extras
+            DatosExtra::truncate();
+            
+            // 8. Eliminar madres
+            Madre::truncate();
+            
+            // 9. Eliminar niños
+            Nino::truncate();
+
+            // Reactivar verificación de foreign keys
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+            \Log::info('Todos los datos eliminados por el usuario: ' . $user->email);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todos los datos han sido eliminados exitosamente'
+            ]);
+
+        } catch (\Exception $e) {
+            // Asegurar que las foreign keys se reactiven incluso si hay error
+            try {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } catch (\Exception $e2) {
+                // Ignorar errores al reactivar foreign keys
+            }
+            
+            \Log::error('Error al eliminar todos los datos: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar los datos: ' . $e->getMessage()
             ], 500);
         }
     }
