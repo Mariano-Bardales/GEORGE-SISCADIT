@@ -1119,11 +1119,23 @@ class ApiController extends Controller
                 } catch (\Exception $e) {
                     $visitas = collect([]);
                 }
+            } else {
+                // Formatear visitas para asegurar que tienen control_de_visita
+                $visitas = $visitas->map(function($visita) {
+                    return [
+                        'id' => $visita->id_visita ?? $visita->id,
+                        'id_niño' => $visita->id_niño,
+                        'control_de_visita' => $visita->control_de_visita ?? $visita->numero_control ?? $visita->numero_visitas ?? 1,
+                        'numero_control' => $visita->control_de_visita ?? $visita->numero_control ?? $visita->numero_visitas ?? 1,
+                        'numero_visitas' => $visita->control_de_visita ?? $visita->numero_control ?? $visita->numero_visitas ?? 1,
+                        'fecha_visita' => $visita->fecha_visita ? Carbon::parse($visita->fecha_visita)->format('Y-m-d') : null,
+                    ];
+                });
             }
         } else {
             $visitas = VisitaDomiciliaria::all();
         }
-        return response()->json(['success' => true, 'data' => $visitas]);
+        return response()->json(['success' => true, 'data' => ['visitas' => $visitas]]);
     }
     
     /**
@@ -1138,7 +1150,7 @@ class ApiController extends Controller
         $visitasEjemplo = collect();
         // Controles de visita con sus rangos (1-4)
         $controlesVisita = [
-            1 => ['dias' => 28, 'min' => 28, 'max' => 28, 'descripcion' => 'Visita domiciliaria Control 1 (28 días)'],
+            1 => ['dias' => 28, 'min' => 28, 'max' => 30, 'descripcion' => 'Visita domiciliaria Control 1 (28-30 días)'],
             2 => ['dias' => 105, 'min' => 60, 'max' => 150, 'descripcion' => 'Visita domiciliaria Control 2 (60-150 días)'],
             3 => ['dias' => 210, 'min' => 180, 'max' => 240, 'descripcion' => 'Visita domiciliaria Control 3 (180-240 días)'],
             4 => ['dias' => 300, 'min' => 270, 'max' => 330, 'descripcion' => 'Visita domiciliaria Control 4 (270-330 días)'],
@@ -1887,7 +1899,7 @@ class ApiController extends Controller
                 $fechaNacimiento = Carbon::parse($nino->fecha_nacimiento);
                 
                 $rangosVisitas = [
-                    1 => ['min' => 28, 'max' => 28, 'nombre' => 'Visita 1'],
+                    1 => ['min' => 28, 'max' => 30, 'nombre' => 'Visita 1'],
                     2 => ['min' => 60, 'max' => 150, 'nombre' => 'Visita 2'],
                     3 => ['min' => 180, 'max' => 240, 'nombre' => 'Visita 3'],
                     4 => ['min' => 270, 'max' => 330, 'nombre' => 'Visita 4']
